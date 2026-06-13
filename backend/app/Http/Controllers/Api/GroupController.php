@@ -33,7 +33,6 @@ class GroupController extends Controller
         ]);
 
         $group->members()->attach($request->user()->id, [
-            'id' => (string) Str::uuid(),
             'role' => 'admin',
             'joined_at' => now(),
         ]);
@@ -79,7 +78,6 @@ class GroupController extends Controller
         }
 
         $group->members()->attach($request->user()->id, [
-            'id' => (string) Str::uuid(),
             'role' => 'member',
             'joined_at' => now(),
         ]);

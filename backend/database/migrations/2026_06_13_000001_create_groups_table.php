@@ -19,14 +19,13 @@ return new class extends Migration
         });
 
         Schema::create('group_members', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->uuid('group_id');
             $table->uuid('user_id');
             $table->string('role', 20)->default('member');
             $table->timestamp('joined_at')->useCurrent();
+            $table->primary(['group_id', 'user_id']);
             $table->foreign('group_id')->references('id')->on('groups')->cascadeOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->unique(['group_id', 'user_id']);
         });
     }
 

@@ -9,12 +9,16 @@ use App\Models\Rating;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 
 class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Idempotent: skip if already seeded
+        if (User::where('email', 'mario@plancine.app')->exists()) {
+            return;
+        }
+
         $mario = User::create([
             'name' => 'Mario',
             'email' => 'mario@plancine.app',
@@ -46,9 +50,9 @@ class DatabaseSeeder extends Seeder
             'created_by' => $mario->id,
         ]);
 
-        $group->members()->attach($mario->id, ['id' => (string) Str::uuid(), 'role' => 'admin', 'joined_at' => now()]);
-        $group->members()->attach($papa->id, ['id' => (string) Str::uuid(), 'role' => 'member', 'joined_at' => now()]);
-        $group->members()->attach($mama->id, ['id' => (string) Str::uuid(), 'role' => 'member', 'joined_at' => now()]);
+        $group->members()->attach($mario->id, ['role' => 'admin', 'joined_at' => now()]);
+        $group->members()->attach($papa->id, ['role' => 'member', 'joined_at' => now()]);
+        $group->members()->attach($mama->id, ['role' => 'member', 'joined_at' => now()]);
 
         $moviesData = [
             ['title' => 'Dune: Parte Dos', 'duration_minutes' => 166, 'platform' => 'hbo', 'genre' => 'sci-fi', 'added_by' => $mario->id, 'status' => 'watched'],

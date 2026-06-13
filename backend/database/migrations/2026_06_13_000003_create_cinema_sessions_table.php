@@ -24,12 +24,11 @@ return new class extends Migration
         });
 
         Schema::create('session_participants', function (Blueprint $table) {
-            $table->uuid('id')->primary();
             $table->uuid('session_id');
             $table->uuid('user_id');
+            $table->primary(['session_id', 'user_id']);
             $table->foreign('session_id')->references('id')->on('cinema_sessions')->cascadeOnDelete();
             $table->foreign('user_id')->references('id')->on('users')->cascadeOnDelete();
-            $table->unique(['session_id', 'user_id']);
         });
 
         Schema::create('ratings', function (Blueprint $table) {

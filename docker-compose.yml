@@ -21,7 +21,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: ./backend/.env.docker
     ports:
       - "8000:8000"
     volumes:
@@ -30,8 +29,10 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # Copy .env.docker → .env so Laravel reads Docker-specific DB_HOST (db, not 127.0.0.1)
     command: >
-      sh -c "php artisan migrate --force &&
+      sh -c "cp /var/www/html/.env.docker /var/www/html/.env &&
+             php artisan migrate --force &&
              php artisan db:seed --force &&
              php artisan serve --host=0.0.0.0 --port=8000"
 
@@ -40,7 +41,8 @@ services:
       context: ./frontend
       dockerfile: Dockerfile
     restart: unless-stopped
-    env_file: ./frontend/.env.docker
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000/api
     ports:
       - "3000:3000"
     volumes:
