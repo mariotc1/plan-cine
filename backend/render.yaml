@@ -1,0 +1,47 @@
+services:
+  - type: web
+    name: plan-cine-api
+    env: php
+    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache
+    startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        generateValue: true
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        fromDatabase:
+          name: plan-cine-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: plan-cine-db
+          property: port
+      - key: DB_DATABASE
+        fromDatabase:
+          name: plan-cine-db
+          property: database
+      - key: DB_USERNAME
+        fromDatabase:
+          name: plan-cine-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: plan-cine-db
+          property: password
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: FRONTEND_URL
+        value: https://plan-cine.vercel.app
+      - key: SANCTUM_STATEFUL_DOMAINS
+        value: plan-cine.vercel.app
+
+databases:
+  - name: plan-cine-db
+    databaseName: plan_cine
+    user: plan_cine
+    plan: free
