@@ -11,6 +11,7 @@
         "laravel/sanctum": "^4.3",
         "laravel/socialite": "^5.27",
         "laravel/tinker": "^3.0",
+        "minishlink/web-push": "^9.0",
         "spatie/laravel-query-builder": "^7.3"
     },
     "require-dev": {

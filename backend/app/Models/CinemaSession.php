@@ -16,13 +16,14 @@ class CinemaSession extends Model
 
     protected $fillable = [
         'group_id', 'movie_id', 'started_at', 'estimated_end_at',
-        'actual_end_at', 'status', 'created_by',
+        'actual_end_at', 'status', 'created_by', 'rating_notification_sent',
     ];
 
     protected $casts = [
         'started_at' => 'datetime',
         'estimated_end_at' => 'datetime',
         'actual_end_at' => 'datetime',
+        'rating_notification_sent' => 'boolean',
     ];
 
     protected static function boot(): void

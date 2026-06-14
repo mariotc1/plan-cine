@@ -5,10 +5,13 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNav } from '@/components/shared/BottomNav';
 import { InstallBanner } from '@/components/shared/InstallBanner';
+import { NotificationBanner } from '@/components/shared/NotificationBanner';
+import { usePushNotifications } from '@/hooks/usePushNotifications';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
   const router = useRouter();
+  usePushNotifications();
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -24,6 +27,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <BottomNav />
+      <NotificationBanner />
       <InstallBanner />
     </div>
   );

@@ -34,6 +34,7 @@ services:
       sh -c "cp /var/www/html/.env.docker /var/www/html/.env &&
              php artisan migrate --force &&
              php artisan db:seed --force &&
+             php artisan schedule:work &
              php artisan serve --host=0.0.0.0 --port=8000"
 
   frontend:
@@ -43,6 +44,7 @@ services:
     restart: unless-stopped
     environment:
       NEXT_PUBLIC_API_URL: http://localhost:8000/api
+      NEXT_PUBLIC_VAPID_PUBLIC_KEY: BMNapIMxsjt3UddjJo3TcNbSRlDcH2upba5GAE-vfxi7rMcTm3cCDlaMH4t_teVDEg7CdHuqSpdVRqkHIMsHW0s
     ports:
       - "3000:3000"
     volumes:

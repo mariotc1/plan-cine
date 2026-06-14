@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession, useFinishSession, useReturnToPending, useRateSession } from '@/hooks/useSessions';
@@ -28,6 +28,18 @@ export default function SessionDetailPage({ params }: Props) {
 
   const [selectedScore, setSelectedScore] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+
+  // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
+  useEffect(() => {
+    if (!session?.estimated_end_at || session.status !== 'in_progress') return;
+    const delay = new Date(session.estimated_end_at).getTime() - Date.now() + 8000;
+    if (delay <= 0) {
+      refetch();
+      return;
+    }
+    const t = setTimeout(() => refetch(), delay);
+    return () => clearTimeout(t);
+  }, [session?.estimated_end_at, session?.status, refetch]);
 
   if (isLoading || !session) return <LoadingSpinner />;
 
