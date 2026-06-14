@@ -87,34 +87,37 @@ export default function GroupLayout({ children, params }: Props) {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <div className="px-5 pt-12 pb-0">
-        <div className="flex items-center justify-between">
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={() => router.push('/groups')}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300"
-          >
-            <ArrowLeft size={18} />
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.85 }}
-            onClick={() => setShowSettings(true)}
-            className="flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300"
-          >
-            <MoreHorizontal size={18} />
-          </motion.button>
+      {/* Header — single row, title truly centered */}
+      <div className="relative flex items-center px-5 pt-12 pb-0">
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={() => router.push('/groups')}
+          className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex-shrink-0"
+        >
+          <ArrowLeft size={18} />
+        </motion.button>
+
+        {/* Absolutely centered — doesn't shift with button widths */}
+        <div className="absolute inset-x-0 flex items-center justify-center pointer-events-none px-16">
+          <div className="flex items-center gap-2 min-w-0">
+            {group?.avatar && <span className="text-lg leading-none flex-shrink-0">{group.avatar}</span>}
+            <h1 className="text-base font-semibold text-white truncate">
+              {group?.name || '...'}
+            </h1>
+          </div>
         </div>
-        <div className="flex items-center gap-3 mt-3">
-          {group?.avatar && <span className="text-2xl">{group.avatar}</span>}
-          <h1 className="text-xl font-bold text-white tracking-tight truncate">
-            {group?.name || '...'}
-          </h1>
-        </div>
+
+        <motion.button
+          whileTap={{ scale: 0.85 }}
+          onClick={() => setShowSettings(true)}
+          className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex-shrink-0 ml-auto"
+        >
+          <MoreHorizontal size={18} />
+        </motion.button>
       </div>
 
-      {/* Tabs — ancho completo, sin scroll, indicador deslizante */}
-      <div className="px-4 pt-4 pb-0">
+      {/* Tabs */}
+      <div className="px-4 pt-3 pb-0">
         <div className="relative flex bg-zinc-900/70 rounded-2xl p-1">
           {TABS.map((tab) => {
             const href = `/groups/${groupId}${tab.href}`;
