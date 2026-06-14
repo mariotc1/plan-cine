@@ -60,9 +60,9 @@ export default function SpinPage({ params }: Props) {
   return (
     <div>
       <SpinWheel
+        movies={movies ?? []}
         onSpin={handleSpin}
         onWatch={handleWatch}
-        totalPending={movies?.length ?? 0}
       />
 
       <StartSessionSheet
