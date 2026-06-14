@@ -19,9 +19,10 @@ const STATUS_LABELS: Record<string, { label: string; color: string }> = {
 interface SessionCardProps {
   session: CinemaSession;
   groupId: string;
+  hideStatus?: boolean;
 }
 
-export function SessionCard({ session, groupId }: SessionCardProps) {
+export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) {
   const statusInfo = STATUS_LABELS[session.status];
 
   return (
@@ -45,9 +46,11 @@ export function SessionCard({ session, groupId }: SessionCardProps) {
                   : formatDate(session.created_at)}
               </p>
             </div>
-            <span className={cn('text-xs font-medium px-2 py-1 rounded-full flex-shrink-0', statusInfo.color)}>
-              {statusInfo.label}
-            </span>
+            {!hideStatus && (
+              <span className={cn('text-xs font-medium px-2 py-1 rounded-full flex-shrink-0', statusInfo.color)}>
+                {statusInfo.label}
+              </span>
+            )}
           </div>
 
           <div className="flex items-center justify-between mt-4">
