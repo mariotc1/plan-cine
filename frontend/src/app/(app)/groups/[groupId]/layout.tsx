@@ -24,8 +24,8 @@ const TABS = [
   { label: 'Pelis', href: '' },
   { label: 'Ruleta', href: '/spin' },
   { label: 'Sesiones', href: '/sessions' },
-  { label: 'Miembros', href: '/members' },
   { label: 'Ranking', href: '/stats' },
+  { label: 'Miembros', href: '/members' },
 ];
 
 interface Props {

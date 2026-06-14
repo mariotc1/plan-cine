@@ -2,14 +2,13 @@
 
 import { use, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { UserMinus, Shield, X } from 'lucide-react';
+import { UserMinus, Shield } from 'lucide-react';
 import { useGroupMembers, useGroup, useKickMember } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { GroupMember } from '@/types';
 import { Button } from '@/components/ui/button';
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { cn } from '@/lib/utils';
 
 interface Props {
   params: Promise<{ groupId: string }>;
@@ -36,57 +35,58 @@ export default function MembersPage({ params }: Props) {
 
   return (
     <div className="px-5 pb-8">
-      <p className="text-zinc-500 text-sm mb-5">
-        {members?.length ?? 0} miembro{(members?.length ?? 0) !== 1 ? 's' : ''}
+      <p className="text-zinc-600 text-xs uppercase tracking-wider font-semibold mb-4">
+        {members?.length ?? 0} {(members?.length ?? 0) === 1 ? 'miembro' : 'miembros'}
       </p>
 
       <motion.div
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="space-y-2"
+        className="space-y-2.5"
       >
         {members?.map((member: GroupMember) => {
           const isSelf = member.id === user?.id;
           const memberIsAdmin = member.role === 'admin';
           const canKick = isAdmin && !isSelf && !memberIsAdmin;
+          const color = member.user?.color ?? '#6366f1';
 
           return (
             <motion.div key={member.id} variants={staggerItem}>
               <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex items-center gap-4">
                 {/* Avatar */}
-                <div
-                  className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl flex-shrink-0"
-                  style={{ backgroundColor: `${member.user?.color ?? '#6366f1'}18` }}
-                >
-                  {member.user?.avatar ?? '🎬'}
-                </div>
+                <div className="flex-shrink-0">
+                  <div
+                    className="w-12 h-12 rounded-2xl flex items-center justify-center text-2xl"
+                    style={{ backgroundColor: `${color}22` }}
+                  >
+                    {member.user?.avatar ?? '🎬'}
+                  </div>
+                  </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="text-white font-semibold text-sm truncate">{member.user?.name}</p>
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <p className="text-white font-semibold text-sm">{member.user?.name}</p>
                     {isSelf && (
-                      <span className="text-[10px] text-zinc-500 bg-white/5 px-1.5 py-0.5 rounded-md flex-shrink-0">
+                      <span className="text-[10px] text-zinc-500 bg-white/5 px-1.5 py-0.5 rounded-md">
                         Tú
                       </span>
                     )}
                     {memberIsAdmin && (
-                      <span className="flex items-center gap-1 text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded-md flex-shrink-0 border border-indigo-500/20">
+                      <span className="flex items-center gap-1 text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded-md border border-indigo-500/20">
                         <Shield size={9} />
                         Admin
                       </span>
                     )}
                   </div>
-                  <p className="text-zinc-500 text-xs mt-0.5 truncate">{member.user?.email}</p>
                   {member.joined_at && (
-                    <p className="text-zinc-600 text-[11px] mt-0.5">
+                    <p className="text-zinc-600 text-xs mt-0.5">
                       Desde {new Date(member.joined_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
                     </p>
                   )}
                 </div>
 
-                {/* Kick button */}
                 {canKick && (
                   <button
                     onClick={() => setKickTarget(member)}
@@ -118,11 +118,10 @@ export default function MembersPage({ params }: Props) {
               <div className="flex justify-center pt-3 pb-4">
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
-
               <div className="flex flex-col items-center text-center mb-6">
                 <div
                   className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
-                  style={{ backgroundColor: `${kickTarget.user?.color ?? '#6366f1'}18` }}
+                  style={{ backgroundColor: `${kickTarget.user?.color ?? '#6366f1'}22` }}
                 >
                   {kickTarget.user?.avatar}
                 </div>
@@ -131,7 +130,6 @@ export default function MembersPage({ params }: Props) {
                   Se eliminará del grupo y perderá acceso a todas sus películas y sesiones.
                 </p>
               </div>
-
               <div className="space-y-3">
                 <Button
                   onClick={handleKick}
