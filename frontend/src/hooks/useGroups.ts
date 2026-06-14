@@ -83,6 +83,32 @@ export function useJoinGroup() {
   });
 }
 
+export function useUpdateGroup(id: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: { name?: string; avatar?: string; description?: string }) =>
+      groupsApi.update(id, data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      qc.invalidateQueries({ queryKey: ['groups', id] });
+      toast.success('Grupo actualizado');
+    },
+    onError: () => toast.error('Error al actualizar el grupo'),
+  });
+}
+
+export function useDeleteGroup() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => groupsApi.delete(id),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups'] });
+      toast.success('Grupo eliminado');
+    },
+    onError: () => toast.error('Error al eliminar el grupo'),
+  });
+}
+
 export function useLeaveGroup() {
   const qc = useQueryClient();
   return useMutation({
@@ -91,5 +117,22 @@ export function useLeaveGroup() {
       qc.invalidateQueries({ queryKey: ['groups'] });
       toast.success('Has salido del grupo');
     },
+    onError: (err: unknown) => {
+      const msg = (err as { response?: { data?: { message?: string } } })
+        ?.response?.data?.message;
+      toast.error(msg || 'Error al salir del grupo');
+    },
+  });
+}
+
+export function useKickMember(groupId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (userId: string) => groupsApi.kickMember(groupId, userId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['groups', groupId, 'members'] });
+      toast.success('Miembro expulsado');
+    },
+    onError: () => toast.error('Error al expulsar al miembro'),
   });
 }
