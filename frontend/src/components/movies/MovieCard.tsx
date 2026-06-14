@@ -70,13 +70,11 @@ export function MovieCard({ movie, onEdit, onDelete }: MovieCardProps) {
 
           {(onEdit || onDelete) && (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <button className={cn(
-                  'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
-                  'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors'
-                )}>
-                  <MoreVertical size={16} />
-                </button>
+              <DropdownMenuTrigger className={cn(
+                'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
+                'text-zinc-600 hover:text-zinc-300 hover:bg-zinc-800 transition-colors outline-none'
+              )}>
+                <MoreVertical size={16} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800">
                 {onEdit && (
