@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -32,9 +33,11 @@ export default function LoginPage() {
   return (
     <motion.div {...fadeInUp}>
       <div className="text-center mb-10">
-        <div className="text-6xl mb-4">🎬</div>
+        <div className="flex justify-center mb-3">
+          <Image src="/logo.png" alt="Plan Cine" width={140} height={140} className="drop-shadow-[0_0_28px_rgba(255,255,255,0.15)]" priority />
+        </div>
         <h1 className="text-3xl font-bold text-white tracking-tight">Plan Cine</h1>
-        <p className="text-zinc-400 mt-2 text-sm">Las noches de cine en familia</p>
+        <p className="text-zinc-400 mt-1 text-sm">Las noches de cine en familia</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">

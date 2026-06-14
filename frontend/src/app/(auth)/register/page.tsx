@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -42,7 +43,9 @@ export default function RegisterPage() {
   return (
     <motion.div {...fadeInUp}>
       <div className="text-center mb-8">
-        <div className="text-5xl mb-3">🎬</div>
+        <div className="flex justify-center mb-2">
+          <Image src="/logo.png" alt="Plan Cine" width={110} height={110} className="drop-shadow-[0_0_24px_rgba(255,255,255,0.15)]" priority />
+        </div>
         <h1 className="text-2xl font-bold text-white">Crear cuenta</h1>
         <p className="text-zinc-400 text-sm mt-1">Únete a Plan Cine</p>
       </div>

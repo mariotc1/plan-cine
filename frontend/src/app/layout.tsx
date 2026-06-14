@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   title: 'Plan Cine',
   description: 'Planifica las noches de cine con tu familia',
   manifest: '/manifest.json',
+  icons: {
+    icon: '/logo.png',
+    apple: '/icon-192.png',
+  },
   appleWebApp: {
     capable: true,
     statusBarStyle: 'black-translucent',
