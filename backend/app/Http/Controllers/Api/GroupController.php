@@ -27,6 +27,7 @@ class GroupController extends Controller
     {
         $group = Group::create([
             'name' => $request->name,
+            'avatar' => $request->avatar ?? '🎬',
             'description' => $request->description,
             'invitation_code' => $this->generateUniqueCode(),
             'created_by' => $request->user()->id,
@@ -54,7 +55,7 @@ class GroupController extends Controller
         $group = $this->findGroupForUser($request->user(), $id);
         $this->requireAdmin($request->user(), $group);
 
-        $group->update($request->only(['name', 'description']));
+        $group->update($request->only(['name', 'avatar', 'description']));
         $group->loadCount('members');
 
         return response()->json(['data' => new GroupResource($group), 'message' => 'Grupo actualizado.']);

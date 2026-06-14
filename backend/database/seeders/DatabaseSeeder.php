@@ -44,9 +44,10 @@ class DatabaseSeeder extends Seeder
         ]);
 
         $group = Group::create([
-            'name' => 'Familia Tibus',
-            'description' => 'Las noches de cine en familia 🎬',
-            'invitation_code' => 'TIBUS001',
+            'name' => 'Familia García',
+            'avatar' => '🏠',
+            'description' => 'Las noches de cine en familia',
+            'invitation_code' => 'GARCIA01',
             'created_by' => $mario->id,
         ]);
 

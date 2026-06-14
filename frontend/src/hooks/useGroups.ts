@@ -62,7 +62,7 @@ export function useGroupMemories(id: string) {
 export function useCreateGroup() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { name: string; description?: string }) => groupsApi.create(data),
+    mutationFn: (data: { name: string; avatar?: string; description?: string }) => groupsApi.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups'] });
       toast.success('Grupo creado correctamente');

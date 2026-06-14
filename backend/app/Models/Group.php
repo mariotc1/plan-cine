@@ -13,7 +13,7 @@ class Group extends Model
     public $incrementing = false;
     protected $keyType = 'string';
 
-    protected $fillable = ['name', 'description', 'invitation_code', 'created_by'];
+    protected $fillable = ['name', 'avatar', 'description', 'invitation_code', 'created_by'];
 
     protected static function boot(): void
     {

@@ -45,7 +45,7 @@ export const authApi = {
 
 export const groupsApi = {
   list: () => api.get('/groups'),
-  create: (data: { name: string; description?: string }) => api.post('/groups', data),
+  create: (data: { name: string; avatar?: string; description?: string }) => api.post('/groups', data),
   get: (id: string) => api.get(`/groups/${id}`),
   update: (id: string, data: { name?: string; description?: string }) => api.put(`/groups/${id}`, data),
   delete: (id: string) => api.delete(`/groups/${id}`),
