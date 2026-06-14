@@ -26,9 +26,8 @@ export const GENRES: { value: Genre; label: string; emoji: string }[] = [
 export const AVATARS = ['🎬', '🍿', '🎥', '🌟', '🎭', '🦁', '🐺', '🦊', '🐉', '🧙', '🦸', '🎮', '👻', '🦋', '🐻', '🦄'];
 
 export const COLORS = [
-  '#6366f1', '#ec4899', '#f59e0b', '#10b981',
-  '#ef4444', '#3b82f6', '#8b5cf6', '#14b8a6',
-  '#f97316', '#84cc16', '#06b6d4', '#a855f7',
+  '#6366f1', '#ec4899', '#3b82f6', '#10b981',
+  '#f59e0b', '#ef4444', '#8b5cf6', '#f97316',
 ];
 
 export const getPlatform = (value: Platform) => PLATFORMS.find((p) => p.value === value);
