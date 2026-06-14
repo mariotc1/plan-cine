@@ -19,7 +19,6 @@ export default function SessionsPage({ params }: Props) {
 
   const inProgress = sessions?.filter((s) => s.status === 'in_progress') ?? [];
   const finished = sessions?.filter((s) => s.status === 'finished') ?? [];
-  const others = sessions?.filter((s) => !['in_progress', 'finished'].includes(s.status)) ?? [];
 
   if (isLoading) {
     return (
@@ -29,26 +28,23 @@ export default function SessionsPage({ params }: Props) {
     );
   }
 
-  if (!sessions?.length) {
+  if (!inProgress.length && !finished.length) {
     return (
       <EmptyState
         emoji="🎭"
         title="Sin sesiones todavía"
-        description="Usa la rueda para elegir una película y empezar vuestra primera sesión"
+        description="Usa la ruleta para elegir una película y empezar vuestra primera sesión"
       />
     );
   }
 
   return (
-    <div className="px-5 pb-6 space-y-6">
+    <div className="px-5 pb-8 space-y-6">
       {inProgress.length > 0 && (
-        <Section title="En curso 🍿" sessions={inProgress} groupId={groupId} />
+        <Section title="Viendo ahora" sessions={inProgress} groupId={groupId} highlight />
       )}
       {finished.length > 0 && (
         <Section title="Vistas" sessions={finished} groupId={groupId} />
-      )}
-      {others.length > 0 && (
-        <Section title="Otras" sessions={others} groupId={groupId} />
       )}
     </div>
   );
@@ -58,14 +54,18 @@ function Section({
   title,
   sessions,
   groupId,
+  highlight,
 }: {
   title: string;
   sessions: CinemaSession[];
   groupId: string;
+  highlight?: boolean;
 }) {
   return (
     <div>
-      <h2 className="text-sm font-medium text-zinc-500 mb-3">{title}</h2>
+      <h2 className={cn('text-xs font-semibold uppercase tracking-wider mb-3', highlight ? 'text-emerald-400' : 'text-zinc-500')}>
+        {title}
+      </h2>
       <motion.div
         variants={staggerContainer}
         initial="initial"
@@ -78,4 +78,9 @@ function Section({
       </motion.div>
     </div>
   );
+}
+
+// cn imported inline to avoid extra import line
+function cn(...classes: (string | undefined | false)[]) {
+  return classes.filter(Boolean).join(' ');
 }
