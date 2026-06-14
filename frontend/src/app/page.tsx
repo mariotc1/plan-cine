@@ -6,6 +6,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
+import { InstallBanner } from '@/components/shared/InstallBanner';
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
@@ -122,6 +123,8 @@ export default function LandingPage() {
         </motion.p>
 
       </div>
+
+      <InstallBanner />
     </div>
   );
 }
