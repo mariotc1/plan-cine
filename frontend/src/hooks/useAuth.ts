@@ -2,6 +2,7 @@
 
 import { useCallback } from 'react';
 import { useRouter } from 'next/navigation';
+import { useQueryClient } from '@tanstack/react-query';
 import { authApi, userApi } from '@/lib/api';
 import { useAuthStore } from '@/stores/authStore';
 import { toast } from 'sonner';
@@ -9,14 +10,16 @@ import { toast } from 'sonner';
 export function useAuth() {
   const { user, isAuthenticated, setAuth, setUser, logout: storeLogout } = useAuthStore();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const login = useCallback(
     async (email: string, password: string) => {
+      queryClient.clear();
       const res = await authApi.login({ email, password });
       setAuth(res.data.data, res.data.token);
       router.push('/groups');
     },
-    [setAuth, router]
+    [setAuth, router, queryClient]
   );
 
   const register = useCallback(
@@ -28,20 +31,22 @@ export function useAuth() {
       avatar?: string;
       color?: string;
     }) => {
+      queryClient.clear();
       const res = await authApi.register(data);
       setAuth(res.data.data, res.data.token);
       router.push('/groups');
     },
-    [setAuth, router]
+    [setAuth, router, queryClient]
   );
 
   const logout = useCallback(async () => {
     try {
       await authApi.logout();
     } catch {}
+    queryClient.clear();
     storeLogout();
-    router.push('/login');
-  }, [storeLogout, router]);
+    router.push('/');
+  }, [storeLogout, router, queryClient]);
 
   const updateProfile = useCallback(
     async (data: { name?: string; avatar?: string; color?: string }) => {
