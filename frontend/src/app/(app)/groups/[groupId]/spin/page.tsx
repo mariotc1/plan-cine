@@ -7,6 +7,7 @@ import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
 import { useMovies, useRandomMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
+import { useFilterStore } from '@/stores/filterStore';
 import { Movie } from '@/types';
 import { toast } from 'sonner';
 
@@ -20,7 +21,9 @@ export default function SpinPage({ params }: Props) {
   const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
   const [showStart, setShowStart] = useState(false);
 
-  const { data: movies } = useMovies(groupId, { status: 'pending' });
+  const filtersRaw = useFilterStore((s) => s.filters[groupId]);
+  const filters = filtersRaw ?? {};
+  const { data: movies } = useMovies(groupId, { ...filters, status: 'pending' });
   const { data: members } = useGroupMembers(groupId);
   const randomMovie = useRandomMovie(groupId);
   const createSession = useCreateSession(groupId);

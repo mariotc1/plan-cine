@@ -21,11 +21,11 @@ const GROUP_EMOJIS = [
 ];
 
 const TABS = [
-  { label: 'Películas', href: '' },
-  { label: 'Rueda', href: '/spin' },
+  { label: 'Pelis', href: '' },
+  { label: 'Ruleta', href: '/spin' },
   { label: 'Sesiones', href: '/sessions' },
   { label: 'Miembros', href: '/members' },
-  { label: 'Stats', href: '/stats' },
+  { label: 'Ranking', href: '/stats' },
 ];
 
 interface Props {
@@ -88,8 +88,8 @@ export default function GroupLayout({ children, params }: Props) {
   return (
     <div className="min-h-screen">
       {/* Header */}
-      <div className="px-5 pt-14 pb-0">
-        <div className="flex items-center justify-between mb-1">
+      <div className="px-5 pt-12 pb-0">
+        <div className="flex items-center justify-between">
           <motion.button
             whileTap={{ scale: 0.85 }}
             onClick={() => router.push('/groups')}
@@ -106,40 +106,50 @@ export default function GroupLayout({ children, params }: Props) {
           </motion.button>
         </div>
         <div className="flex items-center gap-3 mt-3">
-          {group?.avatar && (
-            <span className="text-3xl">{group.avatar}</span>
-          )}
-          <h1 className="text-2xl font-bold text-white tracking-tight truncate">
+          {group?.avatar && <span className="text-2xl">{group.avatar}</span>}
+          <h1 className="text-xl font-bold text-white tracking-tight truncate">
             {group?.name || '...'}
           </h1>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 px-5 pt-4 pb-0 overflow-x-auto scrollbar-none">
-        {TABS.map((tab) => {
-          const href = `/groups/${groupId}${tab.href}`;
-          const isActive = tab.href === ''
-            ? pathname === `/groups/${groupId}`
-            : pathname.startsWith(href);
-          return (
-            <Link
-              key={tab.href}
-              href={href}
-              className={cn(
-                'flex-shrink-0 px-4 py-2 rounded-xl text-sm font-medium transition-colors whitespace-nowrap',
-                isActive
-                  ? 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30'
-                  : 'text-zinc-500 hover:text-zinc-300'
-              )}
-            >
-              {tab.label}
-            </Link>
-          );
-        })}
+      {/* Tabs — ancho completo, sin scroll, indicador deslizante */}
+      <div className="px-4 pt-4 pb-0">
+        <div className="relative flex bg-zinc-900/70 rounded-2xl p-1">
+          {TABS.map((tab) => {
+            const href = `/groups/${groupId}${tab.href}`;
+            const isActive = tab.href === ''
+              ? pathname === `/groups/${groupId}`
+              : pathname.startsWith(href);
+
+            return (
+              <Link
+                key={tab.href}
+                href={href}
+                className="relative flex-1 flex items-center justify-center py-2 z-10"
+              >
+                {isActive && (
+                  <motion.div
+                    layoutId="group-tab-pill"
+                    className="absolute inset-0 bg-indigo-500 rounded-xl shadow-[0_2px_12px_-2px_rgba(99,102,241,0.5)]"
+                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                  />
+                )}
+                <span
+                  className={cn(
+                    'relative z-10 text-[12px] font-semibold transition-colors duration-150 whitespace-nowrap',
+                    isActive ? 'text-white' : 'text-zinc-500'
+                  )}
+                >
+                  {tab.label}
+                </span>
+              </Link>
+            );
+          })}
+        </div>
       </div>
 
-      <div className="mt-4">{children}</div>
+      <div className="mt-3">{children}</div>
 
       {/* Settings sheet */}
       <AnimatePresence>
