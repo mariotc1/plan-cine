@@ -227,7 +227,7 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
                       🎬
                     </motion.span>
                     <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
-                      ¡Esta noche toca...
+                      Esta noche toca...
                     </span>
                   </motion.div>
 
