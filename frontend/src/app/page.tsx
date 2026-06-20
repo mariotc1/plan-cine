@@ -5,8 +5,15 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { Film, Shuffle, Star } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { InstallBanner } from '@/components/shared/InstallBanner';
+
+const features = [
+  { icon: Film, label: 'Lista compartida de películas' },
+  { icon: Shuffle, label: 'Ruleta para elegir qué ver' },
+  { icon: Star, label: 'Valoraciones y estadísticas del grupo' },
+];
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
@@ -19,89 +26,67 @@ export default function LandingPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="relative min-h-screen bg-zinc-950 flex flex-col items-center justify-center px-6 overflow-hidden">
+    <div className="relative min-h-[100dvh] bg-zinc-950 flex flex-col items-center justify-center px-6 py-14 overflow-hidden">
 
-      {/* Glow orbs de fondo */}
-      <motion.div
-        className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[480px] h-[480px] rounded-full bg-indigo-600/10 blur-3xl pointer-events-none"
-        animate={{ scale: [1, 1.18, 1], opacity: [0.35, 0.55, 0.35] }}
-        transition={{ duration: 7, repeat: Infinity, ease: 'easeInOut' }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 left-1/4 w-72 h-72 rounded-full bg-violet-500/8 blur-3xl pointer-events-none"
-        animate={{ scale: [1.1, 1, 1.1], opacity: [0.2, 0.4, 0.2] }}
-        transition={{ duration: 9, repeat: Infinity, ease: 'easeInOut', delay: 3 }}
+      {/* Subtle static glow */}
+      <div
+        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.14) 0%, transparent 65%)' }}
       />
 
-      <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm">
+      <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm space-y-8">
 
-        {/* Logo animado */}
+        {/* Logo */}
         <motion.div
-          initial={{ opacity: 0, scale: 0.6 }}
+          initial={{ opacity: 0, scale: 0.7 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.65, ease: [0.34, 1.56, 0.64, 1] }}
-          className="mb-7"
+          transition={{ duration: 0.6, ease: [0.34, 1.56, 0.64, 1] }}
         >
-          <motion.div
-            animate={{
-              filter: [
-                'drop-shadow(0 0 12px rgba(99,102,241,0.2))',
-                'drop-shadow(0 0 36px rgba(99,102,241,0.55))',
-                'drop-shadow(0 0 12px rgba(99,102,241,0.2))',
-              ],
-            }}
-            transition={{ duration: 3.5, repeat: Infinity, ease: 'easeInOut' }}
-          >
-            <Image src="/logo.png" alt="Plan Cine" width={130} height={130} priority />
-          </motion.div>
+          <div className="relative inline-flex">
+            <div className="absolute inset-0 bg-indigo-500/25 blur-3xl rounded-full scale-150 pointer-events-none" />
+            <Image src="/logo.png" alt="Plan Cine" width={116} height={116} className="relative" priority />
+          </div>
         </motion.div>
 
-        {/* Título */}
-        <motion.h1
-          initial={{ opacity: 0, y: 18 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.28 }}
-          className="text-4xl font-bold text-white tracking-tight"
-        >
-          Plan Cine
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.42 }}
-          className="text-zinc-400 mt-2 text-[15px] leading-relaxed"
-        >
-          Las noches de cine en familia,<br />organizadas y perfectas.
-        </motion.p>
-
-        {/* Feature pills */}
+        {/* Headline */}
         <motion.div
           initial={{ opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.55 }}
-          className="flex flex-wrap justify-center gap-2 mt-7"
+          transition={{ duration: 0.5, delay: 0.25 }}
         >
-          {['🎬 Lista de pelis', '🎰 Ruleta', '⭐ Valoraciones', '📊 Estadísticas'].map((f) => (
-            <span
-              key={f}
-              className="text-xs px-3 py-1.5 rounded-full bg-white/5 text-zinc-400 border border-white/[0.07]"
-            >
-              {f}
-            </span>
+          <h1 className="text-[44px] font-bold text-white tracking-tight leading-none">Plan Cine</h1>
+          <p className="text-zinc-400 mt-3 text-[15px] leading-relaxed max-w-[260px] mx-auto">
+            Las noches de cine en familia, organizadas y perfectas.
+          </p>
+        </motion.div>
+
+        {/* Feature list — iOS settings style */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.42 }}
+          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden divide-y divide-white/[0.05]"
+        >
+          {features.map(({ icon: Icon, label }) => (
+            <div key={label} className="flex items-center gap-3.5 px-4 py-3.5">
+              <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
+                <Icon size={15} className="text-indigo-400" />
+              </div>
+              <span className="text-sm text-zinc-300 text-left">{label}</span>
+            </div>
           ))}
         </motion.div>
 
         {/* CTAs */}
         <motion.div
-          initial={{ opacity: 0, y: 28 }}
+          initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.55, delay: 0.7 }}
-          className="w-full mt-10 space-y-3"
+          transition={{ duration: 0.5, delay: 0.56 }}
+          className="w-full space-y-3"
         >
           <Link
             href="/login"
-            className="flex items-center justify-center w-full h-14 rounded-2xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold text-base transition-colors shadow-[0_4px_28px_-4px_rgba(99,102,241,0.55)]"
+            className="flex items-center justify-center w-full h-14 rounded-2xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold text-base transition-colors shadow-[0_4px_32px_-4px_rgba(99,102,241,0.6)]"
           >
             Iniciar sesión
           </Link>
@@ -113,11 +98,12 @@ export default function LandingPage() {
           </Link>
         </motion.div>
 
+        {/* Tagline */}
         <motion.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.9 }}
-          className="text-zinc-600 text-xs mt-8"
+          transition={{ duration: 0.5, delay: 0.72 }}
+          className="text-zinc-600 text-xs"
         >
           Gratis · Sin anuncios · Solo para tu familia
         </motion.p>
