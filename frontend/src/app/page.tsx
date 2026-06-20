@@ -56,7 +56,7 @@ export default function LandingPage() {
         >
           <h1 className="text-[44px] font-bold text-white tracking-tight leading-none">Plan Cine</h1>
           <p className="text-zinc-400 mt-3 text-[15px] leading-relaxed max-w-[260px] mx-auto">
-            Las noches de cine en familia, organizadas y perfectas.
+            Las mejores noches de cine, organizadas y perfectas.
           </p>
         </motion.div>
 
@@ -105,7 +105,7 @@ export default function LandingPage() {
           transition={{ duration: 0.5, delay: 0.72 }}
           className="text-zinc-600 text-xs"
         >
-          Gratis · Sin anuncios · Solo para tu familia
+          Gratis · Sin anuncios · Para cualquier grupo
         </motion.p>
 
       </div>

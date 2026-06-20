@@ -41,7 +41,7 @@ export default function LoginPage() {
           <Image src="/logo.png" alt="Plan Cine" width={80} height={80} className="relative" priority />
         </div>
         <h1 className="text-2xl font-bold text-white tracking-tight">Bienvenido de nuevo</h1>
-        <p className="text-zinc-500 mt-1 text-sm">Inicia sesión en Plan Cine</p>
+        <p className="text-zinc-500 mt-1 text-sm">Tu app de noches de cine</p>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-4">
