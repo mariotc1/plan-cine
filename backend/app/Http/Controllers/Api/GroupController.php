@@ -27,6 +27,7 @@ class GroupController extends Controller
     {
         $group = Group::create([
             'name' => $request->name,
+            'avatar' => $request->avatar ?? '🎬',
             'description' => $request->description,
             'invitation_code' => $this->generateUniqueCode(),
             'created_by' => $request->user()->id,
@@ -54,7 +55,7 @@ class GroupController extends Controller
         $group = $this->findGroupForUser($request->user(), $id);
         $this->requireAdmin($request->user(), $group);
 
-        $group->update($request->only(['name', 'description']));
+        $group->update($request->only(['name', 'avatar', 'description']));
         $group->loadCount('members');
 
         return response()->json(['data' => new GroupResource($group), 'message' => 'Grupo actualizado.']);
@@ -90,9 +91,33 @@ class GroupController extends Controller
     public function leave(Request $request, string $id): JsonResponse
     {
         $group = $this->findGroupForUser($request->user(), $id);
+        $pivot = $group->members()->where('user_id', $request->user()->id)->first()?->pivot;
+
+        if ($pivot && $pivot->role === 'admin') {
+            return response()->json(['message' => 'El administrador no puede salir del grupo. Elimínalo si ya no lo necesitas.'], 422);
+        }
+
         $group->members()->detach($request->user()->id);
 
         return response()->json(['message' => 'Has salido del grupo.']);
+    }
+
+    public function kickMember(Request $request, string $id, string $userId): JsonResponse
+    {
+        $group = $this->findGroupForUser($request->user(), $id);
+        $this->requireAdmin($request->user(), $group);
+
+        if ($userId === $request->user()->id) {
+            return response()->json(['message' => 'No puedes expulsarte a ti mismo.'], 422);
+        }
+
+        if (!$group->members()->where('user_id', $userId)->exists()) {
+            return response()->json(['message' => 'El usuario no es miembro de este grupo.'], 404);
+        }
+
+        $group->members()->detach($userId);
+
+        return response()->json(['message' => 'Miembro expulsado del grupo.']);
     }
 
     public function members(Request $request, string $id): JsonResponse

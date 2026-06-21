@@ -45,13 +45,14 @@ export const authApi = {
 
 export const groupsApi = {
   list: () => api.get('/groups'),
-  create: (data: { name: string; description?: string }) => api.post('/groups', data),
+  create: (data: { name: string; avatar?: string; description?: string }) => api.post('/groups', data),
   get: (id: string) => api.get(`/groups/${id}`),
-  update: (id: string, data: { name?: string; description?: string }) => api.put(`/groups/${id}`, data),
+  update: (id: string, data: { name?: string; avatar?: string; description?: string }) => api.put(`/groups/${id}`, data),
   delete: (id: string) => api.delete(`/groups/${id}`),
   join: (code: string) => api.post(`/groups/join/${code}`),
   leave: (id: string) => api.delete(`/groups/${id}/leave`),
   members: (id: string) => api.get(`/groups/${id}/members`),
+  kickMember: (groupId: string, userId: string) => api.delete(`/groups/${groupId}/members/${userId}`),
   stats: (id: string) => api.get(`/groups/${id}/stats`),
   memories: (id: string) => api.get(`/groups/${id}/memories`),
 };

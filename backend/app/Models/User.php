@@ -16,7 +16,7 @@ class User extends Authenticatable
     protected $keyType = 'string';
 
     protected $fillable = [
-        'name', 'email', 'password', 'avatar', 'color',
+        'name', 'email', 'password', 'avatar', 'color', 'google_id',
     ];
 
     protected $hidden = ['password', 'remember_token'];

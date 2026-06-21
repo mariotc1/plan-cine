@@ -11,7 +11,8 @@ class UpdateGroupRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'sometimes|string|max:100',
+            'name'        => 'sometimes|string|max:100',
+            'avatar'      => 'sometimes|string|max:20',
             'description' => 'nullable|string|max:500',
         ];
     }

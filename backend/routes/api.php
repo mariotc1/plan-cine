@@ -26,6 +26,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('groups/join/{code}', [GroupController::class, 'join']);
     Route::delete('groups/{id}/leave', [GroupController::class, 'leave']);
     Route::get('groups/{id}/members', [GroupController::class, 'members']);
+    Route::delete('groups/{id}/members/{userId}', [GroupController::class, 'kickMember']);
     Route::get('groups/{id}/stats', [GroupController::class, 'stats']);
     Route::get('groups/{id}/memories', [GroupController::class, 'memories']);
     Route::apiResource('groups', GroupController::class);

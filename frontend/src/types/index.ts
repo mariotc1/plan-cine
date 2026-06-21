@@ -10,6 +10,7 @@ export interface User {
 export interface Group {
   id: string;
   name: string;
+  avatar: string;
   description?: string;
   invitation_code: string;
   created_by: string;

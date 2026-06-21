@@ -17,18 +17,18 @@ class AuthController extends Controller
     public function register(RegisterRequest $request): JsonResponse
     {
         $user = User::create([
-            'name' => $request->name,
-            'email' => $request->email,
+            'name'     => $request->name,
+            'email'    => $request->email,
             'password' => Hash::make($request->password),
-            'avatar' => $request->avatar ?? '🎬',
-            'color' => $request->color ?? '#6366f1',
+            'avatar'   => $request->avatar ?? '🎬',
+            'color'    => $request->color ?? '#6366f1',
         ]);
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'data' => new UserResource($user),
-            'token' => $token,
+            'data'    => new UserResource($user),
+            'token'   => $token,
             'message' => 'Usuario registrado correctamente.',
         ], 201);
     }
@@ -47,8 +47,8 @@ class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'data' => new UserResource($user),
-            'token' => $token,
+            'data'    => new UserResource($user),
+            'token'   => $token,
             'message' => 'Sesión iniciada correctamente.',
         ]);
     }

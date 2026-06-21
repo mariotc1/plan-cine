@@ -7,6 +7,7 @@ use App\Http\Requests\CreateSessionRequest;
 use App\Http\Resources\SessionResource;
 use App\Models\CinemaSession;
 use App\Models\Group;
+use App\Services\PushNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -102,6 +103,12 @@ class SessionController extends Controller
         }
 
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
+
+        try {
+            app(PushNotificationService::class)->notifySessionFinished($session);
+        } catch (\Throwable) {
+            // Push failures must never break the finish action
+        }
 
         return response()->json(['data' => new SessionResource($session), 'message' => '¡Película finalizada! ¿Qué os ha parecido?']);
     }

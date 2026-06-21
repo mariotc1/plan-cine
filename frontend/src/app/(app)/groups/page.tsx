@@ -3,19 +3,89 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Users, LogOut, Link2 } from 'lucide-react';
+import { Plus, Users, Link2, X, ChevronRight } from 'lucide-react';
 import { useGroups, useCreateGroup, useJoinGroup } from '@/hooks/useGroups';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 import { Group } from '@/types';
-import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+const GROUP_EMOJIS = [
+  '🏠', '👨‍👩‍👧‍👦', '🎬', '🍿', '🎮', '🌙',
+  '🎭', '🌟', '🎉', '🏆', '❤️', '🔥',
+  '🎵', '🌈', '🐶', '🏖️', '🎲', '🚀',
+];
+
+// Sheet con footer anclado fuera del scroll
+function BottomSheet({
+  open, onClose, title, children, footer,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+  footer: React.ReactNode;
+}) {
+  return (
+    <AnimatePresence>
+      {open && (
+        <>
+          {/* Backdrop — z-[60] para estar sobre la BottomNav (z-50) */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+            onClick={onClose}
+          />
+
+          {/* Sheet */}
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+            className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
+            style={{ maxHeight: '88vh' }}
+          >
+            {/* Handle */}
+            <div className="flex-shrink-0 flex justify-center pt-3 pb-1">
+              <div className="w-10 h-1 bg-white/20 rounded-full" />
+            </div>
+
+            {/* Header */}
+            <div className="flex-shrink-0 flex items-center justify-between px-6 py-3">
+              <h2 className="text-white font-bold text-xl">{title}</h2>
+              <button
+                onClick={onClose}
+                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-6 pt-1 pb-4">
+              {children}
+            </div>
+
+            {/* Footer anclado — nunca se corta */}
+            <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-white/[0.06] bg-zinc-950">
+              {footer}
+            </div>
+          </motion.div>
+        </>
+      )}
+    </AnimatePresence>
+  );
+}
 
 export default function GroupsPage() {
   const { data: groups, isLoading } = useGroups();
@@ -26,15 +96,17 @@ export default function GroupsPage() {
   const [showJoin, setShowJoin] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
+  const [avatar, setAvatar] = useState('🏠');
   const [joinCode, setJoinCode] = useState('');
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createGroup.mutateAsync({ name, description });
+      await createGroup.mutateAsync({ name, description, avatar });
       setShowCreate(false);
       setName('');
       setDescription('');
+      setAvatar('🏠');
     } catch {}
   };
 
@@ -47,11 +119,8 @@ export default function GroupsPage() {
     } catch {}
   };
 
-  const getGroupInitial = (group: Group) => {
-    return group.name.charAt(0).toUpperCase();
-  };
-
-  const groupColors = ['#6366f1', '#ec4899', '#f59e0b', '#10b981', '#ef4444', '#3b82f6'];
+  const closeCreate = () => { setShowCreate(false); setName(''); setDescription(''); setAvatar('🏠'); };
+  const closeJoin = () => { setShowJoin(false); setJoinCode(''); };
 
   return (
     <div className="min-h-screen">
@@ -85,7 +154,7 @@ export default function GroupsPage() {
           <EmptyState
             emoji="🎬"
             title="Sin grupos todavía"
-            description="Crea un grupo familiar o únete al de un amigo con un código"
+            description="Crea un grupo o únete con un código de invitación"
             action={
               <div className="flex flex-col gap-3 w-full max-w-xs">
                 <Button
@@ -112,28 +181,25 @@ export default function GroupsPage() {
             className="space-y-3"
           >
             <AnimatePresence>
-              {groups.map((group, i) => (
+              {groups.map((group: Group) => (
                 <motion.div key={group.id} variants={staggerItem}>
                   <Link href={`/groups/${group.id}`}>
-                    <div className="bg-zinc-900 rounded-2xl border border-white/5 p-5 active:bg-zinc-800 transition-colors">
+                    <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 active:bg-zinc-800 transition-colors">
                       <div className="flex items-center gap-4">
-                        <div
-                          className="w-12 h-12 rounded-2xl flex items-center justify-center text-xl font-bold text-white flex-shrink-0"
-                          style={{ backgroundColor: `${groupColors[i % groupColors.length]}30`, color: groupColors[i % groupColors.length] }}
-                        >
-                          {getGroupInitial(group)}
+                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-2xl flex-shrink-0">
+                          {group.avatar || '🎬'}
                         </div>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-semibold text-white text-base truncate">{group.name}</h3>
                           {group.description && (
                             <p className="text-sm text-zinc-500 truncate mt-0.5">{group.description}</p>
                           )}
-                          <div className="flex items-center gap-1 mt-1 text-xs text-zinc-600">
+                          <div className="flex items-center gap-1 mt-1.5 text-xs text-zinc-600">
                             <Users size={11} />
                             <span>{group.member_count} miembro{group.member_count !== 1 ? 's' : ''}</span>
                           </div>
                         </div>
-                        <div className="text-zinc-600">›</div>
+                        <ChevronRight size={18} className="text-zinc-700 flex-shrink-0" />
                       </div>
                     </div>
                   </Link>
@@ -145,71 +211,114 @@ export default function GroupsPage() {
       </div>
 
       {/* Create Group Sheet */}
-      <Sheet open={showCreate} onOpenChange={(v) => !v && setShowCreate(false)}>
-        <SheetContent side="bottom" className="bg-zinc-950 border-t border-zinc-800 rounded-t-3xl">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-white text-xl">Crear grupo</SheetTitle>
-          </SheetHeader>
-          <form onSubmit={handleCreate} className="space-y-4 pb-8">
-            <div className="space-y-2">
-              <Label className="text-zinc-300">Nombre del grupo</Label>
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Familia Tibus, Piso Salamanca..."
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12"
-                required
-              />
+      <BottomSheet
+        open={showCreate}
+        onClose={closeCreate}
+        title="Nuevo grupo"
+        footer={
+          <Button
+            form="create-group-form"
+            type="submit"
+            disabled={createGroup.isPending || !name.trim()}
+            className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-base shadow-[0_4px_20px_-4px_rgba(99,102,241,0.4)]"
+          >
+            {createGroup.isPending ? 'Creando...' : 'Crear grupo'}
+          </Button>
+        }
+      >
+        <form id="create-group-form" onSubmit={handleCreate} className="space-y-5">
+          {/* Emoji picker */}
+          <div className="space-y-3">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Icono</Label>
+            <div className="grid grid-cols-9 gap-2">
+              {GROUP_EMOJIS.map((e) => (
+                <button
+                  key={e}
+                  type="button"
+                  onClick={() => setAvatar(e)}
+                  className={cn(
+                    'aspect-square rounded-xl text-xl flex items-center justify-center transition-all',
+                    avatar === e
+                      ? 'bg-indigo-500/25 ring-2 ring-indigo-500'
+                      : 'bg-white/5 hover:bg-white/10'
+                  )}
+                >
+                  {e}
+                </button>
+              ))}
             </div>
-            <div className="space-y-2">
-              <Label className="text-zinc-300">Descripción (opcional)</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Las noches de cine en familia 🎬"
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl resize-none"
-                rows={3}
-              />
+          </div>
+
+          {/* Preview en vivo */}
+          <div className="flex items-center gap-4 bg-white/[0.04] rounded-2xl p-4 border border-white/[0.06]">
+            <div className="w-12 h-12 rounded-2xl bg-white/5 flex items-center justify-center text-2xl flex-shrink-0">
+              {avatar}
             </div>
-            <Button
-              type="submit"
-              disabled={createGroup.isPending || !name}
-              className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold"
-            >
-              {createGroup.isPending ? 'Creando...' : 'Crear grupo'}
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
+            <div className="flex-1 min-w-0">
+              <p className="text-white font-semibold truncate">{name || 'Nombre del grupo'}</p>
+              <p className="text-zinc-500 text-sm truncate mt-0.5">{description || 'Descripción opcional'}</p>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Nombre</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Mi grupo de cine"
+              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">
+              Descripción <span className="normal-case text-zinc-600">(opcional)</span>
+            </Label>
+            <Textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="¿De qué va este grupo?"
+              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl resize-none"
+              rows={2}
+            />
+          </div>
+        </form>
+      </BottomSheet>
 
       {/* Join Group Sheet */}
-      <Sheet open={showJoin} onOpenChange={(v) => !v && setShowJoin(false)}>
-        <SheetContent side="bottom" className="bg-zinc-950 border-t border-zinc-800 rounded-t-3xl">
-          <SheetHeader className="mb-6">
-            <SheetTitle className="text-white text-xl">Unirse a un grupo</SheetTitle>
-          </SheetHeader>
-          <form onSubmit={handleJoin} className="space-y-4 pb-8">
-            <div className="space-y-2">
-              <Label className="text-zinc-300">Código de invitación</Label>
-              <Input
-                value={joinCode}
-                onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-                placeholder="TIBUS001"
-                className="bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-600 rounded-xl h-12 text-center text-lg tracking-widest font-mono uppercase"
-                maxLength={20}
-                required
-              />
-            </div>
-            <Button
-              type="submit"
-              disabled={joinGroup.isPending || !joinCode}
-              className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold"
-            >
-              {joinGroup.isPending ? 'Uniéndome...' : 'Unirme'}
-            </Button>
-          </form>
-        </SheetContent>
-      </Sheet>
+      <BottomSheet
+        open={showJoin}
+        onClose={closeJoin}
+        title="Unirse a un grupo"
+        footer={
+          <Button
+            form="join-group-form"
+            type="submit"
+            disabled={joinGroup.isPending || !joinCode.trim()}
+            className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-base"
+          >
+            {joinGroup.isPending ? 'Uniéndome...' : 'Unirme al grupo'}
+          </Button>
+        }
+      >
+        <form id="join-group-form" onSubmit={handleJoin} className="space-y-5">
+          <p className="text-zinc-400 text-sm leading-relaxed">
+            Pide el código de invitación al administrador del grupo e introdúcelo aquí.
+          </p>
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Código de invitación</Label>
+            <Input
+              value={joinCode}
+              onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
+              placeholder="AB12CD34"
+              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-14 text-center text-2xl tracking-[0.3em] font-mono uppercase"
+              maxLength={20}
+              required
+            />
+          </div>
+        </form>
+      </BottomSheet>
     </div>
   );
 }
