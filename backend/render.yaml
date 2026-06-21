@@ -2,46 +2,94 @@ services:
   - type: web
     name: plan-cine-api
     env: php
-    buildCommand: composer install --no-dev --optimize-autoloader && php artisan config:cache && php artisan route:cache && php artisan view:cache
+    plan: free
+    region: frankfurt
+    buildCommand: >-
+      composer install --no-dev --optimize-autoloader &&
+      php artisan config:clear &&
+      php artisan migrate --force &&
+      php artisan config:cache &&
+      php artisan route:cache &&
+      php artisan view:cache
     startCommand: php artisan serve --host=0.0.0.0 --port=$PORT
+    envVars:
+      - key: APP_NAME
+        value: PlanCine
+      - key: APP_ENV
+        value: production
+      - key: APP_DEBUG
+        value: false
+      - key: APP_KEY
+        sync: false
+      - key: APP_URL
+        sync: false
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: LOG_LEVEL
+        value: error
+      - key: DB_CONNECTION
+        value: pgsql
+      - key: DB_HOST
+        sync: false
+      - key: DB_PORT
+        value: "5432"
+      - key: DB_DATABASE
+        sync: false
+      - key: DB_USERNAME
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: SESSION_DRIVER
+        value: cookie
+      - key: CACHE_STORE
+        value: database
+      - key: FRONTEND_URL
+        sync: false
+      - key: SANCTUM_STATEFUL_DOMAINS
+        sync: false
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@plancine.app
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
+
+  - type: cron
+    name: plan-cine-scheduler
+    env: php
+    plan: free
+    region: frankfurt
+    schedule: "* * * * *"
+    buildCommand: composer install --no-dev --optimize-autoloader
+    startCommand: php artisan push:send-rating-reminders
     envVars:
       - key: APP_ENV
         value: production
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        generateValue: true
+        sync: false
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: plan-cine-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: plan-cine-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: plan-cine-db
-          property: database
+        sync: false
       - key: DB_USERNAME
-        fromDatabase:
-          name: plan-cine-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: plan-cine-db
-          property: password
-      - key: SESSION_DRIVER
-        value: cookie
-      - key: FRONTEND_URL
-        value: https://plan-cine.vercel.app
-      - key: SANCTUM_STATEFUL_DOMAINS
-        value: plan-cine.vercel.app
-
-databases:
-  - name: plan-cine-db
-    databaseName: plan_cine
-    user: plan_cine
-    plan: free
+        sync: false
+      - key: DB_SSLMODE
+        value: require
+      - key: LOG_CHANNEL
+        value: stderr
+      - key: MAIL_FROM_ADDRESS
+        value: noreply@plancine.app
+      - key: VAPID_PUBLIC_KEY
+        sync: false
+      - key: VAPID_PRIVATE_KEY
+        sync: false
