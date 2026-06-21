@@ -32,7 +32,7 @@ export function PullToRefresh() {
     syncPhase('refreshing');
     syncPullY(0);
     try {
-      await queryClient.invalidateQueries();
+      await queryClient.refetchQueries({ type: 'active' });
     } finally {
       syncPhase('done');
       setTimeout(() => syncPhase('idle'), 640);
