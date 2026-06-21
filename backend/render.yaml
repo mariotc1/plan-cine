@@ -20,9 +20,9 @@ services:
       - key: APP_DEBUG
         value: false
       - key: APP_KEY
-        sync: false            # Genera con: php artisan key:generate --show
+        sync: false
       - key: APP_URL
-        sync: false            # https://plan-cine-api.onrender.com (tras primer deploy)
+        sync: false
       - key: LOG_CHANNEL
         value: stderr
       - key: LOG_LEVEL
@@ -30,33 +30,25 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: plan-cine-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: plan-cine-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: plan-cine-db
-          property: database
+        sync: false
       - key: DB_USERNAME
-        fromDatabase:
-          name: plan-cine-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: plan-cine-db
-          property: password
+        sync: false
+      - key: DB_SSLMODE
+        value: require
       - key: SESSION_DRIVER
         value: cookie
       - key: CACHE_STORE
         value: database
       - key: FRONTEND_URL
-        sync: false            # https://tu-app.vercel.app
+        sync: false
       - key: SANCTUM_STATEFUL_DOMAINS
-        sync: false            # tu-app.vercel.app (sin https://)
+        sync: false
       - key: MAIL_FROM_ADDRESS
         value: noreply@plancine.app
       - key: VAPID_PUBLIC_KEY
@@ -64,7 +56,6 @@ services:
       - key: VAPID_PRIVATE_KEY
         sync: false
 
-  # Scheduler: auto-finaliza sesiones y envía notificaciones push al terminar
   - type: cron
     name: plan-cine-scheduler
     env: php
@@ -83,25 +74,17 @@ services:
       - key: DB_CONNECTION
         value: pgsql
       - key: DB_HOST
-        fromDatabase:
-          name: plan-cine-db
-          property: host
+        sync: false
       - key: DB_PORT
-        fromDatabase:
-          name: plan-cine-db
-          property: port
+        value: "5432"
       - key: DB_DATABASE
-        fromDatabase:
-          name: plan-cine-db
-          property: database
+        sync: false
       - key: DB_USERNAME
-        fromDatabase:
-          name: plan-cine-db
-          property: user
+        sync: false
       - key: DB_PASSWORD
-        fromDatabase:
-          name: plan-cine-db
-          property: password
+        sync: false
+      - key: DB_SSLMODE
+        value: require
       - key: LOG_CHANNEL
         value: stderr
       - key: MAIL_FROM_ADDRESS
@@ -110,10 +93,3 @@ services:
         sync: false
       - key: VAPID_PRIVATE_KEY
         sync: false
-
-databases:
-  - name: plan-cine-db
-    databaseName: plan_cine
-    user: plan_cine
-    plan: free
-    region: frankfurt
