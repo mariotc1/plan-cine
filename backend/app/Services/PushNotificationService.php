@@ -55,10 +55,14 @@ class PushNotificationService
             }
         }
 
-        foreach ($webPush->flush() as $report) {
-            if (!$report->isSuccess()) {
-                PushSubscription::where('endpoint', $report->getEndpoint())->delete();
+        try {
+            foreach ($webPush->flush() as $report) {
+                if (!$report->isSuccess()) {
+                    PushSubscription::where('endpoint', $report->getEndpoint())->delete();
+                }
             }
+        } catch (Throwable) {
+            // Network or library failure is non-critical — session finish must not be blocked
         }
     }
 }

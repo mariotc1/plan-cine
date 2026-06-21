@@ -104,7 +104,11 @@ class SessionController extends Controller
 
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
 
-        app(PushNotificationService::class)->notifySessionFinished($session);
+        try {
+            app(PushNotificationService::class)->notifySessionFinished($session);
+        } catch (\Throwable) {
+            // Push failures must never break the finish action
+        }
 
         return response()->json(['data' => new SessionResource($session), 'message' => '¡Película finalizada! ¿Qué os ha parecido?']);
     }

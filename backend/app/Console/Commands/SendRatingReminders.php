@@ -35,7 +35,11 @@ class SendRatingReminders extends Command
                 $session->movie->update(['status' => 'watched']);
             }
 
-            $push->notifySessionFinished($session);
+            try {
+                $push->notifySessionFinished($session);
+            } catch (\Throwable $e) {
+                $this->warn("Push failed for session {$session->id}: {$e->getMessage()}");
+            }
 
             $this->info("Session {$session->id} ({$session->movie?->title}) finished & notified.");
         }

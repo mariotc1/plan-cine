@@ -59,7 +59,7 @@ export function StartSessionSheet({ open, onClose, movie, members, onStart, load
             animate={{ y: 0 }}
             exit={{ y: '100%' }}
             transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
+            className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
             style={{ maxHeight: '88vh' }}
           >
             {/* Handle */}

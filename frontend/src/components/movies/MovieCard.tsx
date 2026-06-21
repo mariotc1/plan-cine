@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Clock, MoreVertical, Pencil, Trash2 } from 'lucide-react';
+import { Clock, MoreVertical, Pencil, Play, Trash2 } from 'lucide-react';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { staggerItem } from '@/lib/animations';
@@ -9,6 +9,7 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { cn } from '@/lib/utils';
@@ -17,11 +18,14 @@ interface MovieCardProps {
   movie: Movie;
   onEdit?: (movie: Movie) => void;
   onDelete?: (movie: Movie) => void;
+  onWatchNow?: (movie: Movie) => void;
 }
 
-export function MovieCard({ movie, onEdit, onDelete }: MovieCardProps) {
+export function MovieCard({ movie, onEdit, onDelete, onWatchNow }: MovieCardProps) {
   const platform = getPlatform(movie.platform);
   const genre = getGenre(movie.genre);
+
+  const hasMenu = onEdit || onDelete || onWatchNow;
 
   return (
     <motion.div
@@ -68,7 +72,7 @@ export function MovieCard({ movie, onEdit, onDelete }: MovieCardProps) {
             )}
           </div>
 
-          {(onEdit || onDelete) && (
+          {hasMenu && (
             <DropdownMenu>
               <DropdownMenuTrigger className={cn(
                 'flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center',
@@ -77,6 +81,15 @@ export function MovieCard({ movie, onEdit, onDelete }: MovieCardProps) {
                 <MoreVertical size={16} />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="bg-zinc-900 border-zinc-800">
+                {onWatchNow && (
+                  <DropdownMenuItem
+                    onClick={() => onWatchNow(movie)}
+                    className="text-indigo-400 hover:text-indigo-300 focus:text-indigo-300 focus:bg-zinc-800 font-medium"
+                  >
+                    <Play size={14} className="mr-2" /> Ver ahora
+                  </DropdownMenuItem>
+                )}
+                {onWatchNow && (onEdit || onDelete) && <DropdownMenuSeparator className="bg-zinc-800" />}
                 {onEdit && (
                   <DropdownMenuItem
                     onClick={() => onEdit(movie)}
