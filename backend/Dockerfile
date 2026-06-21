@@ -17,9 +17,9 @@ RUN composer install --no-scripts --no-autoloader --no-dev --prefer-dist
 
 COPY . .
 
-RUN composer dump-autoload --optimize \
-    && mkdir -p bootstrap/cache storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
-    && chmod -R 775 storage bootstrap/cache
+RUN mkdir -p bootstrap/cache storage/logs storage/framework/cache storage/framework/sessions storage/framework/views \
+    && chmod -R 775 storage bootstrap/cache \
+    && composer dump-autoload --optimize
 
 EXPOSE 8000
 
