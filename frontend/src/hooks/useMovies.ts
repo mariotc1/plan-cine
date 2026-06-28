@@ -1,7 +1,7 @@
 'use client';
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { moviesApi } from '@/lib/api';
+import { moviesApi, tmdbApi } from '@/lib/api';
 import { Movie } from '@/types';
 import { toast } from 'sonner';
 
@@ -68,5 +68,22 @@ export function useDeleteMovie(groupId: string) {
       qc.invalidateQueries({ queryKey: ['groups', groupId, 'movies'] });
       toast.success('Película eliminada');
     },
+  });
+}
+
+export function useEnrichMovies(groupId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: () => tmdbApi.enrich(groupId),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ['groups', groupId, 'movies'] });
+      const { updated, total } = res.data;
+      if (updated > 0) {
+        toast.success(`${updated} de ${total} películas actualizadas con portada`);
+      } else {
+        toast.info('No se encontraron coincidencias en TMDB');
+      }
+    },
+    onError: () => toast.error('Error al obtener portadas'),
   });
 }
