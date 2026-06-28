@@ -20,6 +20,8 @@ class CreateMovieRequest extends FormRequest
             'platform' => ['required', 'string', Rule::in($platforms)],
             'genre' => ['required', 'string', Rule::in($genres)],
             'notes' => 'nullable|string|max:1000',
+            'tmdb_id' => 'nullable|integer',
+            'poster_path' => 'nullable|string|max:255',
         ];
     }
 }

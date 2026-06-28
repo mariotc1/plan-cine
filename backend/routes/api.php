@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\PushController;
 use App\Http\Controllers\Api\RatingController;
 use App\Http\Controllers\Api\SessionController;
+use App\Http\Controllers\Api\TmdbController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -44,6 +45,10 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ratings
     Route::post('sessions/{id}/ratings', [RatingController::class, 'store']);
+
+    // TMDB proxy
+    Route::get('tmdb/search', [TmdbController::class, 'search']);
+    Route::get('tmdb/movie/{id}', [TmdbController::class, 'movie']);
 
     // Push Notifications
     Route::post('push/subscribe', [PushController::class, 'subscribe']);

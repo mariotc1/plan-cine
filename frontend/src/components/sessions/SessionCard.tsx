@@ -2,9 +2,10 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import Image from 'next/image';
 import { CinemaSession } from '@/types';
 import { RatingStars } from './RatingStars';
-import { Clock, Users } from 'lucide-react';
+import { Clock, Film, Users } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { staggerItem } from '@/lib/animations';
@@ -28,10 +29,37 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
   return (
     <motion.div variants={staggerItem}>
       <Link href={`/groups/${groupId}/sessions/${session.id}`}>
-        <div className="bg-zinc-900 rounded-2xl border border-white/5 p-5 active:bg-zinc-800 transition-colors">
-          <div className="flex items-start justify-between gap-3">
+        <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 active:bg-zinc-800 transition-colors">
+          <div className="flex gap-3 items-start">
+            {/* Poster */}
+            <div className="flex-shrink-0 w-[44px] h-[64px] rounded-lg overflow-hidden">
+              {session.movie?.poster_path ? (
+                <Image
+                  src={`https://image.tmdb.org/t/p/w92${session.movie.poster_path}`}
+                  alt={session.movie.title}
+                  width={44}
+                  height={64}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center bg-white/[0.04]">
+                  <Film size={16} className="text-zinc-700" />
+                </div>
+              )}
+            </div>
+
             <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-white truncate">{session.movie?.title || 'Sin película'}</h3>
+              <div className="flex items-start justify-between gap-2">
+                <h3 className="font-semibold text-white truncate leading-tight flex-1">
+                  {session.movie?.title || 'Sin película'}
+                </h3>
+                {!hideStatus && (
+                  <span className={cn('text-xs font-medium px-2 py-1 rounded-full flex-shrink-0', statusInfo.color)}>
+                    {statusInfo.label}
+                  </span>
+                )}
+              </div>
               {session.movie && (
                 <div className="flex items-center gap-1 mt-1 text-xs text-zinc-500">
                   <Clock size={11} />
@@ -46,11 +74,6 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
                   : formatDate(session.created_at)}
               </p>
             </div>
-            {!hideStatus && (
-              <span className={cn('text-xs font-medium px-2 py-1 rounded-full flex-shrink-0', statusInfo.color)}>
-                {statusInfo.label}
-              </span>
-            )}
           </div>
 
           <div className="flex items-center justify-between mt-4">
