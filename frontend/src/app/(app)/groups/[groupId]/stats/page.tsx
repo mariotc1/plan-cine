@@ -1,12 +1,13 @@
 'use client';
 
-import { use } from 'react';
+import React, { use } from 'react';
 import { motion } from 'framer-motion';
 import { useGroupStats } from '@/hooks/useGroups';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { RatingStars } from '@/components/sessions/RatingStars';
 import { getPlatform, getGenre } from '@/lib/constants';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { staggerContainer, staggerItem } from '@/lib/animations';
 
 interface Props {
@@ -45,7 +46,8 @@ export default function StatsPage({ params }: Props) {
         {/* Favoritos */}
         <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
           <StatCard
-            emoji={platform?.emoji ?? '📺'}
+            logo={platform ? <PlatformLogo platform={stats.favorite_platform!} size={22} color={platform.color} /> : undefined}
+            emoji="📺"
             label="plataforma favorita"
             value={platform?.label ?? '—'}
           />
@@ -123,11 +125,11 @@ export default function StatsPage({ params }: Props) {
   );
 }
 
-function StatCard({ emoji, label, value }: { emoji: string; label: string; value: string }) {
+function StatCard({ emoji, label, value, logo }: { emoji: string; label: string; value: string; logo?: React.ReactNode }) {
   return (
     <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col items-center text-center">
       <p className="text-2xl font-bold text-white tracking-tight leading-none flex items-center gap-1.5">
-        <span className="text-xl">{emoji}</span>
+        {logo ?? <span className="text-xl">{emoji}</span>}
         <span>{value}</span>
       </p>
       <p className="text-xs text-zinc-500 mt-2">{label}</p>
