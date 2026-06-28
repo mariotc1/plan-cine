@@ -11,6 +11,7 @@ import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
 import { ArrowLeft, Clock, Film, Users, Calendar, Star } from 'lucide-react';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -132,10 +133,11 @@ export default function SessionDetailPage({ params }: Props) {
               <div className="flex flex-wrap items-center gap-2 mb-3">
                 {platform && (
                   <span
-                    className="text-xs font-medium px-2.5 py-1 rounded-full"
+                    className="inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-full"
                     style={{ backgroundColor: `${platform.color}22`, color: platform.color }}
                   >
-                    {platform.emoji} {platform.label}
+                    <PlatformLogo platform={session.movie!.platform} size={11} color={platform.color} />
+                    {platform.label}
                   </span>
                 )}
                 {genre && (

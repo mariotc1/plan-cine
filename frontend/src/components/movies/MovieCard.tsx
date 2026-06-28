@@ -13,6 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { cn } from '@/lib/utils';
 
 interface MovieCardProps {
@@ -105,10 +106,11 @@ export function MovieCard({ movie, onEdit, onDelete, onWatchNow }: MovieCardProp
             <div className="flex items-center gap-2 mt-1.5 flex-wrap">
               {platform && (
                 <span
-                  className="inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full"
+                  className="inline-flex items-center gap-1.5 text-xs font-medium px-2 py-0.5 rounded-full"
                   style={{ backgroundColor: `${platform.color}25`, color: platform.color }}
                 >
-                  {platform.emoji} {platform.label}
+                  <PlatformLogo platform={movie.platform} size={11} color={platform.color} />
+                  {platform.label}
                 </span>
               )}
               {genre && (

@@ -94,8 +94,9 @@ class SessionController extends Controller
         abort_if(!in_array($session->status, ['pending', 'in_progress']), 422, 'La sesión no se puede finalizar.');
 
         $session->update([
-            'status' => 'finished',
-            'actual_end_at' => now(),
+            'status'                   => 'finished',
+            'actual_end_at'            => now(),
+            'rating_notification_sent' => true,
         ]);
 
         if ($session->movie) {
@@ -105,9 +106,9 @@ class SessionController extends Controller
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
 
         try {
-            app(PushNotificationService::class)->notifySessionFinished($session);
-        } catch (\Throwable) {
-            // Push failures must never break the finish action
+            app(PushNotificationService::class)->notifyRatingReminder($session);
+        } catch (\Throwable $e) {
+            \Log::warning('Push failed on manual finish: ' . $e->getMessage());
         }
 
         return response()->json(['data' => new SessionResource($session), 'message' => '¡Película finalizada! ¿Qué os ha parecido?']);

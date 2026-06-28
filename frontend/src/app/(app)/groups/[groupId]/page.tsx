@@ -3,8 +3,8 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Sparkles, Trash2 } from 'lucide-react';
-import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie, useEnrichMovies } from '@/hooks/useMovies';
+import { Plus, Trash2 } from 'lucide-react';
+import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
 import { MovieCard } from '@/components/movies/MovieCard';
@@ -43,7 +43,6 @@ export default function MoviesPage({ params }: Props) {
   const deleteMovie = useDeleteMovie(groupId);
   const createSession = useCreateSession(groupId);
   const startSession = useStartSession(groupId);
-  const enrichMovies = useEnrichMovies(groupId);
 
   const handleAdd = async (data: {
     title: string;
@@ -105,24 +104,7 @@ export default function MoviesPage({ params }: Props) {
         onChange={(f) => setFilters(groupId, f)}
       />
 
-      {/* TMDB enrich banner — shown when pending movies lack a poster */}
-      {!isLoading && !!movies?.length && movies.some(m => !m.poster_path) && (
-        <motion.button
-          initial={{ opacity: 0, y: -6 }}
-          animate={{ opacity: 1, y: 0 }}
-          whileTap={{ scale: 0.97 }}
-          onClick={() => enrichMovies.mutate()}
-          disabled={enrichMovies.isPending}
-          className="mt-4 w-full flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-sm font-medium transition-colors hover:bg-indigo-500/15 disabled:opacity-60"
-        >
-          <Sparkles size={14} />
-          {enrichMovies.isPending
-            ? 'Buscando portadas...'
-            : `Obtener portadas automáticamente · ${movies.filter(m => !m.poster_path).length} sin foto`}
-        </motion.button>
-      )}
-
-      <div className="mt-5">
+<div className="mt-5">
         {isLoading ? (
           <div className="space-y-3">
             {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { PLATFORMS, GENRES } from '@/lib/constants';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { formatDuration } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { Movie, TmdbSearchResult } from '@/types';
@@ -49,7 +50,7 @@ function parseDuration(input: string, mode: DurationMode): number | null {
 interface PickerSheetProps {
   open: boolean;
   title: string;
-  options: { value: string; label: string; emoji: string }[];
+  options: { value: string; label: string; emoji: string; isPlatform?: boolean; color?: string }[];
   value: string;
   onSelect: (v: string) => void;
   onClose: () => void;
@@ -90,7 +91,19 @@ function PickerSheet({ open, title, options, value, onSelect, onClose }: PickerS
                     value === opt.value ? 'bg-indigo-500/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]',
                   )}
                 >
-                  <span className="text-xl w-7 text-center">{opt.emoji}</span>
+                  {opt.isPlatform ? (
+                    <span
+                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
+                      style={{
+                        backgroundColor: `${opt.color}${value === opt.value ? '28' : '14'}`,
+                        opacity: value === opt.value ? 1 : 0.75,
+                      }}
+                    >
+                      <PlatformLogo platform={opt.value} size={18} color={opt.color} />
+                    </span>
+                  ) : (
+                    <span className="text-xl w-7 text-center">{opt.emoji}</span>
+                  )}
                   <span className="flex-1 font-medium text-sm">{opt.label}</span>
                   {value === opt.value && <Check size={16} className="text-indigo-400 flex-shrink-0" />}
                 </button>
@@ -362,7 +375,10 @@ export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: A
                       className="w-full flex items-center justify-between bg-white/[0.04] border border-white/[0.08] rounded-xl h-12 px-4 transition-colors hover:bg-white/[0.07]"
                     >
                       {selectedPlatform ? (
-                        <span className="text-white text-sm font-medium">{selectedPlatform.emoji} {selectedPlatform.label}</span>
+                        <span className="flex items-center gap-2 text-white text-sm font-medium">
+                          <PlatformLogo platform={selectedPlatform.value} size={16} color={selectedPlatform.color} />
+                          {selectedPlatform.label}
+                        </span>
                       ) : (
                         <span className="text-zinc-600 text-sm">Selecciona plataforma</span>
                       )}
@@ -437,7 +453,14 @@ export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: A
         )}
       </AnimatePresence>
 
-      <PickerSheet open={activePicker === 'platform'} title="Plataforma" options={PLATFORMS} value={platform} onSelect={setPlatform} onClose={() => setActivePicker(null)} />
+      <PickerSheet
+        open={activePicker === 'platform'}
+        title="Plataforma"
+        options={PLATFORMS.map(p => ({ ...p, isPlatform: true }))}
+        value={platform}
+        onSelect={setPlatform}
+        onClose={() => setActivePicker(null)}
+      />
       <PickerSheet open={activePicker === 'genre'} title="Género" options={GENRES} value={genre} onSelect={setGenre} onClose={() => setActivePicker(null)} />
     </>
   );

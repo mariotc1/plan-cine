@@ -76,50 +76,6 @@ class TmdbController extends Controller
         return response()->json(['results' => $results]);
     }
 
-    public function enrich(Request $request, string $groupId): JsonResponse
-    {
-        $group = $request->user()->groups()->findOrFail($groupId);
-        $key   = env('TMDB_API_KEY');
-
-        if (!$key) {
-            return response()->json(['error' => 'TMDB not configured'], 503);
-        }
-
-        $movies  = $group->movies()->whereNull('tmdb_id')->get();
-        $updated = 0;
-
-        foreach ($movies as $movie) {
-            $response = Http::timeout(8)->get(self::BASE . '/search/movie', [
-                'api_key'       => $key,
-                'query'         => $movie->title,
-                'language'      => 'es-ES',
-                'page'          => 1,
-                'include_adult' => false,
-            ]);
-
-            if (!$response->successful()) {
-                continue;
-            }
-
-            $results = $response->json('results', []);
-            if (empty($results)) {
-                continue;
-            }
-
-            $first = $results[0];
-            $movie->update([
-                'tmdb_id'     => $first['id'],
-                'poster_path' => $first['poster_path'] ?? null,
-            ]);
-            $updated++;
-        }
-
-        return response()->json([
-            'updated' => $updated,
-            'total'   => $movies->count(),
-        ]);
-    }
-
     public function movie(Request $request, int $id): JsonResponse
     {
         $key = env('TMDB_API_KEY');

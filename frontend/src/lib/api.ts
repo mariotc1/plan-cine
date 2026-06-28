@@ -115,6 +115,4 @@ export const tmdbApi = {
     api.get<{ results: import('@/types').TmdbSearchResult[] }>('/tmdb/search', { params: { query } }),
   movie: (id: number) =>
     api.get<import('@/types').TmdbMovieDetail>(`/tmdb/movie/${id}`),
-  enrich: (groupId: string) =>
-    api.post<{ updated: number; total: number }>(`/groups/${groupId}/movies/enrich-tmdb`),
 };

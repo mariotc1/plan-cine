@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useQuery } from '@tanstack/react-query';
@@ -10,6 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { AVATARS, COLORS, getPlatform, getGenre } from '@/lib/constants';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { cn } from '@/lib/utils';
 import { LogOut, Pencil, X } from 'lucide-react';
 import { staggerContainer, staggerItem } from '@/lib/animations';
@@ -178,7 +179,8 @@ export default function ProfilePage() {
                 value={genre?.label ?? '—'}
               />
               <StatRow
-                emoji={platform?.emoji ?? '📺'}
+                emoji="📺"
+                logo={platform ? <PlatformLogo platform={stats.favorite_platform!} size={16} color={platform.color} /> : undefined}
                 label="Plataforma favorita"
                 value={platform?.label ?? '—'}
               />
@@ -248,10 +250,12 @@ export default function ProfilePage() {
   );
 }
 
-function StatRow({ emoji, label, value }: { emoji: string; label: string; value: string }) {
+function StatRow({ emoji, label, value, logo }: { emoji: string; label: string; value: string; logo?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 px-5 py-3.5">
-      <span className="text-base w-6 text-center flex-shrink-0">{emoji}</span>
+      <span className="w-6 flex items-center justify-center flex-shrink-0">
+        {logo ?? <span className="text-base">{emoji}</span>}
+      </span>
       <span className="flex-1 text-sm text-zinc-400">{label}</span>
       <span className="text-sm font-semibold text-white">{value}</span>
     </div>

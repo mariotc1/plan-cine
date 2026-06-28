@@ -42,19 +42,26 @@ self.addEventListener('push', (e) => {
 
 self.addEventListener('notificationclick', (e) => {
   e.notification.close();
-  const url = e.notification.data?.url ?? '/';
+  const target = e.notification.data?.url ?? '/';
+
+  // Resolve to absolute URL so navigate() works whether app is open or not
+  const absolute = target.startsWith('http') ? target : self.location.origin + target;
 
   e.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // If the app is already open, navigate it to the target URL
-      for (const client of windowClients) {
-        if ('focus' in client) {
-          client.navigate(url);
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      // Try to reuse an existing window that matches the target URL or any open window
+      for (const client of list) {
+        if (client.url === absolute && 'focus' in client) {
           return client.focus();
         }
       }
-      // Otherwise open a new window
-      if (clients.openWindow) return clients.openWindow(url);
+      // Navigate first open window, or open a new one
+      for (const client of list) {
+        if ('navigate' in client && 'focus' in client) {
+          return client.navigate(absolute).then(() => client.focus());
+        }
+      }
+      if (clients.openWindow) return clients.openWindow(absolute);
     })
   );
 });
