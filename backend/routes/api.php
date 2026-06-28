@@ -32,9 +32,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('groups/{id}/memories', [GroupController::class, 'memories']);
     Route::apiResource('groups', GroupController::class);
 
-    // Movies — named routes must come before apiResource to avoid {id} conflict
+    // Movies — random must come before apiResource to avoid {id} conflict
     Route::get('groups/{groupId}/movies/random', [MovieController::class, 'random']);
-    Route::post('groups/{groupId}/movies/enrich-tmdb', [TmdbController::class, 'enrich']);
     Route::apiResource('groups/{groupId}/movies', MovieController::class);
 
     // Sessions

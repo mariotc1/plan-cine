@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Shuffle, X } from 'lucide-react';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
 
@@ -272,10 +273,11 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
                     <span className="text-sm text-zinc-400">{result.duration_formatted}</span>
                     {platform && (
                       <span
-                        className="text-sm font-medium px-2.5 py-1 rounded-full"
+                        className="inline-flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded-full"
                         style={{ backgroundColor: `${platform.color}20`, color: platform.color }}
                       >
-                        {platform.emoji} {platform.label}
+                        <PlatformLogo platform={result.platform} size={13} color={platform.color} />
+                        {platform.label}
                       </span>
                     )}
                     {genre && (

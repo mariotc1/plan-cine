@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { SlidersHorizontal, X } from 'lucide-react';
+import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { PLATFORMS, GENRES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/utils';
@@ -56,7 +57,8 @@ export function MovieFilters({ filters, onChange }: MovieFiltersProps) {
               className="flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full text-xs font-medium border border-white/10 bg-zinc-800/80"
               style={{ color: activePlatform.color }}
             >
-              {activePlatform.emoji} {activePlatform.label}
+              <PlatformLogo platform={activePlatform.value} size={11} color={activePlatform.color} />
+              {activePlatform.label}
               <X size={10} className="ml-0.5 opacity-60" />
             </motion.button>
           )}
@@ -163,7 +165,8 @@ export function MovieFilters({ filters, onChange }: MovieFiltersProps) {
                               : {}
                           }
                         >
-                          {p.emoji} {p.label}
+                          <PlatformLogo platform={p.value} size={14} color={active ? p.color : '#71717a'} />
+                          {p.label}
                         </button>
                       );
                     })}
