@@ -37,7 +37,8 @@ export function useCreateMovie(groupId: string) {
       duration_minutes: number;
       platform: string;
       genre: string;
-      notes?: string;
+      tmdb_id?: number;
+      poster_path?: string;
     }) => moviesApi.create(groupId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups', groupId, 'movies'] });

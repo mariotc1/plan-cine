@@ -9,7 +9,8 @@ import { RatingStars } from '@/components/sessions/RatingStars';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
-import { ArrowLeft, Clock, Users, Calendar, Star } from 'lucide-react';
+import Image from 'next/image';
+import { ArrowLeft, Clock, Film, Users, Calendar, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -103,42 +104,67 @@ export default function SessionDetailPage({ params }: Props) {
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-zinc-900 rounded-2xl border border-white/5 p-5"
+          className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden"
         >
-          <div className="flex flex-wrap items-center gap-2 mb-4">
-            {platform && (
-              <span
-                className="text-xs font-medium px-2.5 py-1 rounded-full"
-                style={{ backgroundColor: `${platform.color}22`, color: platform.color }}
-              >
-                {platform.emoji} {platform.label}
-              </span>
-            )}
-            {genre && (
-              <span className="text-xs text-zinc-400">{genre.emoji} {genre.label}</span>
-            )}
-            <span className="flex items-center gap-1 text-xs text-zinc-500">
-              <Clock size={11} /> {session.movie?.duration_formatted}
-            </span>
-          </div>
+          <div className="flex gap-4 p-5">
+            {/* Poster */}
+            <div className="flex-shrink-0 w-[60px] h-[88px] rounded-xl overflow-hidden">
+              {session.movie?.poster_path ? (
+                <Image
+                  src={`https://image.tmdb.org/t/p/w185${session.movie.poster_path}`}
+                  alt={session.movie.title ?? ''}
+                  width={60}
+                  height={88}
+                  className="w-full h-full object-cover"
+                  unoptimized
+                />
+              ) : (
+                <div
+                  className="w-full h-full flex items-center justify-center"
+                  style={{ backgroundColor: platform?.color ? `${platform.color}18` : 'rgba(255,255,255,0.04)' }}
+                >
+                  <Film size={20} className="text-zinc-600" />
+                </div>
+              )}
+            </div>
 
-          <div className="space-y-2">
-            {session.started_at && (
-              <div className="flex items-center gap-2 text-sm text-zinc-400">
-                <Calendar size={13} className="flex-shrink-0" />
-                <span>Inicio: {formatTime(session.started_at)}</span>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 mb-3">
+                {platform && (
+                  <span
+                    className="text-xs font-medium px-2.5 py-1 rounded-full"
+                    style={{ backgroundColor: `${platform.color}22`, color: platform.color }}
+                  >
+                    {platform.emoji} {platform.label}
+                  </span>
+                )}
+                {genre && (
+                  <span className="text-xs text-zinc-400">{genre.emoji} {genre.label}</span>
+                )}
+                <span className="flex items-center gap-1 text-xs text-zinc-500">
+                  <Clock size={11} /> {session.movie?.duration_formatted}
+                </span>
               </div>
-            )}
-            {session.estimated_end_at && (
-              <div className="flex items-center gap-2 text-sm text-zinc-500">
-                <Clock size={13} className="flex-shrink-0" />
-                <span>Fin estimado: {formatTime(session.estimated_end_at)}</span>
+
+              <div className="space-y-2">
+                {session.started_at && (
+                  <div className="flex items-center gap-2 text-sm text-zinc-400">
+                    <Calendar size={13} className="flex-shrink-0" />
+                    <span>Inicio: {formatTime(session.started_at)}</span>
+                  </div>
+                )}
+                {session.estimated_end_at && (
+                  <div className="flex items-center gap-2 text-sm text-zinc-500">
+                    <Clock size={13} className="flex-shrink-0" />
+                    <span>Fin estimado: {formatTime(session.estimated_end_at)}</span>
+                  </div>
+                )}
               </div>
-            )}
+            </div>
           </div>
 
           {session.average_rating && (
-            <div className="flex items-center gap-2 mt-4 pt-4 border-t border-white/[0.06]">
+            <div className="flex items-center gap-2 px-5 py-4 border-t border-white/[0.06]">
               <RatingStars value={Math.round(session.average_rating)} readonly size={16} />
               <span className="text-sm font-semibold text-zinc-300">{session.average_rating}</span>
               <span className="text-xs text-zinc-600">

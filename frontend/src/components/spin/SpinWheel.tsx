@@ -92,7 +92,6 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
 
       {/* Wheel */}
       <div className="relative flex items-center justify-center mb-6">
-        {/* Pointer triangle */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 drop-shadow-md">
           <svg width="22" height="18">
             <polygon points="11,18 1,0 21,0" fill="#fff" opacity="0.95" />
@@ -101,11 +100,7 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
 
         <motion.div
           animate={{ rotate: wheelRotation }}
-          transition={
-            isAnimating
-              ? { duration: 4, ease: [0.05, 0.4, 0.1, 1.0] }
-              : { duration: 0 }
-          }
+          transition={isAnimating ? { duration: 4, ease: [0.05, 0.4, 0.1, 1.0] } : { duration: 0 }}
           className="rounded-full overflow-hidden shadow-[0_0_50px_-10px_rgba(99,102,241,0.55)]"
         >
           {n === 0 ? (
@@ -161,7 +156,6 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
         </motion.button>
       )}
 
-      {/* Count — below button, stable so no layout jump */}
       <div className="h-8 flex items-center justify-center mt-2">
         {!showResult && (
           <p className="text-zinc-600 text-xs text-center">
@@ -172,22 +166,20 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
         )}
       </div>
 
-      {/* Result modal — centered overlay */}
+      {/* Result modal */}
       <AnimatePresence>
         {showResult && result && (
           <>
-            {/* Backdrop */}
             <motion.div
               key="backdrop"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               transition={{ duration: 0.25 }}
-              className="fixed inset-0 bg-black/75 z-[70] backdrop-blur-md"
+              className="fixed inset-0 bg-black/80 z-[70] backdrop-blur-md"
               onClick={() => setShowResult(false)}
             />
 
-            {/* Card */}
             <motion.div
               key="result-card"
               initial={{ opacity: 0, scale: 0.6, y: 40 }}
@@ -196,47 +188,76 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
               transition={{ type: 'spring', stiffness: 380, damping: 26 }}
               className="fixed inset-x-5 top-1/2 -translate-y-1/2 z-[71] max-w-sm mx-auto"
             >
-              {/* Glow ring */}
+              {/* Glow */}
               <div className="absolute -inset-px rounded-3xl bg-gradient-to-b from-indigo-500/40 to-purple-500/10 blur-sm" />
 
               <div className="relative bg-zinc-950 rounded-3xl border border-white/10 overflow-hidden shadow-2xl">
-                {/* Top accent bar */}
-                <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
 
-                {/* Close button */}
+                {/* Close button — always on top */}
                 <button
                   onClick={() => setShowResult(false)}
-                  className="absolute top-4 right-4 w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+                  className="absolute top-3.5 right-3.5 z-10 w-7 h-7 rounded-full bg-zinc-950/70 backdrop-blur-sm flex items-center justify-center text-zinc-300 hover:text-white transition-colors"
                 >
                   <X size={14} />
                 </button>
 
-                <div className="px-6 pt-6 pb-7">
-                  {/* Label with film icon animation */}
-                  <motion.div
-                    initial={{ opacity: 0, y: -8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.15 }}
-                    className="flex items-center gap-2 mb-4"
-                  >
-                    <motion.span
-                      animate={{ rotate: [0, -15, 15, -10, 10, 0] }}
-                      transition={{ delay: 0.3, duration: 0.6, ease: 'easeInOut' }}
-                      className="text-2xl"
-                    >
-                      🎬
-                    </motion.span>
-                    <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
-                      Esta noche toca...
-                    </span>
-                  </motion.div>
+                {/* Poster OR accent bar */}
+                {result.poster_path ? (
+                  <div className="relative w-full h-44 overflow-hidden">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`https://image.tmdb.org/t/p/w342${result.poster_path}`}
+                      alt={result.title}
+                      className="w-full h-full object-cover object-center"
+                    />
+                    {/* Cinematic fade */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
+                    {/* Label over poster */}
+                    <div className="absolute bottom-3 left-5 flex items-center gap-2">
+                      <motion.span
+                        animate={{ rotate: [0, -15, 15, -10, 10, 0] }}
+                        transition={{ delay: 0.3, duration: 0.6 }}
+                        className="text-xl"
+                      >
+                        🎬
+                      </motion.span>
+                      <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                        Esta noche toca...
+                      </span>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="h-1 w-full bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500" />
+                    <div className="px-6 pt-6">
+                      <motion.div
+                        initial={{ opacity: 0, y: -8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.15 }}
+                        className="flex items-center gap-2 mb-4"
+                      >
+                        <motion.span
+                          animate={{ rotate: [0, -15, 15, -10, 10, 0] }}
+                          transition={{ delay: 0.3, duration: 0.6 }}
+                          className="text-2xl"
+                        >
+                          🎬
+                        </motion.span>
+                        <span className="text-xs font-bold text-indigo-400 uppercase tracking-widest">
+                          Esta noche toca...
+                        </span>
+                      </motion.div>
+                    </div>
+                  </>
+                )}
 
+                <div className={result.poster_path ? 'px-6 pt-4 pb-6' : 'px-6 pb-6'}>
                   {/* Title */}
                   <motion.h2
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.2, type: 'spring', stiffness: 300 }}
-                    className="text-2xl font-bold text-white leading-tight mb-4"
+                    className="text-2xl font-bold text-white leading-tight mb-3"
                   >
                     {result.title}
                   </motion.h2>
@@ -245,8 +266,8 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
                   <motion.div
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
-                    transition={{ delay: 0.3 }}
-                    className="flex items-center gap-2 flex-wrap mb-6"
+                    transition={{ delay: 0.28 }}
+                    className="flex items-center gap-2 flex-wrap mb-5"
                   >
                     <span className="text-sm text-zinc-400">{result.duration_formatted}</span>
                     {platform && (
@@ -266,7 +287,7 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
                   <motion.div
                     initial={{ opacity: 0, y: 8 }}
                     animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.35 }}
+                    transition={{ delay: 0.33 }}
                     className="flex flex-col gap-3"
                   >
                     <motion.button

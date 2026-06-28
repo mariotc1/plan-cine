@@ -41,7 +41,25 @@ export interface Movie {
   added_by: User;
   notes?: string;
   status: MovieStatus;
+  tmdb_id?: number;
+  poster_path?: string;
   created_at: string;
+}
+
+export interface TmdbSearchResult {
+  tmdb_id: number;
+  title: string;
+  year: string | null;
+  poster_path: string | null;
+}
+
+export interface TmdbMovieDetail {
+  tmdb_id: number;
+  title: string;
+  year: string | null;
+  runtime: number | null;
+  genre: string;
+  poster_path: string | null;
 }
 
 export interface Rating {

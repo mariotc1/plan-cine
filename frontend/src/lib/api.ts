@@ -109,3 +109,10 @@ export const pushApi = {
     api.post('/push/subscribe', data),
   unsubscribe: (endpoint: string) => api.delete('/push/unsubscribe', { data: { endpoint } }),
 };
+
+export const tmdbApi = {
+  search: (query: string) =>
+    api.get<{ results: import('@/types').TmdbSearchResult[] }>('/tmdb/search', { params: { query } }),
+  movie: (id: number) =>
+    api.get<import('@/types').TmdbMovieDetail>(`/tmdb/movie/${id}`),
+};

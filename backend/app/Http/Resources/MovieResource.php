@@ -20,6 +20,8 @@ class MovieResource extends JsonResource
             'added_by' => $this->whenLoaded('addedBy', fn() => new UserResource($this->addedBy)),
             'notes' => $this->notes,
             'status' => $this->status,
+            'tmdb_id' => $this->tmdb_id,
+            'poster_path' => $this->poster_path,
             'created_at' => $this->created_at,
         ];
     }

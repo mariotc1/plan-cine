@@ -15,7 +15,7 @@ class Movie extends Model
 
     protected $fillable = [
         'group_id', 'title', 'duration_minutes', 'platform',
-        'genre', 'added_by', 'notes', 'status',
+        'genre', 'added_by', 'notes', 'status', 'tmdb_id', 'poster_path',
     ];
 
     protected $appends = ['duration_formatted'];

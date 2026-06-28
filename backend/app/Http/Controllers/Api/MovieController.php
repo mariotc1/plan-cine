@@ -49,6 +49,8 @@ class MovieController extends Controller
             'added_by' => $request->user()->id,
             'notes' => $request->notes,
             'status' => 'pending',
+            'tmdb_id' => $request->tmdb_id,
+            'poster_path' => $request->poster_path,
         ]);
 
         $movie->load('addedBy');
@@ -70,7 +72,7 @@ class MovieController extends Controller
         $movie = $group->movies()->findOrFail($id);
 
         $movie->update($request->only([
-            'title', 'duration_minutes', 'platform', 'genre', 'notes',
+            'title', 'duration_minutes', 'platform', 'genre', 'notes', 'tmdb_id', 'poster_path',
         ]));
 
         $movie->load('addedBy');
