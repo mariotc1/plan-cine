@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateMovieRequest;
 use App\Http\Resources\MovieResource;
 use App\Models\Group;
 use App\Models\Movie;
+use App\Services\PushNotificationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -54,6 +55,12 @@ class MovieController extends Controller
         ]);
 
         $movie->load('addedBy');
+
+        try {
+            app(PushNotificationService::class)->notifyMovieAdded($group, $request->user(), $movie);
+        } catch (\Throwable $e) {
+            \Log::warning('Push notifyMovieAdded failed: ' . $e->getMessage());
+        }
 
         return response()->json(['data' => new MovieResource($movie), 'message' => 'Película añadida correctamente.'], 201);
     }

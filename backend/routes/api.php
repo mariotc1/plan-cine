@@ -10,6 +10,17 @@ use App\Http\Controllers\Api\TmdbController;
 use App\Http\Controllers\Api\UserController;
 use Illuminate\Support\Facades\Route;
 
+// External cron endpoint — called by cron-job.org every minute
+// Protected by CRON_SECRET env var (no auth middleware needed)
+Route::post('cron/run-reminders', function (\Illuminate\Http\Request $request) {
+    $secret = env('CRON_SECRET', '');
+    if (!$secret || $request->query('secret') !== $secret) {
+        return response()->json(['error' => 'Unauthorized'], 401);
+    }
+    \Artisan::call('push:send-rating-reminders');
+    return response()->json(['ok' => true, 'output' => trim(\Artisan::output())]);
+});
+
 Route::prefix('auth')->group(function () {
     Route::post('register', [AuthController::class, 'register']);
     Route::post('login', [AuthController::class, 'login']);

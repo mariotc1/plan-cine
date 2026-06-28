@@ -36,7 +36,7 @@ class SendRatingReminders extends Command
             }
 
             try {
-                $push->notifySessionFinished($session);
+                $push->notifyRatingReminder($session);
             } catch (\Throwable $e) {
                 $this->warn("Push failed for session {$session->id}: {$e->getMessage()}");
             }

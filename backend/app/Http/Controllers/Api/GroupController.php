@@ -10,6 +10,7 @@ use App\Http\Resources\GroupResource;
 use App\Http\Resources\MovieResource;
 use App\Models\Group;
 use App\Models\Rating;
+use App\Services\PushNotificationService;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -78,12 +79,20 @@ class GroupController extends Controller
             return response()->json(['message' => 'Ya eres miembro de este grupo.'], 422);
         }
 
-        $group->members()->attach($request->user()->id, [
-            'role' => 'member',
+        $newMember = $request->user();
+
+        $group->members()->attach($newMember->id, [
+            'role'      => 'member',
             'joined_at' => now(),
         ]);
 
         $group->loadCount('members');
+
+        try {
+            app(PushNotificationService::class)->notifyMemberJoined($group, $newMember);
+        } catch (\Throwable $e) {
+            \Log::warning('Push notifyMemberJoined failed: ' . $e->getMessage());
+        }
 
         return response()->json(['data' => new GroupResource($group), 'message' => "Te has unido a {$group->name}."], 200);
     }
