@@ -130,16 +130,16 @@ export default function GroupsPage() {
         action={
           <div className="flex gap-2">
             <motion.button
-              whileTap={{ scale: 0.85 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => setShowJoin(true)}
-              className="w-9 h-9 rounded-full bg-zinc-800 flex items-center justify-center text-zinc-300"
+              className="w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-zinc-300"
             >
               <Link2 size={16} />
             </motion.button>
             <motion.button
-              whileTap={{ scale: 0.85 }}
+              whileTap={{ scale: 0.88 }}
               onClick={() => setShowCreate(true)}
-              className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white"
+              className="w-9 h-9 rounded-full bg-indigo-500 flex items-center justify-center text-white shadow-[0_4px_14px_-2px_rgba(99,102,241,0.55)]"
             >
               <Plus size={18} />
             </motion.button>
@@ -152,7 +152,7 @@ export default function GroupsPage() {
           <LoadingSpinner />
         ) : !groups?.length ? (
           <EmptyState
-            emoji="🎬"
+            icon={<Users size={30} />}
             title="Sin grupos todavía"
             description="Crea un grupo o únete con un código de invitación"
             action={
@@ -182,24 +182,24 @@ export default function GroupsPage() {
           >
             <AnimatePresence>
               {groups.map((group: Group) => (
-                <motion.div key={group.id} variants={staggerItem}>
+                <motion.div key={group.id} variants={staggerItem} whileTap={{ scale: 0.985 }}>
                   <Link href={`/groups/${group.id}`}>
-                    <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 active:bg-zinc-800 transition-colors">
+                    <div className="bg-zinc-900 rounded-2xl border border-white/[0.07] p-4 transition-colors active:bg-zinc-800/60">
                       <div className="flex items-center gap-4">
-                        <div className="w-14 h-14 rounded-2xl bg-white/5 flex items-center justify-center text-2xl flex-shrink-0">
+                        <div className="w-[54px] h-[54px] rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[26px] flex-shrink-0">
                           {group.avatar || '🎬'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-white text-base truncate">{group.name}</h3>
+                          <h3 className="font-bold text-white text-[15px] tracking-tight truncate">{group.name}</h3>
                           {group.description && (
-                            <p className="text-sm text-zinc-500 truncate mt-0.5">{group.description}</p>
+                            <p className="text-[13px] text-zinc-500 truncate mt-0.5">{group.description}</p>
                           )}
-                          <div className="flex items-center gap-1 mt-1.5 text-xs text-zinc-600">
-                            <Users size={11} />
+                          <div className="flex items-center gap-1 mt-1.5 text-[11px] text-zinc-600">
+                            <Users size={10} />
                             <span>{group.member_count} miembro{group.member_count !== 1 ? 's' : ''}</span>
                           </div>
                         </div>
-                        <ChevronRight size={18} className="text-zinc-700 flex-shrink-0" />
+                        <ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
                       </div>
                     </div>
                   </Link>

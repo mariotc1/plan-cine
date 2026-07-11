@@ -26,13 +26,7 @@ export default function LandingPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="relative min-h-[100dvh] bg-zinc-950 flex flex-col items-center justify-center px-6 py-14 overflow-hidden">
-
-      {/* Subtle static glow */}
-      <div
-        className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 0%, rgba(99,102,241,0.14) 0%, transparent 65%)' }}
-      />
+    <div className="relative min-h-[100dvh] flex flex-col items-center justify-center px-6 py-14 overflow-hidden">
 
       <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm space-y-8">
 

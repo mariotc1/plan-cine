@@ -28,35 +28,42 @@ export default function SessionDetailPage({ params }: Props) {
   const returnToPending = useReturnToPending(groupId);
   const rateSession = useRateSession();
 
-  const [selectedScore, setSelectedScore] = useState(0);
+  const [promptScore, setPromptScore] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
+  const [showRatingPrompt, setShowRatingPrompt] = useState(false);
 
   // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
   useEffect(() => {
     if (!session?.estimated_end_at || session.status !== 'in_progress') return;
     const delay = new Date(session.estimated_end_at).getTime() - Date.now() + 8000;
-    if (delay <= 0) {
-      refetch();
-      return;
-    }
+    if (delay <= 0) { refetch(); return; }
     const t = setTimeout(() => refetch(), delay);
     return () => clearTimeout(t);
   }, [session?.estimated_end_at, session?.status, refetch]);
+
+  const userParticipated = session?.participants.some((p) => p.id === user?.id);
+  const userRating = session?.ratings.find((r) => r.user.id === user?.id);
+  const canRate = session?.status === 'finished' && userParticipated && !userRating;
+  const isInProgress = session?.status === 'in_progress';
+
+  // Auto-show rating prompt when session ends and user can rate
+  useEffect(() => {
+    if (!canRate) return;
+    const t = setTimeout(() => setShowRatingPrompt(true), 500);
+    return () => clearTimeout(t);
+  }, [canRate]);
 
   if (isLoading || !session) return <LoadingSpinner />;
 
   const platform = session.movie ? getPlatform(session.movie.platform) : null;
   const genre = session.movie ? getGenre(session.movie.genre) : null;
-  const userParticipated = session.participants.some((p) => p.id === user?.id);
-  const userRating = session.ratings.find((r) => r.user.id === user?.id);
-  const canRate = session.status === 'finished' && userParticipated && !userRating;
-  const isInProgress = session.status === 'in_progress';
 
-  const handleRate = async () => {
-    if (!selectedScore) return;
+  const handleRate = async (score: number, closePrompt = false) => {
+    if (!score) return;
     setSubmittingRating(true);
     try {
-      await rateSession.mutateAsync({ sessionId, score: selectedScore });
+      await rateSession.mutateAsync({ sessionId, score });
+      if (closePrompt) setShowRatingPrompt(false);
       await refetch();
     } finally {
       setSubmittingRating(false);
@@ -108,14 +115,12 @@ export default function SessionDetailPage({ params }: Props) {
           className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden"
         >
           <div className="flex gap-4 p-5">
-            {/* Poster */}
             <div className="flex-shrink-0 w-[60px] h-[88px] rounded-xl overflow-hidden">
               {session.movie?.poster_path ? (
                 <Image
                   src={`https://image.tmdb.org/t/p/w185${session.movie.poster_path}`}
                   alt={session.movie.title ?? ''}
-                  width={60}
-                  height={88}
+                  width={60} height={88}
                   className="w-full h-full object-cover"
                   unoptimized
                 />
@@ -140,9 +145,7 @@ export default function SessionDetailPage({ params }: Props) {
                     {platform.label}
                   </span>
                 )}
-                {genre && (
-                  <span className="text-xs text-zinc-400">{genre.emoji} {genre.label}</span>
-                )}
+                {genre && <span className="text-xs text-zinc-400">{genre.emoji} {genre.label}</span>}
                 <span className="flex items-center gap-1 text-xs text-zinc-500">
                   <Clock size={11} /> {session.movie?.duration_formatted}
                 </span>
@@ -237,28 +240,6 @@ export default function SessionDetailPage({ params }: Props) {
           )}
         </AnimatePresence>
 
-        {/* Rate */}
-        {canRate && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.97 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.15 }}
-            className="bg-zinc-900 rounded-2xl border border-indigo-500/20 p-5"
-          >
-            <p className="text-sm font-semibold text-white mb-1">¿Qué te ha parecido?</p>
-            <p className="text-xs text-zinc-500 mb-5">{session.movie?.title}</p>
-            <div className="flex justify-center mb-5">
-              <RatingStars value={selectedScore} onChange={setSelectedScore} size={38} />
-            </div>
-            <Button
-              onClick={handleRate}
-              disabled={!selectedScore || submittingRating}
-              className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold"
-            >
-              {submittingRating ? 'Guardando...' : 'Enviar valoración'}
-            </Button>
-          </motion.div>
-        )}
 
         {/* Actions (in_progress only) */}
         {isInProgress && (
@@ -286,6 +267,91 @@ export default function SessionDetailPage({ params }: Props) {
           </motion.div>
         )}
       </div>
+
+      {/* ─── Rating prompt sheet ─────────────────────────────── */}
+      <AnimatePresence>
+        {showRatingPrompt && canRate && (
+          <>
+            <motion.div
+              key="rating-backdrop"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/75 z-[60] backdrop-blur-sm"
+            />
+
+            <motion.div
+              key="rating-sheet"
+              initial={{ y: '100%' }}
+              animate={{ y: 0 }}
+              exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 34 }}
+              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 rounded-t-3xl overflow-hidden border-t border-white/[0.08]"
+            >
+              {/* Poster hero — flush al top para que el overflow-hidden recorte las esquinas */}
+              {session.movie?.poster_path ? (
+                <div className="relative w-full h-52">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`https://image.tmdb.org/t/p/w342${session.movie.poster_path}`}
+                    alt={session.movie.title ?? ''}
+                    className="w-full h-full object-cover object-center"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
+                </div>
+              ) : (
+                <div className="pt-5" />
+              )}
+
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+
+                {/* Personalized message */}
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.12 }}
+                  className="mb-6"
+                >
+                  <p className="text-zinc-400 text-[15px] leading-snug">
+                    Hey{' '}
+                    <span className="text-white font-semibold">{user?.name}</span>,
+                    ¿qué te pareció?
+                  </p>
+                  <h2 className="text-xl font-bold text-white leading-tight mt-1 truncate">
+                    {session.movie?.title}
+                  </h2>
+                </motion.div>
+
+                {/* Stars — large and prominent */}
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  transition={{ delay: 0.2, type: 'spring', stiffness: 320 }}
+                  className="flex justify-center mb-7"
+                >
+                  <RatingStars value={promptScore} onChange={setPromptScore} size={52} />
+                </motion.div>
+
+                {/* Actions */}
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.28 }}
+                  className="space-y-3"
+                >
+                  <Button
+                    onClick={() => handleRate(promptScore, true)}
+                    disabled={!promptScore || submittingRating}
+                    className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold disabled:opacity-35 transition-all"
+                  >
+                    {submittingRating ? 'Guardando...' : 'Enviar valoración'}
+                  </Button>
+                </motion.div>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

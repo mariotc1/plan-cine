@@ -7,33 +7,42 @@ import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
 
 const navItems = [
-  { href: '/groups', icon: Home, label: 'Grupos' },
-  { href: '/profile', icon: User, label: 'Perfil' },
+  { href: '/groups', icon: Home },
+  { href: '/profile', icon: User },
 ];
 
 export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-white/8 bg-zinc-950/90 backdrop-blur-xl safe-area-bottom">
-      <div className="flex items-center justify-around h-16 px-6">
-        {navItems.map(({ href, icon: Icon, label }) => {
-          const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
-          return (
-            <Link key={href} href={href} className="flex flex-col items-center gap-1 flex-1">
-              <motion.div
-                whileTap={{ scale: 0.85 }}
-                className={cn(
-                  'flex flex-col items-center gap-1 transition-colors',
-                  isActive ? 'text-indigo-400' : 'text-zinc-500'
-                )}
-              >
-                <Icon size={22} strokeWidth={isActive ? 2.5 : 1.8} />
-                <span className="text-[10px] font-medium">{label}</span>
-              </motion.div>
-            </Link>
-          );
-        })}
+    <nav className="fixed bottom-0 left-0 right-0 z-50">
+      <div className="max-w-[480px] mx-auto">
+        {/* Top edge glow */}
+        <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />
+
+        <div className="flex items-center justify-around bg-zinc-950/95 backdrop-blur-2xl px-8 pt-3 pb-[max(env(safe-area-inset-bottom),14px)]">
+          {navItems.map(({ href, icon: Icon }) => {
+            const isActive = pathname === href || (href !== '/' && pathname.startsWith(href));
+
+            return (
+              <Link key={href} href={href} className="flex-1 flex justify-center">
+                <motion.div
+                  whileTap={{ scale: 0.86 }}
+                  className="flex items-center justify-center p-3"
+                >
+                  <Icon
+                    size={24}
+                    strokeWidth={isActive ? 2.2 : 1.6}
+                    className={cn(
+                      'transition-colors duration-200',
+                      isActive ? 'text-indigo-400' : 'text-zinc-600'
+                    )}
+                  />
+                </motion.div>
+              </Link>
+            );
+          })}
+        </div>
       </div>
     </nav>
   );

@@ -23,9 +23,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen bg-zinc-950">
+    <div className="min-h-screen">
       {/* Centered column — full width on mobile, 480px centered on desktop */}
-      <div className="max-w-[480px] mx-auto min-h-screen bg-zinc-950 relative sm:shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+      <div className="max-w-[480px] mx-auto min-h-screen relative sm:shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
         <main className="pb-20">
           {children}
         </main>

@@ -94,7 +94,7 @@ export default function SessionsPage({ params }: Props) {
       {/* Historial agrupado por mes */}
       {groups.map(({ key, label, items }) => (
         <div key={key}>
-          <div className="sticky top-0 z-10 bg-zinc-950 px-5 py-2.5 border-b border-white/[0.04]">
+          <div className="sticky top-0 z-10 bg-transparent px-5 py-2.5 border-b border-white/[0.04]">
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 capitalize">
                 {label}
