@@ -102,9 +102,9 @@ export default function GroupLayout({ children, params }: Props) {
           <h1 className="text-[17px] font-bold text-white tracking-tight truncate text-center w-full">
             {group?.name || '...'}
           </h1>
-          {group?.members_count !== undefined && (
+          {group?.member_count !== undefined && (
             <p className="text-[11px] text-zinc-500 mt-0.5">
-              {group.members_count} {group.members_count === 1 ? 'miembro' : 'miembros'}
+              {group.member_count} {group.member_count === 1 ? 'miembro' : 'miembros'}
             </p>
           )}
         </div>
