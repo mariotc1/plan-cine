@@ -89,10 +89,10 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
   const genre = result ? getGenre(result.genre) : null;
 
   return (
-    <div className="flex flex-col items-center px-5 pt-2">
+    <div className="flex flex-col items-center justify-center px-5" style={{ minHeight: 'calc(100svh - 230px)' }}>
 
       {/* Wheel */}
-      <div className="relative flex items-center justify-center mb-6">
+      <div className="relative flex items-center justify-center mb-8">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 drop-shadow-md">
           <svg width="22" height="18">
             <polygon points="11,18 1,0 21,0" fill="#fff" opacity="0.95" />
@@ -102,7 +102,7 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
         <motion.div
           animate={{ rotate: wheelRotation }}
           transition={isAnimating ? { duration: 4, ease: [0.05, 0.4, 0.1, 1.0] } : { duration: 0 }}
-          className="rounded-full overflow-hidden shadow-[0_0_50px_-10px_rgba(99,102,241,0.55)]"
+          className="rounded-full overflow-hidden"
         >
           {n === 0 ? (
             <svg width={SIZE} height={SIZE}>
@@ -151,18 +151,18 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
           whileTap={{ scale: 0.97 }}
           onClick={handleSpin}
           disabled={spinning || n === 0}
-          className="w-full max-w-sm h-12 bg-indigo-500/90 hover:bg-indigo-500 disabled:opacity-35 disabled:cursor-not-allowed text-white font-semibold text-base rounded-2xl shadow-[0_4px_24px_-6px_rgba(99,102,241,0.5)] transition-all border border-indigo-400/20"
+          className="h-12 px-10 bg-indigo-500/90 hover:bg-indigo-500 disabled:opacity-35 disabled:cursor-not-allowed text-white font-semibold text-base rounded-2xl shadow-[0_4px_24px_-6px_rgba(99,102,241,0.5)] transition-all border border-indigo-400/20"
         >
           {spinning ? 'Eligiendo...' : '¿Qué vemos hoy?'}
         </motion.button>
       )}
 
-      <div className="h-8 flex items-center justify-center mt-2">
+      <div className="h-8 flex items-center justify-center mt-3">
         {!showResult && (
-          <p className="text-zinc-600 text-xs text-center">
+          <p className="text-zinc-500 text-[13px] text-center">
             {n > 0
-              ? `${n} película${n !== 1 ? 's' : ''} en espera`
-              : 'Añade películas a la lista primero'}
+              ? `${n} película${n !== 1 ? 's' : ''} en la lista`
+              : 'Añade películas primero'}
           </p>
         )}
       </div>
