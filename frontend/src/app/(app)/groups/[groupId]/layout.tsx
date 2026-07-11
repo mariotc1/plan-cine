@@ -3,7 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2 } from 'lucide-react';
+import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft } from 'lucide-react';
 import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
@@ -47,6 +47,7 @@ export default function GroupLayout({ children, params }: Props) {
   const leaveGroup = useLeaveGroup();
 
   const [showSettings, setShowSettings] = useState(false);
+  const [showQR, setShowQR] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [editName, setEditName] = useState('');
@@ -77,12 +78,36 @@ export default function GroupLayout({ children, params }: Props) {
     router.replace('/groups');
   };
 
+  const joinUrl = typeof window !== 'undefined' && group?.invitation_code
+    ? `${window.location.origin}/join/${group.invitation_code}`
+    : '';
+
   const copyCode = () => {
     if (group?.invitation_code) {
       navigator.clipboard.writeText(group.invitation_code);
       toast.success('Código copiado');
       setShowSettings(false);
     }
+  };
+
+  const handleShare = async () => {
+    if (!group || !joinUrl) return;
+    const shareData = {
+      title: `Únete a ${group.name} en Plan Cine`,
+      text: `¡Ey! Únete a "${group.name}" en Plan Cine 🎬 Organizamos nuestras noches de cine aquí.`,
+      url: joinUrl,
+    };
+    try {
+      if (navigator.share && navigator.canShare?.(shareData)) {
+        await navigator.share(shareData);
+      } else {
+        await navigator.clipboard.writeText(joinUrl);
+        toast.success('Enlace copiado');
+      }
+    } catch {
+      // user cancelled share — no-op
+    }
+    setShowSettings(false);
   };
 
   return (
@@ -181,6 +206,32 @@ export default function GroupLayout({ children, params }: Props) {
               </div>
 
               <div className="px-4 pb-[max(env(safe-area-inset-bottom),20px)] space-y-1">
+                {/* Compartir — acción principal */}
+                <button
+                  onClick={handleShare}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white/5 transition-colors text-left"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-indigo-500/15 flex items-center justify-center">
+                    <Share2 size={16} className="text-indigo-400" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Compartir invitación</p>
+                    <p className="text-zinc-500 text-xs">WhatsApp, iMessage, cualquier app</p>
+                  </div>
+                </button>
+
+                {/* QR */}
+                <button
+                  onClick={() => { setShowSettings(false); setShowQR(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white/5 transition-colors text-left"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center">
+                    <QrCode size={16} className="text-zinc-300" />
+                  </div>
+                  <p className="text-white text-sm font-medium">Ver código QR</p>
+                </button>
+
+                {/* Copiar código — fallback */}
                 <button
                   onClick={copyCode}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white/5 transition-colors text-left"
@@ -189,7 +240,7 @@ export default function GroupLayout({ children, params }: Props) {
                     <Copy size={16} className="text-zinc-300" />
                   </div>
                   <div>
-                    <p className="text-white text-sm font-medium">Copiar código de invitación</p>
+                    <p className="text-white text-sm font-medium">Copiar código</p>
                     <p className="text-zinc-500 text-xs font-mono">{group?.invitation_code}</p>
                   </div>
                 </button>
@@ -229,6 +280,70 @@ export default function GroupLayout({ children, params }: Props) {
                     <p className="text-red-400 text-sm font-medium">Salir del grupo</p>
                   </button>
                 )}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* QR sheet */}
+      <AnimatePresence>
+        {showQR && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+              onClick={() => setShowQR(false)}
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
+            >
+              <div className="flex justify-center pt-3 pb-1">
+                <div className="w-10 h-1 bg-white/20 rounded-full" />
+              </div>
+              <div className="flex items-center justify-between px-6 py-3">
+                <button
+                  onClick={() => { setShowQR(false); setShowSettings(true); }}
+                  className="flex items-center gap-1.5 text-zinc-400 hover:text-white transition-colors"
+                >
+                  <ChevronLeft size={16} />
+                  <span className="text-sm">Volver</span>
+                </button>
+                <button onClick={() => setShowQR(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400">
+                  <X size={15} />
+                </button>
+              </div>
+
+              <div className="flex flex-col items-center px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-2">
+                <div className="bg-white rounded-2xl p-5 mb-5">
+                  {joinUrl && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=09090b&format=svg&margin=0`}
+                      alt="QR de invitación"
+                      width={200}
+                      height={200}
+                    />
+                  )}
+                </div>
+                <p className="text-white font-bold text-lg text-center">{group?.name}</p>
+                <p className="text-zinc-500 text-sm text-center mt-1 mb-4">
+                  Escanea para unirte al grupo
+                </p>
+                <div className="flex items-center gap-2 bg-white/[0.06] border border-white/[0.08] rounded-xl px-4 py-2.5 mb-5">
+                  <span className="text-zinc-400 text-xs">Código:</span>
+                  <span className="text-white font-mono font-semibold tracking-widest text-sm">
+                    {group?.invitation_code}
+                  </span>
+                </div>
+                <button
+                  onClick={handleShare}
+                  className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm flex items-center justify-center gap-2 transition-colors"
+                >
+                  <Share2 size={16} /> Compartir enlace
+                </button>
               </div>
             </motion.div>
           </>
