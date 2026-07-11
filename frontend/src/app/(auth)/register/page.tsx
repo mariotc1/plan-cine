@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/hooks/useAuth';
 import { AVATARS, COLORS } from '@/lib/constants';
+import { AvatarPicker } from '@/components/ui/AvatarPicker';
 import { fadeInUp } from '@/lib/animations';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -59,38 +60,30 @@ export default function RegisterPage() {
 
         {/* Avatar picker */}
         <div className="space-y-2.5">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu avatar</Label>
-          <div className="grid grid-cols-8 gap-1.5">
-            {AVATARS.map((a) => (
-              <button
-                key={a}
-                type="button"
-                onClick={() => setAvatar(a)}
-                className={cn(
-                  'w-full aspect-square rounded-xl text-lg flex items-center justify-center transition-all',
-                  avatar === a
-                    ? 'bg-indigo-500/30 ring-2 ring-indigo-500'
-                    : 'bg-white/[0.04] hover:bg-white/[0.08]'
-                )}
-              >
-                {a}
-              </button>
-            ))}
+          <div className="flex items-center justify-between">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu avatar</Label>
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl transition-all duration-150 flex-shrink-0"
+              style={{ backgroundColor: `${color}28` }}
+            >
+              {avatar}
+            </div>
           </div>
+          <AvatarPicker value={avatar} onChange={setAvatar} color={color} />
         </div>
 
         {/* Color picker */}
         <div className="space-y-2.5">
           <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu color</Label>
-          <div className="flex justify-between px-1">
+          <div className="grid grid-cols-6 gap-2 p-1">
             {COLORS.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setColor(c)}
                 className={cn(
-                  'w-9 h-9 rounded-full transition-transform',
-                  color === c ? 'scale-125 ring-2 ring-white ring-offset-2 ring-offset-zinc-950' : 'hover:scale-110'
+                  'w-full aspect-square rounded-full transition-transform',
+                  color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-950' : 'hover:scale-105'
                 )}
                 style={{ backgroundColor: c }}
               />
