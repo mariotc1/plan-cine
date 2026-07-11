@@ -55,7 +55,7 @@ export default function ProfilePage() {
   const genre = stats?.favorite_genre ? getGenre(stats.favorite_genre) : null;
 
   return (
-    <div className="px-5 pt-12 pb-8">
+    <div className="px-5 pb-8" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
       <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-5">
 
         {/* Avatar + identity */}
@@ -166,13 +166,35 @@ export default function ProfilePage() {
 
         {/* Stats */}
         {stats && (
-          <motion.div variants={staggerItem}>
-            <p className="text-xs font-semibold uppercase tracking-wider text-zinc-600 mb-3">Mis estadísticas</p>
+          <motion.div variants={staggerItem} className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Mis estadísticas</p>
+
+            {/* Hero grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_watched}</p>
+                <p className="text-xs text-zinc-500 mt-2">películas vistas</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">
+                  {stats.hours_accumulated}<span className="text-lg text-zinc-500 ml-0.5">h</span>
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">de cine acumuladas</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">
+                  {stats.average_score ?? '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">nota media</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_added}</p>
+                <p className="text-xs text-zinc-500 mt-2">pelis propuestas</p>
+              </div>
+            </div>
+
+            {/* Favoritos */}
             <div className="bg-zinc-900 rounded-2xl border border-white/5 divide-y divide-white/[0.04]">
-              <StatRow emoji="🎬" label="Películas vistas" value={String(stats.movies_watched)} />
-              <StatRow emoji="⏱" label="Horas de cine" value={`${stats.hours_accumulated}h`} />
-              <StatRow emoji="⭐" label="Nota media" value={stats.average_score ? `${stats.average_score}` : '—'} />
-              <StatRow emoji="💡" label="Películas propuestas" value={String(stats.movies_added)} />
               <StatRow
                 emoji={genre?.emoji ?? '🎭'}
                 label="Género favorito"
