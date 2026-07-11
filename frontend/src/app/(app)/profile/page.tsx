@@ -63,8 +63,8 @@ export default function ProfilePage() {
         <motion.div variants={staggerItem} className="flex flex-col items-center pt-2">
           <div className="relative">
             <div
-              className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl shadow-xl"
-              style={{ backgroundColor: `${user.color}25` }}
+              className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
+              style={{ backgroundColor: `${user.color}25`, boxShadow: `0 0 0 2px ${user.color}35` }}
             >
               {user.avatar}
             </div>
@@ -129,7 +129,7 @@ export default function ProfilePage() {
         <motion.div variants={staggerItem}>
           <button
             onClick={() => setShowLogoutConfirm(true)}
-            className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-white/[0.03] border border-white/[0.07] text-zinc-400 hover:text-zinc-200 hover:bg-white/[0.06] transition-colors text-sm font-medium"
+            className="w-full flex items-center justify-center gap-2 h-12 rounded-xl bg-red-500/[0.07] border border-red-500/20 text-red-400 hover:bg-red-500/[0.12] transition-colors text-sm font-medium"
           >
             <LogOut size={15} />
             Cerrar sesión
