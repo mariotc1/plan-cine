@@ -288,22 +288,19 @@ export default function SessionDetailPage({ params }: Props) {
               transition={{ type: 'spring', stiffness: 340, damping: 34 }}
               className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 rounded-t-3xl overflow-hidden border-t border-white/[0.08]"
             >
-              {/* Handle */}
-              <div className="flex justify-center pt-3 pb-2">
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
-              </div>
-
-              {/* Poster hero */}
-              {session.movie?.poster_path && (
-                <div className="relative w-full h-48 overflow-hidden">
+              {/* Poster hero — flush al top para que el overflow-hidden recorte las esquinas */}
+              {session.movie?.poster_path ? (
+                <div className="relative w-full h-52">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={`https://image.tmdb.org/t/p/w342${session.movie.poster_path}`}
                     alt={session.movie.title ?? ''}
-                    className="w-full h-full object-cover object-center scale-[1.03]"
+                    className="w-full h-full object-cover object-center"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/40 to-transparent" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent" />
                 </div>
+              ) : (
+                <div className="pt-5" />
               )}
 
               <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
