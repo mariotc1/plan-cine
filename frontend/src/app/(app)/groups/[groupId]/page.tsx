@@ -143,11 +143,11 @@ export default function MoviesPage({ params }: Props) {
 
       {/* FAB */}
       <motion.button
-        whileTap={{ scale: 0.9 }}
+        whileTap={{ scale: 0.91 }}
         onClick={() => setShowAdd(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 bg-indigo-500 hover:bg-indigo-600 rounded-full flex items-center justify-center shadow-[0_8px_30px_-4px_rgba(99,102,241,0.6)] z-40 transition-colors sm:right-[max(1.25rem,calc(50%-240px+1.25rem))]"
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full flex items-center justify-center z-40 bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-[0_8px_28px_-2px_rgba(99,102,241,0.65)] sm:right-[max(1.25rem,calc(50%-240px+1.25rem))]"
       >
-        <Plus size={24} className="text-white" />
+        <Plus size={22} className="text-white" strokeWidth={2.5} />
       </motion.button>
 
       <AddMovieSheet

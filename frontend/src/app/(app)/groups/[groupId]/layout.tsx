@@ -87,38 +87,40 @@ export default function GroupLayout({ children, params }: Props) {
 
   return (
     <div className="min-h-screen">
-      {/* Header — single row, title truly centered */}
-      <div className="relative flex items-center px-5 pt-12 pb-0">
+      {/* Header */}
+      <div className="relative flex items-center justify-between px-5 pb-0" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
         <motion.button
-          whileTap={{ scale: 0.85 }}
+          whileTap={{ scale: 0.88 }}
           onClick={() => router.push('/groups')}
-          className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex-shrink-0"
+          className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-zinc-300 flex-shrink-0"
         >
-          <ArrowLeft size={18} />
+          <ArrowLeft size={16} />
         </motion.button>
 
-        {/* Absolutely centered — doesn't shift with button widths */}
-        <div className="absolute inset-x-0 flex items-center justify-center pointer-events-none px-16">
-          <div className="flex items-center gap-2 min-w-0">
-            {group?.avatar && <span className="text-lg leading-none flex-shrink-0">{group.avatar}</span>}
-            <h1 className="text-base font-semibold text-white truncate">
-              {group?.name || '...'}
-            </h1>
-          </div>
+        {/* Center — absolutely positioned so buttons don't shift it */}
+        <div className="absolute inset-x-0 flex flex-col items-center justify-center pointer-events-none px-14">
+          <h1 className="text-[17px] font-bold text-white tracking-tight truncate text-center w-full">
+            {group?.name || '...'}
+          </h1>
+          {group?.members_count !== undefined && (
+            <p className="text-[11px] text-zinc-500 mt-0.5">
+              {group.members_count} {group.members_count === 1 ? 'miembro' : 'miembros'}
+            </p>
+          )}
         </div>
 
         <motion.button
-          whileTap={{ scale: 0.85 }}
+          whileTap={{ scale: 0.88 }}
           onClick={() => setShowSettings(true)}
-          className="relative z-10 flex items-center justify-center w-9 h-9 rounded-full bg-zinc-800 text-zinc-300 flex-shrink-0 ml-auto"
+          className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-zinc-300 flex-shrink-0"
         >
           <MoreHorizontal size={18} />
         </motion.button>
       </div>
 
       {/* Tabs */}
-      <div className="px-4 pt-3 pb-0">
-        <div className="relative flex bg-zinc-900/70 rounded-2xl p-1">
+      <div className="px-4 pt-4 pb-0">
+        <div className="relative flex bg-zinc-900/50 border border-white/[0.06] rounded-2xl p-1">
           {TABS.map((tab) => {
             const href = `/groups/${groupId}${tab.href}`;
             const isActive = tab.href === ''
@@ -129,13 +131,13 @@ export default function GroupLayout({ children, params }: Props) {
               <Link
                 key={tab.href}
                 href={href}
-                className="relative flex-1 flex items-center justify-center py-2 z-10"
+                className="relative flex-1 flex items-center justify-center py-[9px] z-10"
               >
                 {isActive && (
                   <motion.div
                     layoutId="group-tab-pill"
-                    className="absolute inset-0 bg-indigo-500 rounded-xl shadow-[0_2px_12px_-2px_rgba(99,102,241,0.5)]"
-                    transition={{ type: 'spring', stiffness: 400, damping: 35 }}
+                    className="absolute inset-0 bg-indigo-500 rounded-xl shadow-[0_2px_16px_-3px_rgba(99,102,241,0.55)]"
+                    transition={{ type: 'spring', stiffness: 420, damping: 36 }}
                   />
                 )}
                 <span

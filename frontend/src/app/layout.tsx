@@ -36,27 +36,47 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${jakarta.variable} dark h-full`}>
+    <html
+      lang="es"
+      className={`${jakarta.variable} dark`}
+      style={{ minHeight: '100dvh', backgroundColor: '#09090b' }}
+    >
       <head>
         <meta name="mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
-      <body className="min-h-full bg-zinc-950 text-white antialiased font-sans">
-        <Providers>
-          {children}
-        </Providers>
-        <Toaster
-          position="top-center"
-          toastOptions={{
-            style: {
-              background: '#27272a',
-              border: '1px solid rgba(255,255,255,0.08)',
-              color: '#fafafa',
-            },
+      <body className="min-h-full bg-transparent text-white antialiased font-sans">
+        {/* Bottom-left corner glow — fixed to viewport, never moves */}
+        <div
+          aria-hidden="true"
+          style={{
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            width: '75vw',
+            height: '55vh',
+            zIndex: 0,
+            pointerEvents: 'none',
+            backgroundImage: 'radial-gradient(ellipse at 0% 100%, rgba(99,102,241,0.26) 0%, rgba(99,102,241,0.08) 45%, transparent 72%)',
           }}
         />
+        <div style={{ position: 'relative', zIndex: 1 }}>
+          <Providers>
+            {children}
+          </Providers>
+          <Toaster
+            position="top-center"
+            toastOptions={{
+              style: {
+                background: '#27272a',
+                border: '1px solid rgba(255,255,255,0.08)',
+                color: '#fafafa',
+              },
+            }}
+          />
+        </div>
       </body>
     </html>
   );
