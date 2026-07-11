@@ -67,12 +67,9 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
               <div className="flex-1 min-w-0 pt-0.5">
 
                 {/* Title row */}
-                <div className="flex items-start gap-2 mb-1.5">
+                <div className="flex items-center gap-2 mb-1.5">
                   {isInProgress && (
-                    <span className="relative flex-shrink-0 mt-[4px]">
-                      <span className="absolute inline-flex h-2 w-2 rounded-full bg-emerald-400 opacity-75 animate-ping" />
-                      <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-                    </span>
+                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400" />
                   )}
                   <h3 className="text-[15px] font-bold text-white leading-tight line-clamp-2 flex-1">
                     {session.movie?.title || 'Sin película'}
@@ -135,7 +132,7 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
               </div>
 
               {/* Chevron */}
-              <ChevronRight size={15} className="text-zinc-700 flex-shrink-0 mt-1.5" />
+              <ChevronRight size={15} className="text-zinc-700 flex-shrink-0 self-center" />
             </div>
           </div>
         </div>
