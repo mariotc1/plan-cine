@@ -365,26 +365,32 @@ export default function GroupLayout({ children, params }: Props) {
               className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
               style={{ maxHeight: '88vh' }}
             >
-              <div className="flex justify-center pt-3 pb-1 flex-shrink-0">
+              <div className="flex justify-center pt-3 pb-4 flex-shrink-0">
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
-              <div className="flex items-center justify-between px-6 py-3 flex-shrink-0">
-                <h2 className="text-white font-bold text-xl">Editar grupo</h2>
-                <button onClick={() => setShowEdit(false)} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400">
-                  <X size={16} />
-                </button>
+
+              {/* Integrated preview header */}
+              <div className="flex-shrink-0 flex items-center gap-4 px-5 mb-5">
+                <div className="w-16 h-16 rounded-2xl bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-4xl flex-shrink-0 transition-all duration-200">
+                  {editAvatar}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600 mb-1">Editar grupo</p>
+                  <p className="text-white font-bold text-xl leading-tight truncate">{editName || 'Nombre del grupo'}</p>
+                  {editDesc && <p className="text-zinc-500 text-sm truncate mt-0.5">{editDesc}</p>}
+                </div>
               </div>
 
-              <div className="flex-1 overflow-y-auto px-6 pb-4">
-                <form id="edit-group-form" onSubmit={handleEdit} className="space-y-5 pt-1">
-                  <div className="space-y-3">
+              <div className="flex-1 overflow-y-auto px-5 pb-4">
+                <form id="edit-group-form" onSubmit={handleEdit} className="space-y-5">
+                  <div className="space-y-2">
                     <Label className="text-zinc-400 text-xs uppercase tracking-wider">Icono</Label>
-                    <div className="grid grid-cols-9 gap-2">
+                    <div className="grid grid-cols-6 gap-2 p-1">
                       {GROUP_EMOJIS.map((e) => (
                         <button
                           key={e} type="button" onClick={() => setEditAvatar(e)}
                           className={cn(
-                            'aspect-square rounded-xl text-xl flex items-center justify-center transition-all',
+                            'aspect-square rounded-xl text-2xl flex items-center justify-center transition-all',
                             editAvatar === e ? 'bg-indigo-500/25 ring-2 ring-indigo-500' : 'bg-white/5 hover:bg-white/10'
                           )}
                         >
@@ -414,7 +420,7 @@ export default function GroupLayout({ children, params }: Props) {
                 </form>
               </div>
 
-              <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-white/[0.06]">
+              <div className="flex-shrink-0 px-5 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-white/[0.06] bg-zinc-950">
                 <Button
                   form="edit-group-form"
                   type="submit"

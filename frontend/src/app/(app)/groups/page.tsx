@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Users, Link2, ChevronRight } from 'lucide-react';
+import { Plus, Users, Link2, ChevronRight, Film, Clock } from 'lucide-react';
 import { useGroups, useCreateGroup, useJoinGroup } from '@/hooks/useGroups';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -117,24 +117,49 @@ export default function GroupsPage() {
           >
             <AnimatePresence>
               {groups.map((group: Group) => (
-                <motion.div key={group.id} variants={staggerItem} whileTap={{ scale: 0.985 }}>
+                <motion.div key={group.id} variants={staggerItem} whileTap={{ scale: 0.983 }}>
                   <Link href={`/groups/${group.id}`}>
-                    <div className="bg-zinc-900 rounded-2xl border border-white/[0.07] p-4 transition-colors active:bg-zinc-800/60">
-                      <div className="flex items-center gap-4">
-                        <div className="w-[54px] h-[54px] rounded-2xl bg-gradient-to-br from-white/[0.09] to-white/[0.03] border border-white/[0.08] flex items-center justify-center text-[26px] flex-shrink-0">
+                    <div className="relative bg-zinc-900 rounded-2xl border border-white/[0.07] overflow-hidden">
+                      {/* Top highlight line */}
+                      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/[0.12] to-transparent" />
+
+                      {/* Main content */}
+                      <div className="flex items-center gap-4 px-5 pt-5 pb-4">
+                        <div
+                          className="w-14 h-14 rounded-2xl flex items-center justify-center text-3xl flex-shrink-0"
+                          style={{ background: 'linear-gradient(135deg, rgba(99,102,241,0.18) 0%, rgba(99,102,241,0.05) 100%)' }}
+                        >
                           {group.avatar || '🎬'}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-bold text-white text-[15px] tracking-tight truncate">{group.name}</h3>
+                          <h3 className="font-bold text-white text-[17px] tracking-tight truncate">{group.name}</h3>
                           {group.description && (
                             <p className="text-[13px] text-zinc-500 truncate mt-0.5">{group.description}</p>
                           )}
-                          <div className="flex items-center gap-1 mt-1.5 text-[11px] text-zinc-600">
-                            <Users size={10} />
-                            <span>{group.member_count} miembro{group.member_count !== 1 ? 's' : ''}</span>
-                          </div>
                         </div>
-                        <ChevronRight size={16} className="text-zinc-700 flex-shrink-0" />
+                        <ChevronRight size={15} className="text-zinc-700 flex-shrink-0" />
+                      </div>
+
+                      {/* Stats bar */}
+                      <div className="flex items-center justify-center gap-4 px-5 py-3 border-t border-white/[0.05]">
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                          <Users size={11} className="text-zinc-600" />
+                          <span>{group.member_count} miembro{group.member_count !== 1 ? 's' : ''}</span>
+                        </div>
+                        <div className="w-px h-3 bg-white/10" />
+                        <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                          <Film size={11} className="text-zinc-600" />
+                          <span>{group.pending_movies_count} por ver</span>
+                        </div>
+                        {group.total_hours_watched > 0 && (
+                          <>
+                            <div className="w-px h-3 bg-white/10" />
+                            <div className="flex items-center gap-1.5 text-xs text-zinc-500">
+                              <Clock size={11} className="text-zinc-600" />
+                              <span>{group.total_hours_watched}h {group.member_count > 1 ? 'juntos' : 'vistas'}</span>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </div>
                   </Link>
