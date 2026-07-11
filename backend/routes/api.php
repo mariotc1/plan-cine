@@ -59,6 +59,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // TMDB proxy
     Route::get('tmdb/search', [TmdbController::class, 'search']);
+    Route::get('tmdb/movie/{id}/trailer', [TmdbController::class, 'trailer']);
     Route::get('tmdb/movie/{id}', [TmdbController::class, 'movie']);
 
     // Push Notifications

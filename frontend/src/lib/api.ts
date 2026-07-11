@@ -115,4 +115,6 @@ export const tmdbApi = {
     api.get<{ results: import('@/types').TmdbSearchResult[] }>('/tmdb/search', { params: { query } }),
   movie: (id: number) =>
     api.get<import('@/types').TmdbMovieDetail>(`/tmdb/movie/${id}`),
+  trailer: (id: number) =>
+    api.get<{ key: string | null }>(`/tmdb/movie/${id}/trailer`),
 };

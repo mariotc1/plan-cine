@@ -3,12 +3,13 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, Film } from 'lucide-react';
 import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
 import { MovieCard } from '@/components/movies/MovieCard';
 import { AddMovieSheet } from '@/components/movies/AddMovieSheet';
+import { MovieDetailSheet } from '@/components/movies/MovieDetailSheet';
 import { MovieFilters } from '@/components/movies/MovieFilters';
 import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -31,6 +32,7 @@ export default function MoviesPage({ params }: Props) {
   const [editMovie, setEditMovie] = useState<Movie | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Movie | null>(null);
   const [watchNowMovie, setWatchNowMovie] = useState<Movie | null>(null);
+  const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
 
   const filtersRaw = useFilterStore((s) => s.filters[groupId]);
   const filters = filtersRaw ?? {};
@@ -111,7 +113,7 @@ export default function MoviesPage({ params }: Props) {
           </div>
         ) : !movies?.length ? (
           <EmptyState
-            emoji="🍿"
+            icon={<Film size={30} />}
             title={Object.keys(filters).length > 0 ? 'Sin resultados' : 'Sin películas pendientes'}
             description={
               Object.keys(filters).length > 0
@@ -131,9 +133,7 @@ export default function MoviesPage({ params }: Props) {
                 <MovieCard
                   key={movie.id}
                   movie={movie}
-                  onEdit={handleEdit}
-                  onDelete={setDeleteTarget}
-                  onWatchNow={handleWatchNow}
+                  onTap={setDetailMovie}
                 />
               ))}
             </AnimatePresence>
@@ -156,6 +156,14 @@ export default function MoviesPage({ params }: Props) {
         onSubmit={handleAdd}
         loading={createMovie.isPending || updateMovie.isPending}
         editMovie={editMovie}
+      />
+
+      <MovieDetailSheet
+        movie={detailMovie}
+        onClose={() => setDetailMovie(null)}
+        onWatchNow={handleWatchNow}
+        onEdit={handleEdit}
+        onDelete={setDeleteTarget}
       />
 
       {/* Watch Now — start session sheet */}
