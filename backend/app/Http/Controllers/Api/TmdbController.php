@@ -76,6 +76,36 @@ class TmdbController extends Controller
         return response()->json(['results' => $results]);
     }
 
+    public function trailer(Request $request, int $id): JsonResponse
+    {
+        $key = env('TMDB_API_KEY');
+        if (!$key) {
+            return response()->json(['key' => null]);
+        }
+
+        $videoKey = Cache::remember('tmdb_trailer_' . $id, 604800, function () use ($id, $key) {
+            foreach (['es-ES', 'en-US'] as $lang) {
+                $response = Http::timeout(8)->get(self::BASE . '/movie/' . $id . '/videos', [
+                    'api_key'  => $key,
+                    'language' => $lang,
+                ]);
+
+                if (!$response->successful()) continue;
+
+                $found = collect($response->json('results', []))
+                    ->filter(fn($v) => $v['site'] === 'YouTube' && in_array($v['type'], ['Trailer', 'Teaser']))
+                    ->sortByDesc(fn($v) => $v['type'] === 'Trailer' ? 1 : 0)
+                    ->first();
+
+                if ($found) return $found['key'];
+            }
+
+            return null;
+        });
+
+        return response()->json(['key' => $videoKey]);
+    }
+
     public function movie(Request $request, int $id): JsonResponse
     {
         $key = env('TMDB_API_KEY');

@@ -2,6 +2,7 @@
 
 import { use } from 'react';
 import { motion } from 'framer-motion';
+import { Clapperboard } from 'lucide-react';
 import { useSessions } from '@/hooks/useSessions';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { EmptyState } from '@/components/shared/EmptyState';
@@ -67,7 +68,7 @@ export default function SessionsPage({ params }: Props) {
   if (!inProgress.length && !finished.length) {
     return (
       <EmptyState
-        emoji="🎭"
+        icon={<Clapperboard size={30} />}
         title="Sin sesiones todavía"
         description="Usa la ruleta para elegir una película y empezar vuestra primera sesión"
       />
