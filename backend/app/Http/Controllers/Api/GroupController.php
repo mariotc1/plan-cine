@@ -20,7 +20,17 @@ class GroupController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $groups = $request->user()->groups()->withCount('members')->get();
+        $groups = $request->user()->groups()
+            ->withCount('members')
+            ->withCount(['movies as pending_movies_count' => fn($q) => $q->where('status', 'pending')])
+            ->addSelect(\DB::raw(
+                '(SELECT COALESCE(SUM(m.duration_minutes), 0)
+                  FROM cinema_sessions cs
+                  INNER JOIN movies m ON cs.movie_id = m.id
+                  WHERE cs.group_id = groups.id AND cs.status = \'finished\'
+                ) as total_minutes_watched'
+            ))
+            ->get();
         return response()->json(['data' => GroupResource::collection($groups)]);
     }
 

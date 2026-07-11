@@ -15,6 +15,8 @@ export interface Group {
   invitation_code: string;
   created_by: string;
   member_count: number;
+  pending_movies_count: number;
+  total_hours_watched: number;
   created_at: string;
 }
 

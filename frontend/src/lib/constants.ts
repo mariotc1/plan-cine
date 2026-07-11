@@ -23,11 +23,19 @@ export const GENRES: { value: Genre; label: string; emoji: string }[] = [
   { value: 'other', label: 'Otra', emoji: '🎬' },
 ];
 
-export const AVATARS = ['🎬', '🍿', '🎥', '🌟', '🎭', '🦁', '🐺', '🦊', '🐉', '🧙', '🦸', '🎮', '👻', '🦋', '🐻', '🦄'];
+export const AVATAR_CATEGORIES = [
+  { key: 'cine',     label: 'Cine',     avatars: ['🎬', '🍿', '🎥', '🌟', '🎭', '🎟️', '🏆', '🎦', '🎪', '🎨', '🎵', '🎸'] },
+  { key: 'personas', label: 'Personas', avatars: ['🧙', '🦸', '👑', '🤠', '👽', '🤖', '🧜', '🧝', '🥷', '👸', '🦹', '🧞'] },
+  { key: 'animales', label: 'Animales', avatars: ['🦁', '🐺', '🦊', '🐉', '🦋', '🐻', '🦄', '🐯', '🦅', '🐬', '🐘', '🐼'] },
+  { key: 'misc',     label: 'Extras',   avatars: ['🎮', '👻', '🌈', '⚡', '🔥', '💎', '🚀', '🌙', '❄️', '🌊', '🍕', '🎃'] },
+];
+
+export const AVATARS = AVATAR_CATEGORIES.flatMap((c) => c.avatars);
 
 export const COLORS = [
-  '#6366f1', '#ec4899', '#3b82f6', '#10b981',
-  '#f59e0b', '#ef4444', '#8b5cf6', '#f97316',
+  '#6366f1', '#8b5cf6', '#ec4899', '#f43f5e',
+  '#3b82f6', '#06b6d4', '#10b981', '#14b8a6',
+  '#f59e0b', '#f97316', '#ef4444', '#84cc16',
 ];
 
 export const getPlatform = (value: Platform) => PLATFORMS.find((p) => p.value === value);

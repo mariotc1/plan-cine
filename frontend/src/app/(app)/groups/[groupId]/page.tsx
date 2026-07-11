@@ -3,10 +3,10 @@
 import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Film } from 'lucide-react';
+import { Plus, Trash2, Film, ChevronRight, Clock } from 'lucide-react';
 import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
-import { useCreateSession, useStartSession } from '@/hooks/useSessions';
+import { useCreateSession, useStartSession, useSessions } from '@/hooks/useSessions';
 import { MovieCard } from '@/components/movies/MovieCard';
 import { AddMovieSheet } from '@/components/movies/AddMovieSheet';
 import { MovieDetailSheet } from '@/components/movies/MovieDetailSheet';
@@ -40,6 +40,8 @@ export default function MoviesPage({ params }: Props) {
 
   const { data: movies, isLoading } = useMovies(groupId, { ...filters, status: 'pending' });
   const { data: members } = useGroupMembers(groupId);
+  const { data: sessions } = useSessions(groupId);
+  const activeSession = sessions?.find((s) => s.status === 'in_progress') ?? null;
   const createMovie = useCreateMovie(groupId);
   const updateMovie = useUpdateMovie(groupId);
   const deleteMovie = useDeleteMovie(groupId);
@@ -100,6 +102,38 @@ export default function MoviesPage({ params }: Props) {
 
   return (
     <div className="px-5 pb-28">
+
+      {/* Active session banner */}
+      {activeSession && (
+        <motion.div
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-4"
+        >
+          <button
+            onClick={() => router.push(`/groups/${groupId}/sessions/${activeSession.id}`)}
+            className="w-full text-left"
+          >
+            <div className="relative rounded-2xl overflow-hidden border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3.5 flex items-center gap-3">
+              {/* Pulsing dot */}
+              <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400" />
+              <div className="flex-1 min-w-0">
+                <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">Viendo ahora</p>
+                <p className="text-white text-sm font-semibold truncate">
+                  {activeSession.movie?.title ?? 'Sesión en curso'}
+                </p>
+                {activeSession.movie?.duration_formatted && (
+                  <p className="text-emerald-400/70 text-[11px] flex items-center gap-1 mt-0.5">
+                    <Clock size={9} /> {activeSession.movie.duration_formatted}
+                  </p>
+                )}
+              </div>
+              <ChevronRight size={15} className="text-emerald-500/60 flex-shrink-0" />
+            </div>
+          </button>
+        </motion.div>
+      )}
+
       {/* Filters */}
       <MovieFilters
         filters={filters}
