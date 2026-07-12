@@ -2,7 +2,7 @@
 
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Shuffle, X } from 'lucide-react';
+import { Play, Shuffle, X, CalendarDays } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
@@ -38,9 +38,10 @@ interface SpinWheelProps {
   movies: Movie[];
   onSpin: () => Promise<Movie | null>;
   onWatch: (movie: Movie) => void;
+  onSchedule?: (movie: Movie) => void;
 }
 
-export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
+export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProps) {
   const [spinning, setSpinning] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
   const [wheelRotation, setWheelRotation] = useState(0);
@@ -299,6 +300,15 @@ export function SpinWheel({ movies, onSpin, onWatch }: SpinWheelProps) {
                     >
                       <Play size={16} fill="white" /> Ver esta película
                     </motion.button>
+                    {onSchedule && (
+                      <motion.button
+                        whileTap={{ scale: 0.96 }}
+                        onClick={() => { setShowResult(false); onSchedule(result); }}
+                        className="w-full h-12 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors border border-amber-500/25"
+                      >
+                        <CalendarDays size={15} /> Programar para más tarde
+                      </motion.button>
+                    )}
                     <motion.button
                       whileTap={{ scale: 0.96 }}
                       onClick={handleAnother}

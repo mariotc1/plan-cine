@@ -30,7 +30,7 @@ export interface GroupMember {
 export type Platform = 'netflix' | 'prime' | 'disney' | 'hbo' | 'movistar' | 'apple' | 'other';
 export type Genre = 'action' | 'comedy' | 'drama' | 'thriller' | 'horror' | 'sci-fi' | 'romance' | 'animation' | 'documentary' | 'other';
 export type MovieStatus = 'pending' | 'in_session' | 'watched';
-export type SessionStatus = 'pending' | 'in_progress' | 'finished' | 'cancelled';
+export type SessionStatus = 'scheduled' | 'pending' | 'in_progress' | 'finished' | 'cancelled';
 
 export interface Movie {
   id: string;
@@ -78,6 +78,7 @@ export interface CinemaSession {
   started_at?: string;
   estimated_end_at?: string;
   actual_end_at?: string;
+  scheduled_at?: string;
   status: SessionStatus;
   participants: User[];
   ratings: Rating[];

@@ -133,6 +133,25 @@ class PushNotificationService
         ]);
     }
 
+    // ─── Scheduled session reminder ──────────────────────────────────────────
+
+    public function notifyScheduledSession(CinemaSession $session): void
+    {
+        $session->loadMissing(['movie', 'participants']);
+
+        $participantIds = $session->participants->pluck('id')->toArray();
+        if (empty($participantIds)) return;
+
+        $movieTitle = $session->movie?->title ?? 'la película';
+        $url = $this->frontendUrl() . "/groups/{$session->group_id}/sessions/{$session->id}";
+
+        $this->send($participantIds, [
+            'title' => '¡Empieza la película! 🎬',
+            'body'  => "Esta noche toca {$movieTitle}. ¿Listos para el cine?",
+            'url'   => $url,
+        ]);
+    }
+
     // ─── New movie added ──────────────────────────────────────────────────────
 
     public function notifyMovieAdded(Group $group, User $addedBy, Movie $movie): void

@@ -5,12 +5,13 @@ import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { CinemaSession } from '@/types';
 import { RatingStars } from './RatingStars';
-import { Clock, Film, ChevronRight } from 'lucide-react';
+import { Clock, Film, ChevronRight, CalendarDays } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
 import { staggerItem } from '@/lib/animations';
 
 const STATUS_CONFIG: Record<string, { label: string; textColor: string; bgColor: string; accentColor: string }> = {
+  scheduled:   { label: 'Programada', textColor: 'text-amber-400',   bgColor: 'bg-amber-500/15',    accentColor: '#f59e0b' },
   pending:     { label: 'Pendiente',  textColor: 'text-zinc-400',    bgColor: 'bg-zinc-800',        accentColor: '#71717a' },
   in_progress: { label: 'En curso',   textColor: 'text-emerald-400', bgColor: 'bg-emerald-500/15',  accentColor: '#10b981' },
   finished:    { label: 'Vista',      textColor: 'text-indigo-400',  bgColor: 'bg-indigo-500/15',   accentColor: '#6366f1' },
@@ -26,13 +27,14 @@ interface SessionCardProps {
 export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) {
   const config = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.pending;
   const isInProgress = session.status === 'in_progress';
+  const isScheduled = session.status === 'scheduled';
 
   return (
     <motion.div variants={staggerItem} whileTap={{ scale: 0.985 }}>
       <Link href={`/groups/${groupId}/sessions/${session.id}`}>
         <div className={cn(
           'bg-zinc-900 rounded-2xl border overflow-hidden transition-colors active:bg-zinc-800/60',
-          isInProgress ? 'border-emerald-500/20' : 'border-white/[0.06]',
+          isInProgress ? 'border-emerald-500/20' : isScheduled ? 'border-amber-500/20' : 'border-white/[0.06]',
         )}>
           {/* Status accent line */}
           <div
@@ -71,6 +73,9 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
                   {isInProgress && (
                     <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400" />
                   )}
+                  {isScheduled && (
+                    <span className="flex-shrink-0 w-2 h-2 rounded-full bg-amber-400" />
+                  )}
                   <h3 className="text-[15px] font-bold text-white leading-tight line-clamp-2 flex-1">
                     {session.movie?.title || 'Sin película'}
                   </h3>
@@ -93,13 +98,22 @@ export function SessionCard({ session, groupId, hideStatus }: SessionCardProps) 
                       <span>·</span>
                     </>
                   )}
-                  <span>
-                    {session.actual_end_at
-                      ? formatDate(session.actual_end_at)
-                      : session.started_at
-                      ? formatDate(session.started_at)
-                      : formatDate(session.created_at)}
-                  </span>
+                  {isScheduled && session.scheduled_at ? (
+                    <span className="flex items-center gap-1 text-amber-500/80">
+                      <CalendarDays size={10} />
+                      {new Date(session.scheduled_at).toLocaleDateString('es-ES', { weekday: 'short', day: 'numeric', month: 'short' })}
+                      {' '}
+                      {new Date(session.scheduled_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  ) : (
+                    <span>
+                      {session.actual_end_at
+                        ? formatDate(session.actual_end_at)
+                        : session.started_at
+                        ? formatDate(session.started_at)
+                        : formatDate(session.created_at)}
+                    </span>
+                  )}
                 </div>
 
                 {/* Participants + Rating */}

@@ -53,6 +53,9 @@ export default function SessionsPage({ params }: Props) {
   const { groupId } = use(params);
   const { data: sessions, isLoading } = useSessions(groupId);
 
+  const scheduled = sessions?.filter((s) => s.status === 'scheduled').sort((a, b) =>
+    new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime()
+  ) ?? [];
   const inProgress = sessions?.filter((s) => s.status === 'in_progress') ?? [];
   const finished = sessions?.filter((s) => s.status === 'finished') ?? [];
   const groups = groupFinished(finished);
@@ -65,7 +68,7 @@ export default function SessionsPage({ params }: Props) {
     );
   }
 
-  if (!inProgress.length && !finished.length) {
+  if (!scheduled.length && !inProgress.length && !finished.length) {
     return (
       <EmptyState
         icon={<Clapperboard size={30} />}
@@ -77,6 +80,20 @@ export default function SessionsPage({ params }: Props) {
 
   return (
     <div className="pb-8">
+      {/* Programadas */}
+      {scheduled.length > 0 && (
+        <div className="px-5 pt-2 pb-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-3">
+            Próximas
+          </h2>
+          <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-3">
+            {scheduled.map((s) => (
+              <SessionCard key={s.id} session={s} groupId={groupId} />
+            ))}
+          </motion.div>
+        </div>
+      )}
+
       {/* Viendo ahora */}
       {inProgress.length > 0 && (
         <div className="px-5 pt-2 pb-5">

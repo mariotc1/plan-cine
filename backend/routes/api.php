@@ -52,6 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('groups/{groupId}/sessions/{id}/finish', [SessionController::class, 'finish']);
     Route::post('groups/{groupId}/sessions/{id}/cancel', [SessionController::class, 'cancel']);
     Route::post('groups/{groupId}/sessions/{id}/return', [SessionController::class, 'returnToPending']);
+    Route::post('groups/{groupId}/sessions/{id}/reschedule', [SessionController::class, 'reschedule']);
     Route::apiResource('groups/{groupId}/sessions', SessionController::class);
 
     // Ratings

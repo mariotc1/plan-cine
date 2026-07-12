@@ -30,7 +30,7 @@ export function useSession(groupId: string, sessionId: string) {
 export function useCreateSession(groupId: string) {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: { movie_id: string; participant_ids: string[] }) =>
+    mutationFn: (data: { movie_id: string; participant_ids: string[]; scheduled_at?: string }) =>
       sessionsApi.create(groupId, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['groups', groupId, 'sessions'] });
@@ -72,6 +72,20 @@ export function useCancelSession(groupId: string) {
       qc.invalidateQueries({ queryKey: ['groups', groupId, 'movies'] });
       toast.success('Sesión cancelada');
     },
+  });
+}
+
+export function useRescheduleSession(groupId: string) {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ sessionId, scheduledAt, participantIds }: { sessionId: string; scheduledAt: string; participantIds?: string[] }) =>
+      sessionsApi.reschedule(groupId, sessionId, { scheduled_at: scheduledAt, participant_ids: participantIds }),
+    onSuccess: (_, { sessionId }) => {
+      qc.invalidateQueries({ queryKey: ['groups', groupId, 'sessions'] });
+      qc.invalidateQueries({ queryKey: ['groups', groupId, 'sessions', sessionId] });
+      toast.success('Sesión reprogramada 📅');
+    },
+    onError: () => toast.error('Error al reprogramar la sesión'),
   });
 }
 

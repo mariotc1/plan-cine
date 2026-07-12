@@ -14,6 +14,7 @@ class CreateSessionRequest extends FormRequest
             'movie_id' => 'required|string|exists:movies,id',
             'participant_ids' => 'required|array|min:1',
             'participant_ids.*' => 'string|exists:users,id',
+            'scheduled_at' => 'nullable|date',
         ];
     }
 }

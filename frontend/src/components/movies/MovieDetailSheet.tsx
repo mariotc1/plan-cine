@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Clock, Play, Pencil, Trash2, Film, ExternalLink } from 'lucide-react';
+import { X, Clock, Play, Pencil, Trash2, Film, ExternalLink, CalendarDays } from 'lucide-react';
 import Image from 'next/image';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
@@ -13,11 +13,12 @@ interface MovieDetailSheetProps {
   movie: Movie | null;
   onClose: () => void;
   onWatchNow?: (movie: Movie) => void;
+  onSchedule?: (movie: Movie) => void;
   onEdit?: (movie: Movie) => void;
   onDelete?: (movie: Movie) => void;
 }
 
-export function MovieDetailSheet({ movie, onClose, onWatchNow, onEdit, onDelete }: MovieDetailSheetProps) {
+export function MovieDetailSheet({ movie, onClose, onWatchNow, onSchedule, onEdit, onDelete }: MovieDetailSheetProps) {
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [trailerLoading, setTrailerLoading] = useState(false);
 
@@ -93,10 +94,32 @@ export function MovieDetailSheet({ movie, onClose, onWatchNow, onEdit, onDelete 
 
               <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
 
-                {/* Title */}
-                <h2 className="text-[22px] font-bold text-white leading-tight mb-3 tracking-tight">
-                  {movie.title}
-                </h2>
+                {/* Title + icon actions */}
+                <div className="flex items-start gap-3 mb-3">
+                  <h2 className="text-[22px] font-bold text-white leading-tight tracking-tight flex-1">
+                    {movie.title}
+                  </h2>
+                  <div className="flex items-center gap-1.5 pt-1 flex-shrink-0">
+                    {onEdit && (
+                      <button
+                        onClick={() => { onClose(); onEdit(movie); }}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] text-zinc-500 hover:text-zinc-300 transition-colors border border-white/[0.08]"
+                        aria-label="Editar"
+                      >
+                        <Pencil size={13} />
+                      </button>
+                    )}
+                    {onDelete && (
+                      <button
+                        onClick={() => { onClose(); onDelete(movie); }}
+                        className="w-8 h-8 rounded-xl flex items-center justify-center bg-red-500/[0.06] hover:bg-red-500/[0.14] text-red-500/60 hover:text-red-400 transition-colors border border-red-500/[0.12]"
+                        aria-label="Eliminar"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    )}
+                  </div>
+                </div>
 
                 {/* Meta badges */}
                 <div className="flex items-center gap-2 flex-wrap mb-3">
@@ -185,35 +208,29 @@ export function MovieDetailSheet({ movie, onClose, onWatchNow, onEdit, onDelete 
                   </div>
                 )}
 
-                {/* Actions */}
-                <div className="space-y-3">
-                  {onWatchNow && (
-                    <button
-                      onClick={() => { onClose(); onWatchNow(movie); }}
-                      className="w-full h-12 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_4px_20px_-4px_rgba(99,102,241,0.5)]"
-                    >
-                      <Play size={15} fill="white" /> Ver ahora
-                    </button>
-                  )}
-                  <div className="flex gap-3">
-                    {onEdit && (
+                {/* Primary actions */}
+                {(onWatchNow || onSchedule) && (
+                  <div className="flex flex-col gap-2.5">
+                    {onWatchNow && (
                       <button
-                        onClick={() => { onClose(); onEdit(movie); }}
-                        className="flex-1 h-11 bg-white/[0.05] hover:bg-white/[0.09] text-zinc-300 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors border border-white/[0.08] text-sm"
+                        onClick={() => { onClose(); onWatchNow(movie); }}
+                        className="w-full h-13 bg-indigo-500 hover:bg-indigo-600 text-white font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors shadow-[0_4px_20px_-4px_rgba(99,102,241,0.45)]"
+                        style={{ height: '52px' }}
                       >
-                        <Pencil size={13} /> Editar
+                        <Play size={16} fill="white" /> Ver ahora
                       </button>
                     )}
-                    {onDelete && (
+                    {onSchedule && (
                       <button
-                        onClick={() => { onClose(); onDelete(movie); }}
-                        className="flex-1 h-11 bg-red-500/[0.08] hover:bg-red-500/[0.15] text-red-400 font-medium rounded-xl flex items-center justify-center gap-2 transition-colors border border-red-500/20 text-sm"
+                        onClick={() => { onClose(); onSchedule(movie); }}
+                        className="w-full h-13 bg-amber-500/15 hover:bg-amber-500/25 text-amber-400 font-semibold rounded-xl flex items-center justify-center gap-2 transition-colors border border-amber-500/25"
+                        style={{ height: '52px' }}
                       >
-                        <Trash2 size={13} /> Eliminar
+                        <CalendarDays size={16} /> Programar para más tarde
                       </button>
                     )}
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </motion.div>
