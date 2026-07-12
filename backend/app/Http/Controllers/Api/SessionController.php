@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSessionRequest;
 use App\Http\Resources\SessionResource;
+use App\Jobs\SendScheduledSessionNotification;
 use App\Models\CinemaSession;
 use App\Models\Group;
 use App\Services\PushNotificationService;
@@ -33,17 +34,15 @@ class SessionController extends Controller
 
         $movie = $group->movies()->findOrFail($request->movie_id);
 
+        $scheduledAt = $request->scheduled_at ? Carbon::parse($request->scheduled_at) : null;
+        $status = $scheduledAt ? 'scheduled' : 'pending';
+
         $session = $group->sessions()->create([
             'movie_id' => $movie->id,
-            'status' => 'pending',
+            'status' => $status,
+            'scheduled_at' => $scheduledAt,
             'created_by' => $request->user()->id,
         ]);
-
-        $participants = collect($request->participant_ids)->map(fn($uid) => [
-            'id' => (string) Str::uuid(),
-            'session_id' => $session->id,
-            'user_id' => $uid,
-        ])->toArray();
 
         $session->participants()->attach($request->participant_ids);
 
@@ -51,7 +50,15 @@ class SessionController extends Controller
 
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
 
-        return response()->json(['data' => new SessionResource($session), 'message' => 'Sesión creada.'], 201);
+        if ($scheduledAt && config('queue.default') !== 'sync') {
+            SendScheduledSessionNotification::dispatch($session->id)->delay($scheduledAt);
+        }
+
+        $message = $scheduledAt
+            ? 'Sesión programada para el ' . $scheduledAt->format('d/m/Y \a \l\a\s H:i') . '.'
+            : 'Sesión creada.';
+
+        return response()->json(['data' => new SessionResource($session), 'message' => $message], 201);
     }
 
     public function show(Request $request, string $groupId, string $id): JsonResponse
@@ -70,7 +77,7 @@ class SessionController extends Controller
         $group = $this->findGroupForUser($request->user(), $groupId);
         $session = $group->sessions()->with(['movie', 'participants'])->findOrFail($id);
 
-        abort_if($session->status !== 'pending', 422, 'La sesión no está en estado pendiente.');
+        abort_if(!in_array($session->status, ['pending', 'scheduled']), 422, 'La sesión no se puede iniciar.');
 
         $startedAt = Carbon::now();
         $estimatedEnd = $startedAt->copy()->addMinutes($session->movie->duration_minutes);
@@ -128,6 +135,38 @@ class SessionController extends Controller
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
 
         return response()->json(['data' => new SessionResource($session), 'message' => 'Sesión cancelada.']);
+    }
+
+    public function reschedule(Request $request, string $groupId, string $id): JsonResponse
+    {
+        $request->validate([
+            'scheduled_at'      => 'required|date',
+            'participant_ids'   => 'sometimes|array',
+            'participant_ids.*' => 'exists:users,id',
+        ]);
+
+        $group   = $this->findGroupForUser($request->user(), $groupId);
+        $session = $group->sessions()->with(['movie', 'participants'])->findOrFail($id);
+
+        abort_if($session->status !== 'scheduled', 422, 'Solo se pueden reprogramar sesiones programadas.');
+
+        $newScheduledAt = Carbon::parse($request->scheduled_at);
+        $session->update(['scheduled_at' => $newScheduledAt]);
+
+        if ($request->has('participant_ids')) {
+            $session->participants()->sync($request->participant_ids);
+        }
+
+        if (config('queue.default') !== 'sync') {
+            SendScheduledSessionNotification::dispatch($session->id)->delay($newScheduledAt);
+        }
+
+        $session->load(['movie.addedBy', 'participants', 'ratings.user']);
+
+        return response()->json([
+            'data'    => new SessionResource($session),
+            'message' => 'Sesión reprogramada para el ' . $newScheduledAt->format('d/m/Y \a \l\a\s H:i') . '.',
+        ]);
     }
 
     public function returnToPending(Request $request, string $groupId, string $id): JsonResponse

@@ -4,6 +4,7 @@ import { use, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SpinWheel } from '@/components/spin/SpinWheel';
 import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
+import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { useMovies, useRandomMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
@@ -18,8 +19,8 @@ interface Props {
 export default function SpinPage({ params }: Props) {
   const { groupId } = use(params);
   const router = useRouter();
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [showStart, setShowStart] = useState(false);
+  const [watchMovie, setWatchMovie] = useState<Movie | null>(null);
+  const [scheduleMovie, setScheduleMovie] = useState<Movie | null>(null);
 
   const filtersRaw = useFilterStore((s) => s.filters[groupId]);
   const filters = filtersRaw ?? {};
@@ -39,24 +40,35 @@ export default function SpinPage({ params }: Props) {
     }
   };
 
-  const handleWatch = (movie: Movie) => {
-    setSelectedMovie(movie);
-    setShowStart(true);
-  };
-
-  const handleStart = async (participantIds: string[]) => {
-    if (!selectedMovie) return;
+  const handleStartNow = async (participantIds: string[]) => {
+    if (!watchMovie) return;
     try {
       const sessionRes = await createSession.mutateAsync({
-        movie_id: selectedMovie.id,
+        movie_id: watchMovie.id,
         participant_ids: participantIds,
       });
       const session = sessionRes.data.data;
       await startSession.mutateAsync(session.id);
-      setShowStart(false);
+      setWatchMovie(null);
       router.push(`/groups/${groupId}/sessions/${session.id}`);
     } catch {
       toast.error('Error al iniciar la sesión');
+    }
+  };
+
+  const handleSchedule = async (participantIds: string[], scheduledAt: string) => {
+    if (!scheduleMovie) return;
+    try {
+      await createSession.mutateAsync({
+        movie_id: scheduleMovie.id,
+        participant_ids: participantIds,
+        scheduled_at: scheduledAt,
+      });
+      setScheduleMovie(null);
+      toast.success('Sesión programada 📅');
+      router.push(`/groups/${groupId}/sessions`);
+    } catch {
+      toast.error('Error al programar la sesión');
     }
   };
 
@@ -65,16 +77,26 @@ export default function SpinPage({ params }: Props) {
       <SpinWheel
         movies={movies ?? []}
         onSpin={handleSpin}
-        onWatch={handleWatch}
+        onWatch={(movie) => setWatchMovie(movie)}
+        onSchedule={(movie) => setScheduleMovie(movie)}
       />
 
       <StartSessionSheet
-        open={showStart}
-        onClose={() => setShowStart(false)}
-        movie={selectedMovie}
+        open={!!watchMovie}
+        onClose={() => setWatchMovie(null)}
+        movie={watchMovie}
         members={members?.map((m) => m.user) ?? []}
-        onStart={handleStart}
+        onStart={handleStartNow}
         loading={createSession.isPending || startSession.isPending}
+      />
+
+      <ScheduleSessionSheet
+        open={!!scheduleMovie}
+        onClose={() => setScheduleMovie(null)}
+        movie={scheduleMovie}
+        members={members?.map((m) => m.user) ?? []}
+        onSchedule={handleSchedule}
+        loading={createSession.isPending}
       />
     </div>
   );

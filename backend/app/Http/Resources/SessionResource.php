@@ -16,6 +16,7 @@ class SessionResource extends JsonResource
             'started_at' => $this->started_at,
             'estimated_end_at' => $this->estimated_end_at,
             'actual_end_at' => $this->actual_end_at,
+            'scheduled_at' => $this->scheduled_at,
             'status' => $this->status,
             'participants' => $this->whenLoaded('participants', fn() => UserResource::collection($this->participants)),
             'ratings' => $this->whenLoaded('ratings', fn() => RatingResource::collection($this->ratings)),

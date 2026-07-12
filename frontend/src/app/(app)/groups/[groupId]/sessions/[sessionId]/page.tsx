@@ -3,14 +3,17 @@
 import { use, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useSession, useFinishSession, useReturnToPending, useRateSession } from '@/hooks/useSessions';
+import { useSession, useStartSession, useFinishSession, useReturnToPending, useRescheduleSession, useRateSession } from '@/hooks/useSessions';
+import { useGroupMembers } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { RatingStars } from '@/components/sessions/RatingStars';
+import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
+import { ConfirmSheet } from '@/components/sessions/ConfirmSheet';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
-import { ArrowLeft, Clock, Film, Users, Calendar, Star } from 'lucide-react';
+import { ArrowLeft, Clock, Film, Users, Calendar, Star, CalendarDays, Play } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -24,13 +27,20 @@ export default function SessionDetailPage({ params }: Props) {
   const router = useRouter();
   const { data: session, isLoading, refetch } = useSession(groupId, sessionId);
   const { user } = useAuthStore();
+  const startSession = useStartSession(groupId);
   const finishSession = useFinishSession(groupId);
   const returnToPending = useReturnToPending(groupId);
+  const rescheduleSession = useRescheduleSession(groupId);
   const rateSession = useRateSession();
+
+  const { data: groupMembers = [] } = useGroupMembers(groupId);
+  const members = groupMembers.map((m) => m.user);
 
   const [promptScore, setPromptScore] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [showEditSheet, setShowEditSheet] = useState(false);
+  const [showConfirmCancel, setShowConfirmCancel] = useState(false);
 
   // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
   useEffect(() => {
@@ -45,6 +55,7 @@ export default function SessionDetailPage({ params }: Props) {
   const userRating = session?.ratings.find((r) => r.user.id === user?.id);
   const canRate = session?.status === 'finished' && userParticipated && !userRating;
   const isInProgress = session?.status === 'in_progress';
+  const isScheduled = session?.status === 'scheduled';
 
   // Auto-show rating prompt when session ends and user can rate
   useEffect(() => {
@@ -70,13 +81,14 @@ export default function SessionDetailPage({ params }: Props) {
     }
   };
 
-  const STATUS_CONFIG = {
+  const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string }> = {
+    scheduled:   { label: 'Programada', dot: 'bg-amber-400',   text: 'text-amber-400',   bg: 'bg-amber-500/15' },
     pending:     { label: 'Pendiente',  dot: 'bg-zinc-500',    text: 'text-zinc-400',    bg: 'bg-zinc-800' },
     in_progress: { label: 'En curso',   dot: 'bg-emerald-400', text: 'text-emerald-400', bg: 'bg-emerald-500/15' },
     finished:    { label: 'Vista',      dot: 'bg-indigo-400',  text: 'text-indigo-400',  bg: 'bg-indigo-500/15' },
     cancelled:   { label: 'Cancelada',  dot: 'bg-red-400',     text: 'text-red-400',     bg: 'bg-red-500/15' },
   };
-  const sc = STATUS_CONFIG[session.status];
+  const sc = STATUS_CONFIG[session.status] ?? STATUS_CONFIG.pending;
 
   return (
     <div>
@@ -152,6 +164,16 @@ export default function SessionDetailPage({ params }: Props) {
               </div>
 
               <div className="space-y-2">
+                {session.scheduled_at && (
+                  <div className="flex items-center gap-2 text-sm text-amber-400/90">
+                    <CalendarDays size={13} className="flex-shrink-0" />
+                    <span>
+                      {new Date(session.scheduled_at).toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' })}
+                      {' a las '}
+                      {new Date(session.scheduled_at).toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                )}
                 {session.started_at && (
                   <div className="flex items-center gap-2 text-sm text-zinc-400">
                     <Calendar size={13} className="flex-shrink-0" />
@@ -240,6 +262,47 @@ export default function SessionDetailPage({ params }: Props) {
           )}
         </AnimatePresence>
 
+
+        {/* Actions (scheduled) */}
+        {isScheduled && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="space-y-2.5 pt-1"
+          >
+            {/* Primary row: Edit + Start now — equal halves */}
+            <div className="flex gap-2.5">
+              <Button
+                onClick={() => setShowEditSheet(true)}
+                className="flex-1 h-12 rounded-xl bg-amber-500/90 hover:bg-amber-500 text-zinc-950 font-semibold text-sm flex items-center justify-center gap-1.5"
+              >
+                <CalendarDays size={14} /> Editar sesión
+              </Button>
+              <Button
+                onClick={async () => {
+                  await startSession.mutateAsync(sessionId);
+                  await refetch();
+                }}
+                disabled={startSession.isPending}
+                className="flex-1 h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Play size={13} fill="currentColor" />
+                {startSession.isPending ? 'Iniciando...' : 'Empezar ahora'}
+              </Button>
+            </div>
+
+            {/* Destructive: Cancel — minimal prominence */}
+            <div className="flex justify-center pt-1">
+              <button
+                onClick={() => setShowConfirmCancel(true)}
+                className="text-sm text-red-400/70 hover:text-red-400 transition-colors font-medium"
+              >
+                Cancelar sesión
+              </button>
+            </div>
+          </motion.div>
+        )}
 
         {/* Actions (in_progress only) */}
         {isInProgress && (
@@ -352,6 +415,38 @@ export default function SessionDetailPage({ params }: Props) {
           </>
         )}
       </AnimatePresence>
+
+      {/* Edit session sheet (participants + date/time) */}
+      <ScheduleSessionSheet
+        open={showEditSheet}
+        onClose={() => setShowEditSheet(false)}
+        movie={session?.movie ?? null}
+        members={members}
+        editMode
+        initialParticipantIds={session?.participants.map((p) => p.id)}
+        initialScheduledAt={session?.scheduled_at}
+        loading={rescheduleSession.isPending}
+        onSchedule={async (participantIds, scheduledAt) => {
+          await rescheduleSession.mutateAsync({ sessionId, scheduledAt, participantIds });
+          setShowEditSheet(false);
+          await refetch();
+        }}
+      />
+
+      {/* Cancel confirmation */}
+      <ConfirmSheet
+        open={showConfirmCancel}
+        onClose={() => setShowConfirmCancel(false)}
+        title="¿Cancelar la sesión?"
+        message="La película volverá a la lista de pendientes y podrás programarla de nuevo cuando quieras."
+        confirmLabel="Sí, cancelar sesión"
+        cancelLabel="Mantener"
+        loading={returnToPending.isPending}
+        onConfirm={async () => {
+          await returnToPending.mutateAsync(sessionId);
+          router.replace(`/groups/${groupId}/sessions`);
+        }}
+      />
     </div>
   );
 }

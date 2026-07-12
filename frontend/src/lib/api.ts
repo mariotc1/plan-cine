@@ -80,7 +80,7 @@ export const moviesApi = {
 
 export const sessionsApi = {
   list: (groupId: string) => api.get(`/groups/${groupId}/sessions`),
-  create: (groupId: string, data: { movie_id: string; participant_ids: string[] }) =>
+  create: (groupId: string, data: { movie_id: string; participant_ids: string[]; scheduled_at?: string }) =>
     api.post(`/groups/${groupId}/sessions`, data),
   get: (groupId: string, id: string) => api.get(`/groups/${groupId}/sessions/${id}`),
   start: (groupId: string, id: string) => api.post(`/groups/${groupId}/sessions/${id}/start`),
@@ -88,6 +88,8 @@ export const sessionsApi = {
   cancel: (groupId: string, id: string) => api.post(`/groups/${groupId}/sessions/${id}/cancel`),
   returnToPending: (groupId: string, id: string) =>
     api.post(`/groups/${groupId}/sessions/${id}/return`),
+  reschedule: (groupId: string, id: string, data: { scheduled_at: string; participant_ids?: string[] }) =>
+    api.post(`/groups/${groupId}/sessions/${id}/reschedule`, data),
 };
 
 export const ratingsApi = {

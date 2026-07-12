@@ -12,6 +12,7 @@ import { AddMovieSheet } from '@/components/movies/AddMovieSheet';
 import { MovieDetailSheet } from '@/components/movies/MovieDetailSheet';
 import { MovieFilters } from '@/components/movies/MovieFilters';
 import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
+import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SkeletonCard } from '@/components/shared/LoadingSpinner';
 import { Button } from '@/components/ui/button';
@@ -32,6 +33,7 @@ export default function MoviesPage({ params }: Props) {
   const [editMovie, setEditMovie] = useState<Movie | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Movie | null>(null);
   const [watchNowMovie, setWatchNowMovie] = useState<Movie | null>(null);
+  const [scheduleMovie, setScheduleMovie] = useState<Movie | null>(null);
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
 
   const filtersRaw = useFilterStore((s) => s.filters[groupId]);
@@ -97,6 +99,22 @@ export default function MoviesPage({ params }: Props) {
       router.push(`/groups/${groupId}/sessions/${session.id}`);
     } catch {
       toast.error('Error al iniciar la sesión');
+    }
+  };
+
+  const handleScheduleSession = async (participantIds: string[], scheduledAt: string) => {
+    if (!scheduleMovie) return;
+    try {
+      await createSession.mutateAsync({
+        movie_id: scheduleMovie.id,
+        participant_ids: participantIds,
+        scheduled_at: scheduledAt,
+      });
+      setScheduleMovie(null);
+      toast.success('Sesión programada 📅');
+      router.push(`/groups/${groupId}/sessions`);
+    } catch {
+      toast.error('Error al programar la sesión');
     }
   };
 
@@ -196,11 +214,12 @@ export default function MoviesPage({ params }: Props) {
         movie={detailMovie}
         onClose={() => setDetailMovie(null)}
         onWatchNow={handleWatchNow}
+        onSchedule={(movie) => { setDetailMovie(null); setScheduleMovie(movie); }}
         onEdit={handleEdit}
         onDelete={setDeleteTarget}
       />
 
-      {/* Watch Now — start session sheet */}
+      {/* Ver ahora sheet */}
       <StartSessionSheet
         open={!!watchNowMovie}
         onClose={() => setWatchNowMovie(null)}
@@ -208,6 +227,16 @@ export default function MoviesPage({ params }: Props) {
         members={members?.map((m) => m.user) ?? []}
         onStart={handleStartSession}
         loading={createSession.isPending || startSession.isPending}
+      />
+
+      {/* Programar sheet */}
+      <ScheduleSessionSheet
+        open={!!scheduleMovie}
+        onClose={() => setScheduleMovie(null)}
+        movie={scheduleMovie}
+        members={members?.map((m) => m.user) ?? []}
+        onSchedule={handleScheduleSession}
+        loading={createSession.isPending}
       />
 
       {/* Delete confirm sheet */}
