@@ -51,7 +51,7 @@ function StarRow({ rating, size = 14 }: { rating: number; size?: number }) {
   );
 }
 
-// Card is 390×560 — portrait, optimised for mobile sharing
+// Card is 390×620 — portrait, poster-first design
 export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
   mode, movieTitle, posterPath, rating, ratingCount,
   userName, userAvatar, userColor, groupName, participants = [],
@@ -73,7 +73,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       ref={ref}
       style={{
         width: '390px',
-        height: '560px',
+        height: '620px',
         backgroundColor: '#09090b',
         borderRadius: '24px',
         overflow: 'hidden',
@@ -97,7 +97,7 @@ export const ShareCard = forwardRef<HTMLDivElement, ShareCardProps>(({
       <div style={{ padding: '24px 24px 0 24px', position: 'relative', zIndex: 2 }}>
         <div style={{
           width: '100%',
-          height: '295px',
+          height: '380px',
           borderRadius: '14px',
           overflow: 'hidden',
           boxShadow: '0 12px 48px rgba(0,0,0,0.75)',

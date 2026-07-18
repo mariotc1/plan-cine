@@ -12,7 +12,7 @@ import { useAuthStore } from '@/stores/authStore';
 // ─── Canvas image generation ────────────────────────────────────────────────
 
 const W = 390;
-const H = 560;
+const H = 620;
 const SCALE = 2;
 
 // Layout constants — mirror ShareCard.tsx (portrait)
@@ -20,11 +20,11 @@ const PAD = 24;
 const POSTER_X = PAD;
 const POSTER_Y = PAD;
 const POSTER_W = W - PAD * 2;   // 342
-const POSTER_H_C = 295;
+const POSTER_H_C = 380;
 const INFO_X = PAD;
 const INFO_W = W - PAD * 2;     // 342
-const INFO_Y = POSTER_Y + POSTER_H_C + 18; // 337
-const INFO_BOTTOM = H - PAD;    // 536
+const INFO_Y = POSTER_Y + POSTER_H_C + 18; // 422
+const INFO_BOTTOM = H - PAD;    // 596
 const FONT = '-apple-system, BlinkMacSystemFont, system-ui, sans-serif';
 
 function roundRectPath(
@@ -260,12 +260,12 @@ interface ShareCardSheetProps {
 }
 
 const CARD_W = 390;
-const CARD_H = 560;
-const PREVIEW_SCALE = 0.6;
+const CARD_H = 620;
+const PREVIEW_SCALE = 0.54;
 
 export function ShareCardSheet({ open, onClose, session, groupName }: ShareCardSheetProps) {
   const { user } = useAuthStore();
-  const [mode, setMode] = useState<'personal' | 'group'>('group');
+  const [mode, setMode] = useState<'personal' | 'group'>('personal');
   const [sharing, setSharing] = useState(false);
 
   const userRating = session.ratings.find((r) => r.user.id === user?.id);
@@ -335,7 +335,7 @@ export function ShareCardSheet({ open, onClose, session, groupName }: ShareCardS
             <div className="px-6 py-5">
               {/* Toggle */}
               <div className="flex gap-2 mb-5 p-1 bg-white/[0.04] rounded-2xl border border-white/[0.06]">
-                {(['group', 'personal'] as const).map((m) => {
+                {(['personal', 'group'] as const).map((m) => {
                   const disabled = m === 'personal' && !hasPersonalRating;
                   return (
                     <button
