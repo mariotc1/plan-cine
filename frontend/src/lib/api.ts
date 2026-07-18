@@ -20,7 +20,10 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
+      // Clear both the raw token and the full Zustand persisted state so
+      // the landing page doesn't read isAuthenticated: true and loop back.
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('plan-cine-auth');
       window.location.href = '/login';
     }
     return Promise.reject(error);

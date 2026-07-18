@@ -4,6 +4,7 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft } from 'lucide-react';
+import QRCode from 'react-qr-code';
 import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { cn } from '@/lib/utils';
@@ -319,12 +320,12 @@ export default function GroupLayout({ children, params }: Props) {
               <div className="flex flex-col items-center px-6 pb-[max(env(safe-area-inset-bottom),32px)] pt-2">
                 <div className="bg-white rounded-2xl p-5 mb-5">
                   {joinUrl && (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(joinUrl)}&bgcolor=ffffff&color=09090b&format=svg&margin=0`}
-                      alt="QR de invitación"
-                      width={200}
-                      height={200}
+                    <QRCode
+                      value={joinUrl}
+                      size={200}
+                      fgColor="#09090b"
+                      bgColor="#ffffff"
+                      style={{ height: 200, width: 200 }}
                     />
                   )}
                 </div>

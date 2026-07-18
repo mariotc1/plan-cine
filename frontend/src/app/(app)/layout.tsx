@@ -8,9 +8,10 @@ import { InstallBanner } from '@/components/shared/InstallBanner';
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { PullToRefresh } from '@/components/shared/PullToRefresh';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
+import { authApi } from '@/lib/api';
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated } = useAuthStore();
+  const { isAuthenticated, logout } = useAuthStore();
   const router = useRouter();
   usePushNotifications();
 
@@ -19,6 +20,19 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       router.replace('/');
     }
   }, [isAuthenticated, router]);
+
+  // Validate token against the backend once on mount.
+  // Covers the case where the token is persisted in Zustand but has expired
+  // on the server — the 401 interceptor handles the redirect, but we also
+  // clear the store here so the landing page doesn't loop back.
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    authApi.me().catch(() => {
+      logout();
+      router.replace('/login');
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   if (!isAuthenticated) return null;
 

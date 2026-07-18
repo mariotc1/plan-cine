@@ -43,6 +43,10 @@ export function useAuth() {
     try {
       await authApi.logout();
     } catch {}
+    // Clear SW cache so a subsequent user never sees stale data from a prior session
+    if (typeof window !== 'undefined' && 'caches' in window) {
+      caches.keys().then((keys) => keys.forEach((k) => caches.delete(k)));
+    }
     queryClient.clear();
     storeLogout();
     router.push('/');
