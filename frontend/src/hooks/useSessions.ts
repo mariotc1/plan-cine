@@ -16,6 +16,11 @@ export function useSessions(groupId: string) {
   });
 }
 
+export function useActiveSession(groupId: string): CinemaSession | undefined {
+  const { data: sessions } = useSessions(groupId);
+  return sessions?.find((s) => s.status === 'in_progress');
+}
+
 export function useSession(groupId: string, sessionId: string) {
   return useQuery<CinemaSession>({
     queryKey: ['groups', groupId, 'sessions', sessionId],

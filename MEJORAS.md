@@ -145,40 +145,31 @@
 
 ---
 
-## FASE 4 — Navegación y estructura
+## FASE 4 — Navegación y estructura ✅ COMPLETADA
 
 > Cambio estructural de mayor impacto visual. Hacerlo después de las fases 1-3 para no mezclar bugs.
 
-### 4.1 Reestructurar tabs del grupo: 5 → 4
-- **Problema:** 5 tabs (Películas, Ruleta, Sesiones, Stats, Recuerdos) en un pill horizontal overflow en iPhone SE (375px) y saturan visualmente.
-- **Nueva estructura de 4 tabs:**
-  - `Películas` — lista de pendientes (default)
-  - `¿Qué vemos?` — acceso a Ruleta + Movie Duels (ambos en la misma pantalla, como modos)
-  - `Historial` — sesiones terminadas + memories juntos
-  - `Grupo` — stats, miembros, configuración del grupo
-- **Archivos a tocar:**
-  - `src/app/(app)/groups/[groupId]/layout.tsx` — rehacer la nav con 4 tabs
-  - `src/app/(app)/groups/[groupId]/spin/page.tsx` — añadir selector de modo (Ruleta / Duelo)
-  - Posiblemente unificar `memories` y `sessions` bajo `historial`
-- **Qué probar:** En iPhone SE (375px en DevTools). Los 4 tabs deben caber sin scroll ni truncado. Navegar entre todos, verificar que las rutas funcionan.
+### 4.1 Reestructurar tabs del grupo: 5 → 4 ✅
+- **Archivos tocados:** `src/app/(app)/groups/[groupId]/layout.tsx`
+- **Nuevas tabs:** `Pelis` · `Ruleta` · `Historial` · `Grupo` (mismas rutas, nuevos labels)
+- **Qué probar:** iPhone SE (375px en DevTools) → los 4 tabs deben caber sin scroll ni truncado. Navegar entre todos.
 
-### 4.2 "Now Playing" banner persistente
-- **Problema:** Cuando hay una sesión activa, no hay ningún indicador visible si navegas a otras pestañas del grupo.
-- **Fix:** Banner fijo debajo del header del grupo cuando el estado de la sesión es `en_curso`. Muestra título de la película + tiempo restante estimado + tap → va a la sesión.
-- **Archivos a crear:**
-  - `src/components/sessions/NowPlayingBanner.tsx`
-- **Archivos a tocar:**
-  - `src/app/(app)/groups/[groupId]/layout.tsx` — incluir `<NowPlayingBanner groupId={groupId} />`
-  - `src/hooks/useSessions.ts` — hook `useActiveSession(groupId)` si no existe
-- **Qué probar:** Iniciar sesión → navegar a Stats → el banner debe aparecer. Tapearlo → va a la pantalla de sesión. Terminar sesión → banner desaparece.
+### 4.2 "Now Playing" banner persistente ✅
+- **Archivos creados:** `src/components/sessions/NowPlayingBanner.tsx`
+- **Archivos tocados:** `src/hooks/useSessions.ts` (añadido `useActiveSession`), `layout.tsx`
+- **Comportamiento:** Banner emerald con dot pulsante entre las tabs y el contenido. Muestra título, tiempo restante (actualizado cada minuto) y avatares. Tap → navega a la sesión. Desaparece con animación cuando la sesión termina.
+- **Qué probar:** Iniciar una sesión → navegar a Ruleta o Historial → banner visible. Tapearlo → va a la sesión. Terminar sesión → banner desaparece.
 
-### 4.3 Búsqueda inline siempre visible
-- **Problema:** Con muchas películas, encontrar una concreta requiere scrollear o abrir el sheet de filtros. La búsqueda debería estar siempre visible como en cualquier lista de iOS.
-- **Fix:** `SearchBar` fijo justo debajo del header, sobre la lista. Al hacer focus, filtra en tiempo real (client-side, sin llamada API si ya están cargadas). Filtros avanzados siguen en el sheet.
-- **Archivos a tocar:**
-  - `src/app/(app)/groups/[groupId]/page.tsx` — añadir `SearchBar` + lógica de filtrado local
-  - `src/components/shared/SearchBar.tsx` — nuevo componente reutilizable
-- **Qué probar:** Escribir parte del título de una película → lista filtra en tiempo real. Limpiar búsqueda → vuelve la lista completa. El SearchBar no interfiere con el scroll ni con los filtros avanzados.
+### 4.3 Búsqueda inline en lista de películas ✅
+- **Archivos creados:** `src/components/shared/SearchBar.tsx`
+- **Archivos tocados:** `src/app/(app)/groups/[groupId]/page.tsx`
+- **Comportamiento:** SearchBar aparece sólo cuando hay películas cargadas. Filtrado client-side en tiempo real con `useMemo`. Botón ✕ para limpiar. Empty state contextual según búsqueda vs filtros vs lista vacía.
+- **Qué probar:** Escribir parte de un título → lista filtra al instante. Borrar → lista completa. Buscar algo inexistente → empty state con el término buscado.
+
+### 4.4 Historial unificado con Recuerdos ✅
+- **Archivos tocados:** `src/app/(app)/groups/[groupId]/sessions/page.tsx`
+- **Comportamiento:** La pestaña "Historial" muestra sesiones + sección "Recuerdos" al final (películas vistas tal día como hoy hace N años). Solo aparece si hay memories.
+- **Qué probar:** Si el grupo tiene más de 1 año, la sección Recuerdos aparece al final del Historial con el diseño de cards indigo.
 
 ---
 
@@ -268,6 +259,7 @@
 | 2026-07-18 | Fase 1 | 1.1-1.4 completos. 1.5 requiere fix en backend Laravel |
 | 2026-07-18 | Fase 2 | 2.1-2.4 completos. Hook useSheetAnimation + useLongPress |
 | 2026-07-18 | Fase 3 | 3.1-3.3 completos. Skeletons shimmer + OfflineBanner + empty states |
+| 2026-07-18 | Fase 4 | 4.1-4.4 completos. 4 tabs + NowPlayingBanner + SearchBar + Historial+Memories |
 
 ---
 

@@ -4,10 +4,12 @@ import { use, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSheetAnimation } from '@/hooks/useSheetAnimation';
-import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft } from 'lucide-react';
+import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft, Users, Shield, UserMinus } from 'lucide-react';
 import QRCode from 'react-qr-code';
-import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup } from '@/hooks/useGroups';
+import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup, useGroupMembers, useKickMember } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
+import { NowPlayingBanner } from '@/components/sessions/NowPlayingBanner';
+import { GroupMember } from '@/types';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -27,7 +29,6 @@ const TABS = [
   { label: 'Ruleta', href: '/spin' },
   { label: 'Sesiones', href: '/sessions' },
   { label: 'Ranking', href: '/stats' },
-  { label: 'Miembros', href: '/members' },
 ];
 
 interface Props {
@@ -47,16 +48,27 @@ export default function GroupLayout({ children, params }: Props) {
   const updateGroup = useUpdateGroup(groupId);
   const deleteGroup = useDeleteGroup();
   const leaveGroup = useLeaveGroup();
+  const { data: members } = useGroupMembers(groupId);
+  const kickMember = useKickMember(groupId);
 
   const [showSettings, setShowSettings] = useState(false);
   const [showQR, setShowQR] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
+  const [showMembers, setShowMembers] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [kickTarget, setKickTarget] = useState<GroupMember | null>(null);
 
-  const settingsSheet = useSheetAnimation(() => setShowSettings(false));
-  const qrSheet = useSheetAnimation(() => setShowQR(false));
-  const editSheet = useSheetAnimation(() => setShowEdit(false));
-  const deleteSheet = useSheetAnimation(() => setShowDeleteConfirm(false));
+  const settingsSheet  = useSheetAnimation(() => setShowSettings(false));
+  const qrSheet        = useSheetAnimation(() => setShowQR(false));
+  const editSheet      = useSheetAnimation(() => setShowEdit(false));
+  const membersSheet   = useSheetAnimation(() => setShowMembers(false));
+  const deleteSheet    = useSheetAnimation(() => setShowDeleteConfirm(false));
+
+  const handleKick = async () => {
+    if (!kickTarget) return;
+    await kickMember.mutateAsync(kickTarget.id);
+    setKickTarget(null);
+  };
   const [editName, setEditName] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editAvatar, setEditAvatar] = useState('🎬');
@@ -186,6 +198,8 @@ export default function GroupLayout({ children, params }: Props) {
         </div>
       </div>
 
+      <NowPlayingBanner groupId={groupId} />
+
       <div className="mt-3">{children}</div>
 
       {/* Settings sheet */}
@@ -248,6 +262,21 @@ export default function GroupLayout({ children, params }: Props) {
                   <div>
                     <p className="text-white text-sm font-medium">Copiar código</p>
                     <p className="text-zinc-500 text-xs font-mono">{group?.invitation_code}</p>
+                  </div>
+                </button>
+
+                <button
+                  onClick={() => { setShowSettings(false); setShowMembers(true); }}
+                  className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl hover:bg-white/5 transition-colors text-left"
+                >
+                  <div className="w-9 h-9 rounded-xl bg-white/8 flex items-center justify-center">
+                    <Users size={16} className="text-zinc-300" />
+                  </div>
+                  <div>
+                    <p className="text-white text-sm font-medium">Miembros</p>
+                    {group?.member_count !== undefined && (
+                      <p className="text-zinc-500 text-xs">{group.member_count} {group.member_count === 1 ? 'persona' : 'personas'}</p>
+                    )}
                   </div>
                 </button>
 
@@ -433,6 +462,145 @@ export default function GroupLayout({ children, params }: Props) {
                 >
                   {updateGroup.isPending ? 'Guardando...' : 'Guardar cambios'}
                 </Button>
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Members sheet */}
+      <AnimatePresence>
+        {showMembers && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              transition={{ duration: 0.18 }}
+              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+              onClick={() => setShowMembers(false)}
+            />
+            <motion.div
+              {...membersSheet.motionProps}
+              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
+              style={{ maxHeight: '80vh' }}
+            >
+              {/* Handle */}
+              <div className="flex justify-center pt-3 pb-1 flex-shrink-0 select-none" {...membersSheet.handleProps}>
+                <div className="w-10 h-1 bg-white/20 rounded-full" />
+              </div>
+
+              {/* Header */}
+              <div className="flex items-center justify-between px-6 py-3 flex-shrink-0">
+                <div>
+                  <h2 className="text-white font-bold text-lg leading-tight">Miembros</h2>
+                  <p className="text-zinc-500 text-xs mt-0.5">{members?.length ?? 0} {(members?.length ?? 0) === 1 ? 'persona' : 'personas'} en el grupo</p>
+                </div>
+                <button
+                  onClick={() => setShowMembers(false)}
+                  className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400"
+                >
+                  <X size={15} />
+                </button>
+              </div>
+
+              {/* Member list */}
+              <div className="flex-1 overflow-y-auto px-4 pb-[max(env(safe-area-inset-bottom),24px)] space-y-2">
+                {members?.map((member: GroupMember) => {
+                  const isSelf    = member.id === user?.id;
+                  const isAdminM  = member.role === 'admin';
+                  const canKick   = isAdmin && !isSelf && !isAdminM;
+                  const color     = member.user?.color ?? '#6366f1';
+                  return (
+                    <div key={member.id} className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-2xl px-4 py-3">
+                      {/* Avatar */}
+                      <div
+                        className="w-11 h-11 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                        style={{ backgroundColor: `${color}20` }}
+                      >
+                        {member.user?.avatar ?? '🎬'}
+                      </div>
+
+                      {/* Info */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1.5 flex-wrap">
+                          <p className="text-white font-semibold text-sm">{member.user?.name}</p>
+                          {isSelf && (
+                            <span className="text-[10px] text-zinc-500 bg-white/[0.06] px-1.5 py-0.5 rounded-md">Tú</span>
+                          )}
+                          {isAdminM && (
+                            <span className="flex items-center gap-0.5 text-[10px] text-indigo-400 bg-indigo-500/10 px-1.5 py-0.5 rounded-md border border-indigo-500/20">
+                              <Shield size={8} strokeWidth={2.5} /> Admin
+                            </span>
+                          )}
+                        </div>
+                        {member.joined_at && (
+                          <p className="text-zinc-600 text-[11px] mt-0.5">
+                            Desde {new Date(member.joined_at).toLocaleDateString('es-ES', { month: 'long', year: 'numeric' })}
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Kick button */}
+                      {canKick && (
+                        <motion.button
+                          whileTap={{ scale: 0.88 }}
+                          onClick={() => setKickTarget(member)}
+                          className="flex-shrink-0 w-8 h-8 rounded-xl flex items-center justify-center text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        >
+                          <UserMinus size={15} />
+                        </motion.button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Kick confirm sheet */}
+      <AnimatePresence>
+        {kickTarget && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/70 z-[70] backdrop-blur-sm"
+              onClick={() => setKickTarget(null)}
+            />
+            <motion.div
+              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
+              transition={{ type: 'spring', stiffness: 340, damping: 34 }}
+              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[71] bg-zinc-950 border-t border-white/10 rounded-t-3xl px-6 pb-[max(env(safe-area-inset-bottom),28px)]"
+            >
+              <div className="flex justify-center pt-3 pb-5">
+                <div className="w-10 h-1 bg-white/20 rounded-full" />
+              </div>
+              <div className="flex flex-col items-center text-center mb-6">
+                <div
+                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
+                  style={{ backgroundColor: `${kickTarget.user?.color ?? '#6366f1'}20` }}
+                >
+                  {kickTarget.user?.avatar}
+                </div>
+                <h2 className="text-white font-bold text-xl">Expulsar a {kickTarget.user?.name}</h2>
+                <p className="text-zinc-500 text-sm mt-2 leading-relaxed max-w-[280px]">
+                  Perderá acceso al grupo. Podrá volver a unirse con el enlace de invitación.
+                </p>
+              </div>
+              <div className="space-y-2.5">
+                <button
+                  onClick={handleKick}
+                  disabled={kickMember.isPending}
+                  className="w-full h-12 rounded-xl bg-red-500/90 hover:bg-red-500 text-white font-semibold transition-colors disabled:opacity-50"
+                >
+                  {kickMember.isPending ? 'Expulsando...' : `Expulsar a ${kickTarget.user?.name}`}
+                </button>
+                <button
+                  onClick={() => setKickTarget(null)}
+                  className="w-full h-12 rounded-xl bg-white/[0.05] text-zinc-400 font-medium transition-colors border border-white/[0.08]"
+                >
+                  Cancelar
+                </button>
               </div>
             </motion.div>
           </>

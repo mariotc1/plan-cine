@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { SlidersHorizontal, X } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { SlidersHorizontal, Search, X } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { PLATFORMS, GENRES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
@@ -12,10 +12,13 @@ import { MovieFiltersState } from '@/stores/filterStore';
 interface MovieFiltersProps {
   filters: MovieFiltersState;
   onChange: (filters: MovieFiltersState) => void;
+  searchQuery?: string;
+  onSearchChange?: (v: string) => void;
 }
 
-export function MovieFilters({ filters, onChange }: MovieFiltersProps) {
+export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChange }: MovieFiltersProps) {
   const [open, setOpen] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const activeCount = [filters.platform, filters.genre, filters.max_duration].filter(Boolean).length;
   const hasFilters = activeCount > 0;
@@ -25,70 +28,114 @@ export function MovieFilters({ filters, onChange }: MovieFiltersProps) {
 
   return (
     <>
-      {/* Trigger row */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <button
-          onClick={() => setOpen(true)}
-          className={cn(
-            'flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold transition-all flex-shrink-0',
-            hasFilters
-              ? 'bg-indigo-500 text-white shadow-[0_2px_12px_-2px_rgba(99,102,241,0.45)]'
-              : 'bg-zinc-800 text-zinc-400 border border-zinc-700/50',
-          )}
-        >
-          <SlidersHorizontal size={12} />
-          Filtrar
-          {activeCount > 0 && (
-            <span className="bg-white/25 rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold">
-              {activeCount}
-            </span>
-          )}
-        </button>
+      {/* Toolbar: search + filter button */}
+      <div className="space-y-2">
+        <div className="flex gap-2">
+          {/* Search box */}
+          <div className="relative flex-1 flex items-center bg-zinc-800/60 border border-white/[0.06] rounded-xl h-10 focus-within:border-white/[0.14] focus-within:bg-zinc-800/90 transition-all">
+            <Search size={14} className="absolute left-3 text-zinc-500 pointer-events-none flex-shrink-0" />
+            <input
+              ref={inputRef}
+              type="search"
+              value={searchQuery}
+              onChange={(e) => onSearchChange?.(e.target.value)}
+              placeholder="Buscar película..."
+              className="w-full h-full bg-transparent pl-9 pr-8 text-[14px] text-white placeholder:text-zinc-600 outline-none"
+            />
+            <AnimatePresence>
+              {searchQuery && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.7 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.7 }}
+                  transition={{ duration: 0.12 }}
+                  onClick={() => { onSearchChange?.(''); inputRef.current?.focus(); }}
+                  className="absolute right-2.5 w-4 h-4 rounded-full bg-zinc-600 flex items-center justify-center flex-shrink-0"
+                >
+                  <X size={9} className="text-white" strokeWidth={3} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
 
+          {/* Filter button box — mismo alto y estilo */}
+          <button
+            onClick={() => setOpen(true)}
+            className={cn(
+              'flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[13px] font-semibold transition-all flex-shrink-0 border',
+              hasFilters
+                ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-400'
+                : 'bg-zinc-800/60 border-white/[0.06] text-zinc-400',
+            )}
+          >
+            <SlidersHorizontal size={13} />
+            Filtrar
+            {activeCount > 0 && (
+              <span className={cn(
+                'rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold',
+                hasFilters ? 'bg-indigo-500/30 text-indigo-300' : 'bg-white/15 text-zinc-400',
+              )}>
+                {activeCount}
+              </span>
+            )}
+          </button>
+        </div>
+
+        {/* Active filter chips */}
         <AnimatePresence>
-          {activePlatform && (
-            <motion.button
-              key="plat"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              onClick={() => onChange({ ...filters, platform: undefined })}
-              className="flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full text-xs font-medium border border-white/10 bg-zinc-800/80"
-              style={{ color: activePlatform.color }}
+          {(activePlatform || activeGenre || filters.max_duration) && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.18 }}
+              className="flex gap-2 flex-wrap overflow-hidden"
             >
-              <PlatformLogo platform={activePlatform.value} size={11} color={activePlatform.color} />
-              {activePlatform.label}
-              <X size={10} className="ml-0.5 opacity-60" />
-            </motion.button>
-          )}
-          {activeGenre && (
-            <motion.button
-              key="genre"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              onClick={() => onChange({ ...filters, genre: undefined })}
-              className="flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full text-xs font-medium border border-white/10 bg-zinc-800/80 text-zinc-300"
-            >
-              {activeGenre.emoji} {activeGenre.label}
-              <X size={10} className="ml-0.5 opacity-60" />
-            </motion.button>
-          )}
-          {filters.max_duration && (
-            <motion.button
-              key="dur"
-              initial={{ opacity: 0, scale: 0.85 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.85 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 30 }}
-              onClick={() => onChange({ ...filters, max_duration: undefined })}
-              className="flex items-center gap-1 h-8 pl-2.5 pr-2 rounded-full text-xs font-medium border border-white/10 bg-zinc-800/80 text-zinc-300"
-            >
-              máx. {formatDuration(filters.max_duration)}
-              <X size={10} className="ml-0.5 opacity-60" />
-            </motion.button>
+              {activePlatform && (
+                <motion.button
+                  key="plat"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  onClick={() => onChange({ ...filters, platform: undefined })}
+                  className="flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-lg text-xs font-medium border border-white/10 bg-zinc-800/80"
+                  style={{ color: activePlatform.color }}
+                >
+                  <PlatformLogo platform={activePlatform.value} size={11} color={activePlatform.color} />
+                  {activePlatform.label}
+                  <X size={10} className="ml-0.5 opacity-60" />
+                </motion.button>
+              )}
+              {activeGenre && (
+                <motion.button
+                  key="genre"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  onClick={() => onChange({ ...filters, genre: undefined })}
+                  className="flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-lg text-xs font-medium border border-white/10 bg-zinc-800/80 text-zinc-300"
+                >
+                  {activeGenre.emoji} {activeGenre.label}
+                  <X size={10} className="ml-0.5 opacity-60" />
+                </motion.button>
+              )}
+              {filters.max_duration && (
+                <motion.button
+                  key="dur"
+                  initial={{ opacity: 0, scale: 0.85 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.85 }}
+                  transition={{ type: 'spring', stiffness: 400, damping: 30 }}
+                  onClick={() => onChange({ ...filters, max_duration: undefined })}
+                  className="flex items-center gap-1 h-7 pl-2 pr-1.5 rounded-lg text-xs font-medium border border-white/10 bg-zinc-800/80 text-zinc-300"
+                >
+                  máx. {formatDuration(filters.max_duration)}
+                  <X size={10} className="ml-0.5 opacity-60" />
+                </motion.button>
+              )}
+            </motion.div>
           )}
         </AnimatePresence>
       </div>

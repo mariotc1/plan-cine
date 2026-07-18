@@ -4,10 +4,14 @@ import { use } from 'react';
 import { motion } from 'framer-motion';
 import { Clapperboard } from 'lucide-react';
 import { useSessions } from '@/hooks/useSessions';
+import { useGroupMemories } from '@/hooks/useGroups';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { SessionCardSkeleton } from '@/components/sessions/SessionCardSkeleton';
-import { staggerContainer } from '@/lib/animations';
+import { RatingStars } from '@/components/sessions/RatingStars';
+import { getPlatform } from '@/lib/constants';
+import { formatDate } from '@/lib/utils';
+import { staggerContainer, staggerItem } from '@/lib/animations';
 import { CinemaSession } from '@/types';
 
 interface Props {
@@ -52,6 +56,7 @@ function groupFinished(sessions: CinemaSession[]) {
 export default function SessionsPage({ params }: Props) {
   const { groupId } = use(params);
   const { data: sessions, isLoading } = useSessions(groupId);
+  const { data: memories } = useGroupMemories(groupId);
 
   const scheduled = sessions?.filter((s) => s.status === 'scheduled').sort((a, b) =>
     new Date(a.scheduled_at!).getTime() - new Date(b.scheduled_at!).getTime()
@@ -133,6 +138,69 @@ export default function SessionsPage({ params }: Props) {
           </motion.div>
         </div>
       ))}
+
+      {/* Recuerdos */}
+      {memories && memories.length > 0 && (
+        <div className="px-5 pb-8">
+          <div className="flex items-baseline gap-2 py-2.5 mb-3 border-t border-white/[0.04]">
+            <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Recuerdos</span>
+            <span className="text-xs text-zinc-600">· Tal día como hoy</span>
+          </div>
+          <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-3">
+            {memories.map((memory, i) => {
+              const platform = getPlatform(memory.movie.platform);
+              return (
+                <motion.div
+                  key={i}
+                  variants={staggerItem}
+                  className="bg-zinc-900 rounded-2xl border border-white/[0.06] overflow-hidden"
+                >
+                  <div className="bg-gradient-to-r from-indigo-500/10 to-purple-500/10 px-4 py-2.5 border-b border-white/[0.04] flex items-center gap-2">
+                    <span className="text-sm">📸</span>
+                    <p className="text-[11px] font-semibold text-indigo-400">
+                      Hace {memory.years_ago} {memory.years_ago === 1 ? 'año' : 'años'} · {formatDate(memory.date)}
+                    </p>
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-bold text-white text-[15px] mb-1 leading-tight">{memory.movie.title}</h3>
+                    <div className="flex items-center gap-2 text-[11px] text-zinc-500 mb-3">
+                      <span>{memory.movie.duration_formatted}</span>
+                      {platform && (
+                        <>
+                          <span>·</span>
+                          <span style={{ color: platform.color }}>{platform.emoji} {platform.label}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-1.5 mb-3">
+                      {memory.participants.map((p) => (
+                        <span
+                          key={p.id}
+                          className="w-6 h-6 rounded-lg flex items-center justify-center text-xs"
+                          style={{ backgroundColor: `${p.color}20` }}
+                          title={p.name}
+                        >
+                          {p.avatar}
+                        </span>
+                      ))}
+                    </div>
+                    {memory.ratings.length > 0 && (
+                      <div className="space-y-1.5 pt-2.5 border-t border-white/[0.05]">
+                        {memory.ratings.map((rating) => (
+                          <div key={rating.id} className="flex items-center justify-between">
+                            <span className="text-[11px] text-zinc-400">{rating.user.name}</span>
+                            <RatingStars value={rating.score} readonly size={12} />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })}
+          </motion.div>
+        </div>
+      )}
     </div>
   );
 }
