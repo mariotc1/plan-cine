@@ -63,11 +63,11 @@
 
 ---
 
-## FASE 2 — Gestos e interacciones nativas (Apple feel)
+## FASE 2 — Gestos e interacciones nativas (Apple feel) ✅ COMPLETADA
 
 > El mayor salto perceptivo de la app. Pasar de "tap-only" a gestos fluidos.
 
-### 2.1 Pull-to-dismiss en todos los sheets
+### 2.1 Pull-to-dismiss en todos los sheets ✅
 - **Problema:** Los sheets se cierran solo con el botón X. En iOS, el gesto muscular es drag-down para cerrar.
 - **Fix:** Framer Motion `drag="y"` en el contenedor del sheet. Si el drag supera 120px → cerrar con spring animation.
 - **Archivos a tocar:** Todos los Sheet components:
@@ -275,6 +275,7 @@
 |-------|----------------|-------|
 | 2026-07-18 | — | Documento creado |
 | 2026-07-18 | Fase 1 | 1.1-1.4 completos. 1.5 requiere fix en backend Laravel |
+| 2026-07-18 | Fase 2 | 2.1-2.4 completos. Hook useSheetAnimation + useLongPress |
 
 ---
 

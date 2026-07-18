@@ -3,6 +3,7 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
+import { useSheetAnimation } from '@/hooks/useSheetAnimation';
 import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup } from '@/hooks/useGroups';
@@ -51,6 +52,11 @@ export default function GroupLayout({ children, params }: Props) {
   const [showQR, setShowQR] = useState(false);
   const [showEdit, setShowEdit] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  const settingsSheet = useSheetAnimation(() => setShowSettings(false));
+  const qrSheet = useSheetAnimation(() => setShowQR(false));
+  const editSheet = useSheetAnimation(() => setShowEdit(false));
+  const deleteSheet = useSheetAnimation(() => setShowDeleteConfirm(false));
   const [editName, setEditName] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editAvatar, setEditAvatar] = useState('🎬');
@@ -192,11 +198,10 @@ export default function GroupLayout({ children, params }: Props) {
               onClick={() => setShowSettings(false)}
             />
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              {...settingsSheet.motionProps}
               className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
             >
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex justify-center pt-3 pb-1 select-none" {...settingsSheet.handleProps}>
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
               <div className="flex items-center justify-between px-6 py-4">
@@ -297,11 +302,10 @@ export default function GroupLayout({ children, params }: Props) {
               onClick={() => setShowQR(false)}
             />
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              {...qrSheet.motionProps}
               className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
             >
-              <div className="flex justify-center pt-3 pb-1">
+              <div className="flex justify-center pt-3 pb-1 select-none" {...qrSheet.handleProps}>
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
               <div className="flex items-center justify-between px-6 py-3">
@@ -361,12 +365,11 @@ export default function GroupLayout({ children, params }: Props) {
               onClick={() => setShowEdit(false)}
             />
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              {...editSheet.motionProps}
               className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
               style={{ maxHeight: '88vh' }}
             >
-              <div className="flex justify-center pt-3 pb-4 flex-shrink-0">
+              <div className="flex justify-center pt-3 pb-4 flex-shrink-0 select-none" {...editSheet.handleProps}>
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
 
@@ -446,11 +449,10 @@ export default function GroupLayout({ children, params }: Props) {
               onClick={() => setShowDeleteConfirm(false)}
             />
             <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
+              {...deleteSheet.motionProps}
               className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl px-6 pb-[max(env(safe-area-inset-bottom),24px)]"
             >
-              <div className="flex justify-center pt-3 pb-4">
+              <div className="flex justify-center pt-3 pb-4 select-none" {...deleteSheet.handleProps}>
                 <div className="w-10 h-1 bg-white/20 rounded-full" />
               </div>
               <div className="flex flex-col items-center text-center mb-6">

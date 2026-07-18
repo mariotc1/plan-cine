@@ -186,6 +186,9 @@ export default function MoviesPage({ params }: Props) {
                   key={movie.id}
                   movie={movie}
                   onTap={setDetailMovie}
+                  onEdit={handleEdit}
+                  onDelete={setDeleteTarget}
+                  onWatchNow={handleWatchNow}
                 />
               ))}
             </AnimatePresence>
