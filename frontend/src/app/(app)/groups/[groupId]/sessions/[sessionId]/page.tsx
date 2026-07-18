@@ -4,11 +4,12 @@ import { use, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession, useStartSession, useFinishSession, useReturnToPending, useRescheduleSession, useRateSession } from '@/hooks/useSessions';
-import { useGroupMembers } from '@/hooks/useGroups';
+import { useGroupMembers, useGroup } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { RatingStars } from '@/components/sessions/RatingStars';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { ConfirmSheet } from '@/components/sessions/ConfirmSheet';
+import { ShareCardSheet } from '@/components/sessions/ShareCardSheet';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -34,6 +35,7 @@ export default function SessionDetailPage({ params }: Props) {
   const rateSession = useRateSession();
 
   const { data: groupMembers = [] } = useGroupMembers(groupId);
+  const { data: group } = useGroup(groupId);
   const members = groupMembers.map((m) => m.user);
 
   const [promptScore, setPromptScore] = useState(0);
@@ -41,6 +43,7 @@ export default function SessionDetailPage({ params }: Props) {
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
   useEffect(() => {
@@ -263,6 +266,25 @@ export default function SessionDetailPage({ params }: Props) {
         </AnimatePresence>
 
 
+        {/* Share card — finished sessions */}
+        {session.status === 'finished' && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+          >
+            <button
+              onClick={() => setShowShareCard(true)}
+              className="w-full h-11 rounded-2xl border border-white/[0.08] bg-white/[0.03] hover:bg-white/[0.06] text-zinc-400 hover:text-zinc-200 text-sm font-medium flex items-center justify-center gap-2 transition-all"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 12v8a2 2 0 002 2h12a2 2 0 002-2v-8M16 6l-4-4-4 4M12 2v13"/>
+              </svg>
+              Compartir valoración
+            </button>
+          </motion.div>
+        )}
+
         {/* Actions (scheduled) */}
         {isScheduled && (
           <motion.div
@@ -432,6 +454,16 @@ export default function SessionDetailPage({ params }: Props) {
           await refetch();
         }}
       />
+
+      {/* Share card sheet */}
+      {session && (
+        <ShareCardSheet
+          open={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          session={session}
+          groupName={group?.name}
+        />
+      )}
 
       {/* Cancel confirmation */}
       <ConfirmSheet
