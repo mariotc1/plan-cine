@@ -4,16 +4,17 @@ import { use, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { useSession, useStartSession, useFinishSession, useReturnToPending, useRescheduleSession, useRateSession } from '@/hooks/useSessions';
-import { useGroupMembers } from '@/hooks/useGroups';
+import { useGroupMembers, useGroup } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { RatingStars } from '@/components/sessions/RatingStars';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { ConfirmSheet } from '@/components/sessions/ConfirmSheet';
+import { ShareCardSheet } from '@/components/sessions/ShareCardSheet';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
-import { ArrowLeft, Clock, Film, Users, Calendar, Star, CalendarDays, Play } from 'lucide-react';
+import { ArrowLeft, Clock, Film, Users, Calendar, Star, CalendarDays, Play, Share2 } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -34,13 +35,16 @@ export default function SessionDetailPage({ params }: Props) {
   const rateSession = useRateSession();
 
   const { data: groupMembers = [] } = useGroupMembers(groupId);
+  const { data: group } = useGroup(groupId);
   const members = groupMembers.map((m) => m.user);
 
   const [promptScore, setPromptScore] = useState(0);
   const [submittingRating, setSubmittingRating] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
+  const [ratingStep, setRatingStep] = useState<'rate' | 'share'>('rate');
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
 
   // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
   useEffect(() => {
@@ -69,16 +73,22 @@ export default function SessionDetailPage({ params }: Props) {
   const platform = session.movie ? getPlatform(session.movie.platform) : null;
   const genre = session.movie ? getGenre(session.movie.genre) : null;
 
-  const handleRate = async (score: number, closePrompt = false) => {
+  const handleRate = async (score: number) => {
     if (!score) return;
     setSubmittingRating(true);
     try {
       await rateSession.mutateAsync({ sessionId, score });
-      if (closePrompt) setShowRatingPrompt(false);
       await refetch();
+      setRatingStep('share'); // transition to share nudge in same sheet
     } finally {
       setSubmittingRating(false);
     }
+  };
+
+  const handleCloseRatingSheet = () => {
+    setShowRatingPrompt(false);
+    setRatingStep('rate');
+    setPromptScore(0);
   };
 
   const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string }> = {
@@ -107,9 +117,25 @@ export default function SessionDetailPage({ params }: Props) {
       <div className="px-5 pb-10 space-y-4">
         {/* Title + status */}
         <div>
-          <h1 className="text-2xl font-bold text-white leading-tight">
-            {session.movie?.title || 'Sesión'}
-          </h1>
+          <div className="flex items-start gap-2">
+            <h1 className="text-2xl font-bold text-white leading-tight flex-1">
+              {session.movie?.title || 'Sesión'}
+            </h1>
+            <AnimatePresence>
+              {session.status === 'finished' && (
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  whileTap={{ scale: 0.85 }}
+                  onClick={() => setShowShareCard(true)}
+                  className="flex-shrink-0 mt-0.5 w-8 h-8 rounded-xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-zinc-500 hover:text-zinc-200 transition-colors"
+                >
+                  <Share2 size={14} />
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
           <div className="flex items-center gap-2 mt-2">
             {session.started_at && (
               <p className="text-sm text-zinc-500">{formatDate(session.started_at)}</p>
@@ -263,6 +289,7 @@ export default function SessionDetailPage({ params }: Props) {
         </AnimatePresence>
 
 
+
         {/* Actions (scheduled) */}
         {isScheduled && (
           <motion.div
@@ -333,7 +360,7 @@ export default function SessionDetailPage({ params }: Props) {
 
       {/* ─── Rating prompt sheet ─────────────────────────────── */}
       <AnimatePresence>
-        {showRatingPrompt && canRate && (
+        {showRatingPrompt && (
           <>
             <motion.div
               key="rating-backdrop"
@@ -341,6 +368,7 @@ export default function SessionDetailPage({ params }: Props) {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className="fixed inset-0 bg-black/75 z-[60] backdrop-blur-sm"
+              onClick={ratingStep === 'rate' ? handleCloseRatingSheet : undefined}
             />
 
             <motion.div
@@ -351,7 +379,7 @@ export default function SessionDetailPage({ params }: Props) {
               transition={{ type: 'spring', stiffness: 340, damping: 34 }}
               className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 rounded-t-3xl overflow-hidden border-t border-white/[0.08]"
             >
-              {/* Poster hero — flush al top para que el overflow-hidden recorte las esquinas */}
+              {/* Poster hero */}
               {session.movie?.poster_path ? (
                 <div className="relative w-full h-52">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -367,49 +395,77 @@ export default function SessionDetailPage({ params }: Props) {
               )}
 
               <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+                <AnimatePresence mode="wait">
 
-                {/* Personalized message */}
-                <motion.div
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.12 }}
-                  className="mb-6"
-                >
-                  <p className="text-zinc-400 text-[15px] leading-snug">
-                    Hey{' '}
-                    <span className="text-white font-semibold">{user?.name}</span>,
-                    ¿qué te pareció?
-                  </p>
-                  <h2 className="text-xl font-bold text-white leading-tight mt-1 truncate">
-                    {session.movie?.title}
-                  </h2>
-                </motion.div>
+                  {/* Step 1 — Rate */}
+                  {ratingStep === 'rate' && (
+                    <motion.div
+                      key="rate"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -6 }}
+                      transition={{ duration: 0.18 }}
+                    >
+                      <div className="mb-6">
+                        <p className="text-zinc-400 text-[15px] leading-snug">
+                          Hey <span className="text-white font-semibold">{user?.name}</span>, ¿qué te pareció?
+                        </p>
+                        <h2 className="text-xl font-bold text-white leading-tight mt-1 truncate">
+                          {session.movie?.title}
+                        </h2>
+                      </div>
 
-                {/* Stars — large and prominent */}
-                <motion.div
-                  initial={{ opacity: 0, scale: 0.85 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ delay: 0.2, type: 'spring', stiffness: 320 }}
-                  className="flex justify-center mb-7"
-                >
-                  <RatingStars value={promptScore} onChange={setPromptScore} size={52} />
-                </motion.div>
+                      <div className="flex justify-center mb-7">
+                        <RatingStars value={promptScore} onChange={setPromptScore} size={52} />
+                      </div>
 
-                {/* Actions */}
-                <motion.div
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.28 }}
-                  className="space-y-3"
-                >
-                  <Button
-                    onClick={() => handleRate(promptScore, true)}
-                    disabled={!promptScore || submittingRating}
-                    className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold disabled:opacity-35 transition-all"
-                  >
-                    {submittingRating ? 'Guardando...' : 'Enviar valoración'}
-                  </Button>
-                </motion.div>
+                      <Button
+                        onClick={() => handleRate(promptScore)}
+                        disabled={!promptScore || submittingRating}
+                        className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold disabled:opacity-35 transition-all"
+                      >
+                        {submittingRating ? 'Guardando...' : 'Enviar valoración'}
+                      </Button>
+                    </motion.div>
+                  )}
+
+                  {/* Step 2 — Share nudge */}
+                  {ratingStep === 'share' && (
+                    <motion.div
+                      key="share"
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.22 }}
+                      className="text-center"
+                    >
+                      <p className="text-white font-bold text-xl mb-1">¡Valoración guardada!</p>
+                      <p className="text-zinc-400 text-[15px] mb-7">
+                        ¿La compartes con alguien?
+                      </p>
+
+                      <div className="flex gap-2.5">
+                        <button
+                          onClick={handleCloseRatingSheet}
+                          className="flex-1 h-12 rounded-xl bg-white/[0.06] border border-white/[0.08] text-zinc-400 font-medium text-sm hover:bg-white/[0.1] transition-colors"
+                        >
+                          Ahora no
+                        </button>
+                        <Button
+                          onClick={() => {
+                            handleCloseRatingSheet();
+                            setShowShareCard(true);
+                          }}
+                          className="flex-1 h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold text-sm flex items-center justify-center gap-2"
+                        >
+                          <Share2 size={14} />
+                          Compartir
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+
+                </AnimatePresence>
               </div>
             </motion.div>
           </>
@@ -432,6 +488,16 @@ export default function SessionDetailPage({ params }: Props) {
           await refetch();
         }}
       />
+
+      {/* Share card sheet */}
+      {session && (
+        <ShareCardSheet
+          open={showShareCard}
+          onClose={() => setShowShareCard(false)}
+          session={session}
+          groupName={group?.name}
+        />
+      )}
 
       {/* Cancel confirmation */}
       <ConfirmSheet

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\CreateSessionRequest;
 use App\Http\Resources\SessionResource;
+use App\Jobs\FinishScheduledSession;
 use App\Jobs\SendScheduledSessionNotification;
 use App\Models\CinemaSession;
 use App\Models\Group;
@@ -79,14 +80,22 @@ class SessionController extends Controller
 
         abort_if(!in_array($session->status, ['pending', 'scheduled']), 422, 'La sesión no se puede iniciar.');
 
-        $startedAt = Carbon::now();
-        $estimatedEnd = $startedAt->copy()->addMinutes($session->movie->duration_minutes);
+        $startedAt    = Carbon::now();
+        $durationMins = $session->movie?->duration_minutes ?? 0;
+        $estimatedEnd = $durationMins > 0
+            ? $startedAt->copy()->addMinutes($durationMins)
+            : null;
 
         $session->update([
-            'status' => 'in_progress',
-            'started_at' => $startedAt,
+            'status'           => 'in_progress',
+            'started_at'       => $startedAt,
             'estimated_end_at' => $estimatedEnd,
         ]);
+
+        // Dispatch auto-finish job so the session ends automatically after the movie duration
+        if ($estimatedEnd && config('queue.default') !== 'sync') {
+            FinishScheduledSession::dispatch($session->id)->delay($estimatedEnd);
+        }
 
         $session->load(['movie.addedBy', 'participants', 'ratings.user']);
 
