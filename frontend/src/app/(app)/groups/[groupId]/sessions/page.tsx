@@ -6,7 +6,7 @@ import { Clapperboard } from 'lucide-react';
 import { useSessions } from '@/hooks/useSessions';
 import { SessionCard } from '@/components/sessions/SessionCard';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { SkeletonCard } from '@/components/shared/LoadingSpinner';
+import { SessionCardSkeleton } from '@/components/sessions/SessionCardSkeleton';
 import { staggerContainer } from '@/lib/animations';
 import { CinemaSession } from '@/types';
 
@@ -63,7 +63,7 @@ export default function SessionsPage({ params }: Props) {
   if (isLoading) {
     return (
       <div className="px-5 space-y-3 pt-2">
-        {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+        {[1, 2, 3].map((i) => <SessionCardSkeleton key={i} />)}
       </div>
     );
   }
@@ -72,8 +72,8 @@ export default function SessionsPage({ params }: Props) {
     return (
       <EmptyState
         icon={<Clapperboard size={30} />}
-        title="Sin sesiones todavía"
-        description="Usa la ruleta para elegir una película y empezar vuestra primera sesión"
+        title="Todavía no habéis visto nada juntos"
+        description="Elegid una película de la lista, pulsad «Ver ahora» y empezad vuestra primera sesión de cine."
       />
     );
   }

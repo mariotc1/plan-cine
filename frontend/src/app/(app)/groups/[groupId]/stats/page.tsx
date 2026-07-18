@@ -3,7 +3,7 @@
 import React, { use } from 'react';
 import { motion } from 'framer-motion';
 import { useGroupStats } from '@/hooks/useGroups';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { StatCardSkeleton } from '@/components/stats/StatCardSkeleton';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { RatingStars } from '@/components/sessions/RatingStars';
 import { getPlatform, getGenre } from '@/lib/constants';
@@ -19,13 +19,13 @@ export default function StatsPage({ params }: Props) {
   const { groupId } = use(params);
   const { data: stats, isLoading } = useGroupStats(groupId);
 
-  if (isLoading) return <LoadingSpinner />;
+  if (isLoading) return <StatCardSkeleton />;
   if (!stats || stats.total_watched === 0) {
     return (
       <EmptyState
         icon={<BarChart2 size={28} />}
-        title="Sin estadísticas todavía"
-        description="Completad vuestra primera sesión de cine para ver estadísticas"
+        title="Aquí aparecerán vuestras estadísticas"
+        description="Completad vuestra primera sesión de cine y los datos empezarán a aparecer."
       />
     );
   }

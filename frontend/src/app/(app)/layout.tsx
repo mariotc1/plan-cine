@@ -6,6 +6,7 @@ import { useAuthStore } from '@/stores/authStore';
 import { BottomNav } from '@/components/shared/BottomNav';
 import { InstallBanner } from '@/components/shared/InstallBanner';
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
+import { OfflineBanner } from '@/components/shared/OfflineBanner';
 import { PullToRefresh } from '@/components/shared/PullToRefresh';
 import { usePushNotifications } from '@/hooks/usePushNotifications';
 import { authApi } from '@/lib/api';
@@ -40,6 +41,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen">
       {/* Centered column — full width on mobile, 480px centered on desktop */}
       <div className="max-w-[480px] mx-auto min-h-screen relative sm:shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
+        <OfflineBanner />
         <main className="pb-20">
           {children}
         </main>

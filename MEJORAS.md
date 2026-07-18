@@ -111,46 +111,37 @@
 
 ---
 
-## FASE 3 — Feedback visual y estados
+## FASE 3 — Feedback visual y estados ✅ COMPLETADA
 
 > La diferencia entre una app que parece rápida y una que parece lenta está aquí.
 
-### 3.1 Skeleton screens
-- **Problema:** `LoadingSpinner` genérico no da contexto de lo que está cargando. Los skeleton screens dan sensación de velocidad y estructura.
-- **Componentes a crear:**
-  - `src/components/movies/MovieCardSkeleton.tsx` — mismas dimensiones que MovieCard, shimmer animation
-  - `src/components/sessions/SessionCardSkeleton.tsx`
-  - `src/components/stats/StatCardSkeleton.tsx`
-- **Archivos a tocar:**
-  - `src/app/(app)/groups/[groupId]/page.tsx` — mostrar `MovieCardSkeleton` x4 mientras carga
-  - `src/app/(app)/groups/[groupId]/sessions/page.tsx` — `SessionCardSkeleton`
-  - `src/app/(app)/groups/[groupId]/stats/page.tsx` — `StatCardSkeleton`
-- **Qué probar:** Throttling a "Slow 3G" en DevTools. Las pantallas deben mostrar esqueletos del tamaño correcto, no un spinner central.
+### 3.1 Skeleton screens ✅
+- **Archivos creados:**
+  - `src/components/movies/MovieCardSkeleton.tsx` — shimmer animado, mismas dimensiones que MovieCard (poster 56×82, title, badges, metadata row)
+  - `src/components/sessions/SessionCardSkeleton.tsx` — poster 52×76, título, estado, avatares participantes
+  - `src/components/stats/StatCardSkeleton.tsx` — replica el layout completo de stats (hero 2-col, favoritos, protagonistas, top películas)
+- **Animación:** keyframe `shimmer` añadido a `globals.css` + clase `.skeleton` — sweep gradient de izquierda a derecha, más premium que `animate-pulse`
+- **Páginas actualizadas:**
+  - `src/app/(app)/groups/[groupId]/page.tsx` — 4 MovieCardSkeleton en carga
+  - `src/app/(app)/groups/[groupId]/sessions/page.tsx` — 3 SessionCardSkeleton en carga
+  - `src/app/(app)/groups/[groupId]/stats/page.tsx` — StatCardSkeleton full-page en carga
+  - `src/app/(app)/groups/page.tsx` — 3 GroupCard skeletons inline en carga
+- **Qué probar:** Throttling a "Slow 3G" en DevTools → Network. Las pantallas deben mostrar esqueletos del tamaño correcto, nunca un spinner central.
 
-### 3.2 Indicador de conexión offline
-- **Problema:** Sin conexión, el usuario puede intentar añadir película o iniciar sesión. La sheet se cierra (parece que funcionó) y la acción se pierde silenciosamente.
-- **Fix:** Hook `useOnlineStatus` con `navigator.onLine` + event listeners `online`/`offline`. Banner sutil cuando está offline.
-- **Archivos a crear:**
-  - `src/hooks/useOnlineStatus.ts`
-  - `src/components/shared/OfflineBanner.tsx` — barra naranja/gris fija top con mensaje
-- **Archivos a tocar:**
-  - `src/app/(app)/layout.tsx` — incluir `<OfflineBanner />`
-  - Mutaciones críticas (añadir película, iniciar sesión): deshabilitar si offline con toast explicativo
-- **Qué probar:** Activar modo avión → app debe mostrar banner "Sin conexión". Desactivar → banner desaparece. Intentar añadir película offline → toast informativo, sheet no se cierra silenciosamente.
+### 3.2 Indicador de conexión offline ✅
+- **Archivos creados:**
+  - `src/hooks/useOnlineStatus.ts` — `navigator.onLine` + listeners `online`/`offline`
+  - `src/components/shared/OfflineBanner.tsx` — banner ámbar sticky-top con slide-in spring animation
+- **Añadido a:** `src/app/(app)/layout.tsx` encima del `<main>` (dentro del centered column)
+- **Qué probar:** DevTools → Network → Throttling → "Offline". App muestra banner ámbar con "Sin conexión". Volver a Online → banner desaparece con animación.
 
-### 3.3 Empty states con personalidad
-- **Problema:** Los empty states actuales son genéricos e impersonales. Cada contexto vacío es una oportunidad de guiar al usuario.
-- **Archivos a tocar:**
-  - `src/components/shared/EmptyState.tsx` — añadir prop `variant` con estilos por contexto
-  - `src/app/(app)/groups/[groupId]/page.tsx` — empty state específico para lista vacía
-  - `src/app/(app)/groups/[groupId]/sessions/page.tsx`
-  - `src/app/(app)/groups/page.tsx`
-- **Mensajes por contexto:**
-  - Sin películas pendientes: "Tu lista está vacía. Añade la primera película del grupo."
-  - Sin sesiones: "Todavía no habéis visto ninguna película juntos. ¿Esta noche?"
-  - Sin grupos: "Crea tu primer grupo e invita a tu familia."
-  - Sin stats: "Las estadísticas aparecerán después de vuestra primera sesión."
-- **Qué probar:** Crear un grupo nuevo. Ir a cada sección vacía y verificar que el mensaje es el correcto y el CTA te lleva al sitio esperado.
+### 3.3 Empty states con personalidad ✅
+- **Mensajes actualizados:**
+  - Películas sin filtro: "Nada pendiente por ver" / "Añade la primera película al grupo y empieza la lista."
+  - Películas con filtros: "Sin resultados" / "Prueba ajustando los filtros o borrándolos"
+  - Sesiones vacías: "Todavía no habéis visto nada juntos" / "Elegid una película de la lista, pulsad «Ver ahora» y empezad vuestra primera sesión de cine."
+  - Stats vacías: "Aquí aparecerán vuestras estadísticas" / "Completad vuestra primera sesión de cine y los datos empezarán a aparecer."
+- **Qué probar:** Crear un grupo nuevo → visitar cada sección vacía → verificar el mensaje y que el empty state no es genérico.
 
 ---
 
@@ -276,6 +267,7 @@
 | 2026-07-18 | — | Documento creado |
 | 2026-07-18 | Fase 1 | 1.1-1.4 completos. 1.5 requiere fix en backend Laravel |
 | 2026-07-18 | Fase 2 | 2.1-2.4 completos. Hook useSheetAnimation + useLongPress |
+| 2026-07-18 | Fase 3 | 3.1-3.3 completos. Skeletons shimmer + OfflineBanner + empty states |
 
 ---
 

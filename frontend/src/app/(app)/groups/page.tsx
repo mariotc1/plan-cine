@@ -7,7 +7,6 @@ import { Plus, Users, Link2, ChevronRight, Film, Clock } from 'lucide-react';
 import { useGroups, useCreateGroup, useJoinGroup } from '@/hooks/useGroups';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -84,7 +83,25 @@ export default function GroupsPage() {
 
       <div className="px-5 pb-8">
         {isLoading ? (
-          <LoadingSpinner />
+          <div className="space-y-3">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="bg-zinc-900 rounded-2xl border border-white/[0.07] overflow-hidden">
+                <div className="flex items-center gap-4 px-5 pt-5 pb-4">
+                  <div className="w-14 h-14 skeleton rounded-2xl flex-shrink-0" />
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="h-[17px] skeleton rounded-lg w-3/5" />
+                    <div className="h-[13px] skeleton rounded-lg w-2/5" />
+                  </div>
+                  <div className="w-3.5 h-3.5 skeleton rounded flex-shrink-0" />
+                </div>
+                <div className="flex items-center justify-center gap-4 px-5 py-3 border-t border-white/[0.05]">
+                  <div className="h-3 skeleton rounded-lg w-20" />
+                  <div className="w-px h-3 bg-white/10" />
+                  <div className="h-3 skeleton rounded-lg w-16" />
+                </div>
+              </div>
+            ))}
+          </div>
         ) : !groups?.length ? (
           <EmptyState
             icon={<Users size={30} />}

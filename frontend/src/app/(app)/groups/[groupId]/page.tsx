@@ -14,7 +14,7 @@ import { MovieFilters } from '@/components/movies/MovieFilters';
 import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { SkeletonCard } from '@/components/shared/LoadingSpinner';
+import { MovieCardSkeleton } from '@/components/movies/MovieCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { staggerContainer } from '@/lib/animations';
 import { useFilterStore } from '@/stores/filterStore';
@@ -161,16 +161,16 @@ export default function MoviesPage({ params }: Props) {
 <div className="mt-5">
         {isLoading ? (
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4].map((i) => <MovieCardSkeleton key={i} />)}
           </div>
         ) : !movies?.length ? (
           <EmptyState
             icon={<Film size={30} />}
-            title={Object.keys(filters).length > 0 ? 'Sin resultados' : 'Sin películas pendientes'}
+            title={Object.keys(filters).length > 0 ? 'Sin resultados' : 'Nada pendiente por ver'}
             description={
               Object.keys(filters).length > 0
-                ? 'Prueba a cambiar los filtros'
-                : 'Añade la primera película a la lista'
+                ? 'Prueba ajustando los filtros o borrándolos'
+                : 'Añade la primera película al grupo y empieza la lista.'
             }
           />
         ) : (
