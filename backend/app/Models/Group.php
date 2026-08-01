@@ -37,6 +37,11 @@ class Group extends Model
         return $this->hasMany(CinemaSession::class);
     }
 
+    public function duels()
+    {
+        return $this->hasMany(Duel::class);
+    }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

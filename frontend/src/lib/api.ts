@@ -115,6 +115,19 @@ export const pushApi = {
   unsubscribe: (endpoint: string) => api.delete('/push/unsubscribe', { data: { endpoint } }),
 };
 
+export const duelsApi = {
+  getActive: (groupId: string) => api.get(`/groups/${groupId}/duels/active`),
+  create:    (groupId: string) => api.post(`/groups/${groupId}/duels`),
+  vote:      (groupId: string, duelId: string, movieId: string) =>
+    api.post(`/groups/${groupId}/duels/${duelId}/vote`, { movie_id: movieId }),
+  close:     (groupId: string, duelId: string) =>
+    api.post(`/groups/${groupId}/duels/${duelId}/close`),
+  resolve:   (groupId: string, duelId: string, action: 'revote' | 'random') =>
+    api.post(`/groups/${groupId}/duels/${duelId}/resolve`, { action }),
+  cancel:    (groupId: string, duelId: string) =>
+    api.delete(`/groups/${groupId}/duels/${duelId}`),
+};
+
 export const tmdbApi = {
   search: (query: string) =>
     api.get<{ results: import('@/types').TmdbSearchResult[] }>('/tmdb/search', { params: { query } }),
