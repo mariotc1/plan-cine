@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSheetAnimation } from '@/hooks/useSheetAnimation';
@@ -9,6 +9,7 @@ import QRCode from 'react-qr-code';
 import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup, useGroupMembers, useKickMember } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { NowPlayingBanner } from '@/components/sessions/NowPlayingBanner';
+import { useActiveDuel } from '@/hooks/useDuel';
 import { GroupMember } from '@/types';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -63,6 +64,51 @@ export default function GroupLayout({ children, params }: Props) {
   const editSheet      = useSheetAnimation(() => setShowEdit(false));
   const membersSheet   = useSheetAnimation(() => setShowMembers(false));
   const deleteSheet    = useSheetAnimation(() => setShowDeleteConfirm(false));
+
+  // ─── Global duel detection (runs on every group page) ────────────────────
+  const { data: activeDuel } = useActiveDuel(groupId);
+  const hasRedirectedToDuel = useRef(false);
+  const prevDuelStatus = useRef<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!activeDuel) return;
+
+    // Redirect once per duel to the spin page when voting starts
+    if (
+      (activeDuel.status === 'voting' || activeDuel.status === 'tie') &&
+      !hasRedirectedToDuel.current &&
+      !pathname.includes('/spin')
+    ) {
+      hasRedirectedToDuel.current = true;
+      router.push(`/groups/${groupId}/spin`);
+    }
+
+    // Reset flag when duel ends so a new duel can redirect again
+    if (activeDuel.status === 'closed') {
+      hasRedirectedToDuel.current = false;
+    }
+
+    // Notify non-admin members when voting ends
+    if (
+      (prevDuelStatus.current === 'voting' || prevDuelStatus.current === 'tie') &&
+      activeDuel.status === 'closed' &&
+      activeDuel.winner_id
+    ) {
+      const winner =
+        activeDuel.movie_a.id === activeDuel.winner_id
+          ? activeDuel.movie_a
+          : activeDuel.movie_b;
+      if (!isAdmin) {
+        toast.success(`¡Ha ganado "${winner.title}"! 🏆`, {
+          description: 'El admin decidirá si la veis ahora o la programáis',
+          duration: 6000,
+        });
+      }
+    }
+
+    prevDuelStatus.current = activeDuel.status;
+  }, [activeDuel, isAdmin, groupId, pathname, router]);
+  // ─────────────────────────────────────────────────────────────────────────
 
   const handleKick = async () => {
     if (!kickTarget) return;

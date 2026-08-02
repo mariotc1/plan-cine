@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Shuffle, Swords } from 'lucide-react';
@@ -11,6 +11,7 @@ import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet
 import { useMovies, useRandomMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
+import { useActiveDuel } from '@/hooks/useDuel';
 import { useFilterStore } from '@/stores/filterStore';
 import { useAuthStore } from '@/stores/authStore';
 import { Movie } from '@/types';
@@ -46,6 +47,16 @@ export default function SpinPage({ params }: Props) {
   ) ?? false;
 
   const memberUsers = members?.map((m) => m.user) ?? [];
+
+  // ─── Auto-switch to duelo tab when arriving at spin with an active duel ────
+  const { data: activeDuel } = useActiveDuel(groupId);
+
+  useEffect(() => {
+    if (!activeDuel) return;
+    if (activeDuel.status === 'voting' || activeDuel.status === 'tie') {
+      setMode('duelo');
+    }
+  }, [activeDuel]);
 
   const handleSpin = async (): Promise<Movie | null> => {
     try {

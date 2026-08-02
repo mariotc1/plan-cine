@@ -9,6 +9,8 @@ function duelKey(groupId: string) {
 }
 
 export function useActiveDuel(groupId: string, enabled = true) {
+  const qc = useQueryClient();
+
   return useQuery<Duel | null>({
     queryKey: duelKey(groupId),
     queryFn: async () => {
@@ -16,7 +18,14 @@ export function useActiveDuel(groupId: string, enabled = true) {
         const res = await duelsApi.getActive(groupId);
         return res.data.data ?? null;
       } catch (e: unknown) {
-        if ((e as { response?: { status?: number } }).response?.status === 404) return null;
+        if ((e as { response?: { status?: number } }).response?.status === 404) {
+          // Backend only returns active (voting/tie) duels via getActive.
+          // If the duel was just closed, preserve the cached winner so non-admin
+          // members still see the result instead of falling back to the idle screen.
+          const cached = qc.getQueryData<Duel | null>(duelKey(groupId));
+          if (cached?.status === 'closed') return cached;
+          return null;
+        }
         throw e;
       }
     },
