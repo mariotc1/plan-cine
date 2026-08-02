@@ -17,6 +17,13 @@ self.addEventListener('activate', (e) => {
 
 self.addEventListener('fetch', (e) => {
   if (e.request.method !== 'GET') return;
+
+  const url = new URL(e.request.url);
+
+  // Never cache cross-origin requests (the Laravel API lives on a different domain)
+  // or same-origin /api/ paths (for local dev where frontend and API share a host).
+  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))
   );

@@ -123,3 +123,22 @@ export interface Memory {
   ratings: Rating[];
   average_rating: number | null;
 }
+
+export type DuelStatus = 'voting' | 'tie' | 'closed';
+
+export interface DuelVote {
+  user: User;
+  movie_id: string;
+}
+
+export interface Duel {
+  id: string;
+  group_id: string;
+  status: DuelStatus;
+  movie_a: Movie;
+  movie_b: Movie;
+  votes: DuelVote[];
+  winner_id: string | null;
+  created_by: string;
+  created_at: string;
+}

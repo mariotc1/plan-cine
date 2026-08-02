@@ -1,12 +1,12 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Film, ChevronRight, Clock } from 'lucide-react';
+import { Plus, Trash2, Film } from 'lucide-react';
 import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
-import { useCreateSession, useStartSession, useSessions } from '@/hooks/useSessions';
+import { useCreateSession, useStartSession } from '@/hooks/useSessions';
 import { MovieCard } from '@/components/movies/MovieCard';
 import { AddMovieSheet } from '@/components/movies/AddMovieSheet';
 import { MovieDetailSheet } from '@/components/movies/MovieDetailSheet';
@@ -14,7 +14,7 @@ import { MovieFilters } from '@/components/movies/MovieFilters';
 import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
-import { SkeletonCard } from '@/components/shared/LoadingSpinner';
+import { MovieCardSkeleton } from '@/components/movies/MovieCardSkeleton';
 import { Button } from '@/components/ui/button';
 import { staggerContainer } from '@/lib/animations';
 import { useFilterStore } from '@/stores/filterStore';
@@ -36,14 +36,21 @@ export default function MoviesPage({ params }: Props) {
   const [scheduleMovie, setScheduleMovie] = useState<Movie | null>(null);
   const [detailMovie, setDetailMovie] = useState<Movie | null>(null);
 
+  const [searchQuery, setSearchQuery] = useState('');
+
   const filtersRaw = useFilterStore((s) => s.filters[groupId]);
   const filters = filtersRaw ?? {};
   const setFilters = useFilterStore((s) => s.setFilters);
 
   const { data: movies, isLoading } = useMovies(groupId, { ...filters, status: 'pending' });
+
+  const filteredMovies = useMemo(() => {
+    if (!searchQuery.trim()) return movies ?? [];
+    const q = searchQuery.toLowerCase();
+    return (movies ?? []).filter((m) => m.title.toLowerCase().includes(q));
+  }, [movies, searchQuery]);
+
   const { data: members } = useGroupMembers(groupId);
-  const { data: sessions } = useSessions(groupId);
-  const activeSession = sessions?.find((s) => s.status === 'in_progress') ?? null;
   const createMovie = useCreateMovie(groupId);
   const updateMovie = useUpdateMovie(groupId);
   const deleteMovie = useDeleteMovie(groupId);
@@ -121,56 +128,35 @@ export default function MoviesPage({ params }: Props) {
   return (
     <div className="px-5 pb-28">
 
-      {/* Active session banner */}
-      {activeSession && (
-        <motion.div
-          initial={{ opacity: 0, y: -8 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-4"
-        >
-          <button
-            onClick={() => router.push(`/groups/${groupId}/sessions/${activeSession.id}`)}
-            className="w-full text-left"
-          >
-            <div className="relative rounded-2xl overflow-hidden border border-emerald-500/25 bg-emerald-500/[0.07] px-4 py-3.5 flex items-center gap-3">
-              {/* Pulsing dot */}
-              <span className="flex-shrink-0 w-2 h-2 rounded-full bg-emerald-400" />
-              <div className="flex-1 min-w-0">
-                <p className="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-0.5">Viendo ahora</p>
-                <p className="text-white text-sm font-semibold truncate">
-                  {activeSession.movie?.title ?? 'Sesión en curso'}
-                </p>
-                {activeSession.movie?.duration_formatted && (
-                  <p className="text-emerald-400/70 text-[11px] flex items-center gap-1 mt-0.5">
-                    <Clock size={9} /> {activeSession.movie.duration_formatted}
-                  </p>
-                )}
-              </div>
-              <ChevronRight size={15} className="text-emerald-500/60 flex-shrink-0" />
-            </div>
-          </button>
-        </motion.div>
-      )}
-
-      {/* Filters */}
+      {/* Search + Filters unified toolbar */}
       <MovieFilters
         filters={filters}
         onChange={(f) => setFilters(groupId, f)}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
       />
 
-<div className="mt-5">
+      <div className="mt-3">
         {isLoading ? (
           <div className="space-y-3">
-            {[1, 2, 3].map((i) => <SkeletonCard key={i} />)}
+            {[1, 2, 3, 4].map((i) => <MovieCardSkeleton key={i} />)}
           </div>
-        ) : !movies?.length ? (
+        ) : !filteredMovies.length ? (
           <EmptyState
             icon={<Film size={30} />}
-            title={Object.keys(filters).length > 0 ? 'Sin resultados' : 'Sin películas pendientes'}
+            title={
+              searchQuery
+                ? 'Sin resultados'
+                : Object.keys(filters).length > 0
+                ? 'Sin resultados con estos filtros'
+                : 'Nada pendiente por ver'
+            }
             description={
-              Object.keys(filters).length > 0
-                ? 'Prueba a cambiar los filtros'
-                : 'Añade la primera película a la lista'
+              searchQuery
+                ? `No hay películas que coincidan con "${searchQuery}"`
+                : Object.keys(filters).length > 0
+                ? 'Prueba ajustando los filtros o borrándolos'
+                : 'Añade la primera película al grupo y empieza la lista.'
             }
           />
         ) : (
@@ -181,11 +167,14 @@ export default function MoviesPage({ params }: Props) {
             className="space-y-3"
           >
             <AnimatePresence mode="popLayout">
-              {movies.map((movie) => (
+              {filteredMovies.map((movie) => (
                 <MovieCard
                   key={movie.id}
                   movie={movie}
                   onTap={setDetailMovie}
+                  onEdit={handleEdit}
+                  onDelete={setDeleteTarget}
+                  onWatchNow={handleWatchNow}
                 />
               ))}
             </AnimatePresence>

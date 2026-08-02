@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\DuelController;
 use App\Http\Controllers\Api\GroupController;
 use App\Http\Controllers\Api\MovieController;
 use App\Http\Controllers\Api\PushController;
@@ -62,6 +63,14 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('tmdb/search', [TmdbController::class, 'search']);
     Route::get('tmdb/movie/{id}/trailer', [TmdbController::class, 'trailer']);
     Route::get('tmdb/movie/{id}', [TmdbController::class, 'movie']);
+
+    // Duels — active must come before {duelId} to avoid route conflict
+    Route::get('groups/{groupId}/duels/active', [DuelController::class, 'active']);
+    Route::post('groups/{groupId}/duels', [DuelController::class, 'create']);
+    Route::post('groups/{groupId}/duels/{duelId}/vote', [DuelController::class, 'vote']);
+    Route::post('groups/{groupId}/duels/{duelId}/close', [DuelController::class, 'close']);
+    Route::post('groups/{groupId}/duels/{duelId}/resolve', [DuelController::class, 'resolve']);
+    Route::delete('groups/{groupId}/duels/{duelId}', [DuelController::class, 'cancel']);
 
     // Push Notifications
     Route::post('push/subscribe', [PushController::class, 'subscribe']);

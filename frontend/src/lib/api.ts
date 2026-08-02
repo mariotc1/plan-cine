@@ -20,7 +20,10 @@ api.interceptors.response.use(
   (res) => res,
   (error) => {
     if (error.response?.status === 401 && typeof window !== 'undefined') {
+      // Clear both the raw token and the full Zustand persisted state so
+      // the landing page doesn't read isAuthenticated: true and loop back.
       localStorage.removeItem('auth_token');
+      localStorage.removeItem('plan-cine-auth');
       window.location.href = '/login';
     }
     return Promise.reject(error);
@@ -110,6 +113,19 @@ export const pushApi = {
   subscribe: (data: { endpoint: string; p256dh: string; auth: string }) =>
     api.post('/push/subscribe', data),
   unsubscribe: (endpoint: string) => api.delete('/push/unsubscribe', { data: { endpoint } }),
+};
+
+export const duelsApi = {
+  getActive: (groupId: string) => api.get(`/groups/${groupId}/duels/active`),
+  create:    (groupId: string) => api.post(`/groups/${groupId}/duels`),
+  vote:      (groupId: string, duelId: string, movieId: string) =>
+    api.post(`/groups/${groupId}/duels/${duelId}/vote`, { movie_id: movieId }),
+  close:     (groupId: string, duelId: string) =>
+    api.post(`/groups/${groupId}/duels/${duelId}/close`),
+  resolve:   (groupId: string, duelId: string, action: 'revote' | 'random') =>
+    api.post(`/groups/${groupId}/duels/${duelId}/resolve`, { action }),
+  cancel:    (groupId: string, duelId: string) =>
+    api.delete(`/groups/${groupId}/duels/${duelId}`),
 };
 
 export const tmdbApi = {

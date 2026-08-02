@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertTriangle } from 'lucide-react';
+import { useSheetAnimation } from '@/hooks/useSheetAnimation';
 
 interface ConfirmSheetProps {
   open: boolean;
@@ -20,6 +21,8 @@ export function ConfirmSheet({
   confirmLabel = 'Confirmar',
   cancelLabel = 'Cancelar',
 }: ConfirmSheetProps) {
+  const { motionProps, handleProps } = useSheetAnimation(onClose);
+
   return (
     <AnimatePresence>
       {open && (
@@ -31,11 +34,10 @@ export function ConfirmSheet({
             onClick={onClose}
           />
           <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 400, damping: 38 }}
+            {...motionProps}
             className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[81] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
           >
-            <div className="flex justify-center pt-3 pb-0">
+            <div className="flex justify-center pt-3 pb-0 select-none" {...handleProps}>
               <div className="w-10 h-1 bg-white/20 rounded-full" />
             </div>
 
