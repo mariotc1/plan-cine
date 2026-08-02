@@ -24,10 +24,8 @@ interface DuelViewProps {
   onSchedule: (movie: Movie) => void;
 }
 
-// ─── Available height for flex-filling states ────────────────────────────────
 // Accounts for: safe-area-top (~44px) + group header (~56px) + tabs (~58px)
 // + mt-3 (~12px) + mode-switcher (~52px) + main pb-20 (80px) = ~302px total
-// Using 295px gives a small breathing room at the bottom.
 const CONTENT_HEIGHT = 'calc(100svh - 295px)';
 
 // ─── Voting / Tie movie card ──────────────────────────────────────────────────
@@ -220,6 +218,112 @@ function VoteRow({ duel, members }: { duel: Duel; members: User[] }) {
   );
 }
 
+// ─── Sword intro overlay ──────────────────────────────────────────────────────
+// Two Swords icons fly in from opposite sides, clash twice with an amber glow,
+// then "DUELO" punches in before the overlay fades away.
+
+function SwordIntroOverlay() {
+  // Clash positions: swords meet at ±38px from center on first/second clash,
+  // pull back to ±56px between impacts.
+  const clashX = 38;
+  const pullX = 56;
+
+  // Keyframe times (fractions of 1.6 s total):
+  //   0.00 → off-screen
+  //   0.20 → first clash
+  //   0.32 → hold at clash
+  //   0.42 → pull back
+  //   0.52 → second clash
+  //   1.00 → hold
+  const swordTimes = [0, 0.20, 0.32, 0.42, 0.52, 1.0];
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.3 }}
+      className="fixed inset-0 z-50 bg-zinc-950 flex flex-col items-center justify-center gap-8 overflow-hidden"
+    >
+      {/* Radial glow — flares at each clash moment */}
+      <motion.div
+        className="absolute rounded-full pointer-events-none"
+        style={{
+          width: 260,
+          height: 260,
+          background:
+            'radial-gradient(circle, rgba(251,191,36,0.75) 0%, rgba(251,191,36,0.12) 55%, transparent 70%)',
+        }}
+        initial={{ opacity: 0, scale: 0.3 }}
+        animate={{
+          opacity: [0, 0, 1, 0,   0, 0.9, 0.15, 0],
+          scale:   [0.3, 0.3, 1.9, 0.5, 0.5, 2.4, 1.3, 0.3],
+        }}
+        transition={{
+          duration: 1.6,
+          times:    [0, 0.18, 0.22, 0.34, 0.48, 0.54, 0.66, 0.92],
+        }}
+      />
+
+      {/* Swords row */}
+      <div className="relative w-72 h-20 flex items-center justify-center">
+        {/* Left sword */}
+        <motion.div
+          className="absolute"
+          style={{ rotate: 45 }}
+          initial={{ x: -260, opacity: 0 }}
+          animate={{
+            x: [-260, -clashX, -clashX, -pullX, -clashX, -clashX],
+            opacity: [0, 1, 1, 1, 1, 1],
+          }}
+          transition={{ duration: 1.6, times: swordTimes, ease: ['easeOut', 'linear', 'easeOut', 'easeIn', 'linear'] }}
+        >
+          <Swords
+            size={54}
+            className="text-amber-400"
+            style={{ filter: 'drop-shadow(0 0 14px rgba(251,191,36,0.9))' }}
+          />
+        </motion.div>
+
+        {/* Right sword (mirrored horizontally) */}
+        <motion.div
+          className="absolute"
+          style={{ rotate: 45, scaleX: -1 }}
+          initial={{ x: 260, opacity: 0 }}
+          animate={{
+            x: [260, clashX, clashX, pullX, clashX, clashX],
+            opacity: [0, 1, 1, 1, 1, 1],
+          }}
+          transition={{ duration: 1.6, times: swordTimes, ease: ['easeOut', 'linear', 'easeOut', 'easeIn', 'linear'] }}
+        >
+          <Swords
+            size={54}
+            className="text-amber-400"
+            style={{ filter: 'drop-shadow(0 0 14px rgba(251,191,36,0.9))' }}
+          />
+        </motion.div>
+      </div>
+
+      {/* "DUELO" text — punches in after second clash */}
+      <motion.p
+        className="text-5xl font-black tracking-[0.32em] text-amber-400"
+        style={{ textShadow: '0 0 24px rgba(251,191,36,0.75), 0 0 52px rgba(251,191,36,0.3)' }}
+        initial={{ opacity: 0, scale: 0.55 }}
+        animate={{
+          opacity: [0, 0, 0, 1,    1],
+          scale:   [0.55, 0.55, 0.55, 1.1, 1.0],
+        }}
+        transition={{
+          duration: 1.6,
+          times:    [0, 0.42, 0.58, 0.72, 1.0],
+        }}
+      >
+        DUELO
+      </motion.p>
+    </motion.div>
+  );
+}
+
 // ─── Main DuelView ────────────────────────────────────────────────────────────
 
 export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, onSchedule }: DuelViewProps) {
@@ -233,6 +337,7 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
   const myVote = duel?.votes.find((v) => v.user.id === currentUserId);
   const votedMovieId = myVote?.movie_id ?? null;
 
+  const [showIntro, setShowIntro] = useState(false);
   const [randomSpinning, setRandomSpinning] = useState(false);
 
   function apiError(e: unknown, fallback: string): string {
@@ -287,175 +392,45 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
     }
   };
 
+  // Show intro overlay while the API call runs; both must finish before hiding.
+  // 1800 ms gives 1600 ms of animation + 200 ms comfortable hold.
   const handleStart = async () => {
+    setShowIntro(true);
     try {
-      await createDuel.mutateAsync();
+      await Promise.all([
+        new Promise<void>((r) => setTimeout(r, 1800)),
+        createDuel.mutateAsync(),
+      ]);
     } catch (e) {
       toast.error(apiError(e, 'Error al iniciar el duelo'));
+    } finally {
+      setShowIntro(false);
     }
   };
 
-  if (isLoading) {
-    return (
-      <div className="px-5 flex flex-col gap-3" style={{ height: CONTENT_HEIGHT }}>
-        <div className="skeleton h-8 w-36 rounded-xl" />
-        <div className="flex gap-3 flex-1 min-h-0">
-          <div className="skeleton flex-1 rounded-2xl" />
-          <div className="skeleton flex-1 rounded-2xl" />
-        </div>
-        <div className="skeleton h-10 rounded-2xl" />
-        <div className="skeleton h-12 rounded-2xl" />
-      </div>
-    );
-  }
-
-  // ── Winner state ────────────────────────────────────────────────────────────
-  if (duel?.status === 'closed' && duel.winner_id) {
-    const winner = duel.movie_a.id === duel.winner_id ? duel.movie_a : duel.movie_b;
-    const loser  = duel.movie_a.id === duel.winner_id ? duel.movie_b : duel.movie_a;
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="px-5 flex flex-col gap-3"
-        style={{ height: CONTENT_HEIGHT }}
-      >
-        {/* Trophy header */}
-        <div className="flex items-center gap-3 flex-shrink-0">
-          <Trophy size={22} className="text-amber-400 flex-shrink-0" />
-          <div>
-            <p className="text-white font-bold text-xl">¡Tenemos ganadora!</p>
-            <p className="text-zinc-500 text-[13px]">La votación ha concluido</p>
+  // ── Content renderer — kept as a function so AnimatePresence for the overlays
+  // always lives at the top of the returned JSX tree, surviving state transitions.
+  const renderContent = () => {
+    if (isLoading) {
+      return (
+        <div className="px-5 flex flex-col gap-3" style={{ height: CONTENT_HEIGHT }}>
+          <div className="skeleton h-8 w-36 rounded-xl" />
+          <div className="flex gap-3 flex-1 min-h-0">
+            <div className="skeleton flex-1 rounded-2xl" />
+            <div className="skeleton flex-1 rounded-2xl" />
           </div>
+          <div className="skeleton h-10 rounded-2xl" />
+          <div className="skeleton h-12 rounded-2xl" />
         </div>
+      );
+    }
 
-        {/* Winner card — fills remaining space */}
-        <WinnerCard movie={winner} style={{ flex: 1, minHeight: 0 }} />
+    // ── Winner ──────────────────────────────────────────────────────────────
+    if (duel?.status === 'closed' && duel.winner_id) {
+      const winner = duel.movie_a.id === duel.winner_id ? duel.movie_a : duel.movie_b;
+      const loser  = duel.movie_a.id === duel.winner_id ? duel.movie_b : duel.movie_a;
 
-        {/* Loser pill */}
-        <div className="flex items-center gap-2.5 flex-shrink-0">
-          <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 opacity-35">
-            {loser.poster_path ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={`https://image.tmdb.org/t/p/w92${loser.poster_path}`} alt={loser.title} className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                <Film size={12} className="text-zinc-600" />
-              </div>
-            )}
-          </div>
-          <div className="opacity-35 min-w-0">
-            <p className="text-zinc-400 text-[12px] font-medium truncate">{loser.title}</p>
-            <p className="text-zinc-600 text-[11px]">Queda pendiente para otro día</p>
-          </div>
-        </div>
-
-        {/* CTAs */}
-        <div className="flex-shrink-0 space-y-2">
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => onWatch(winner)}
-            className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-2xl flex items-center justify-center gap-2 shadow-[0_4px_20px_-4px_rgba(251,191,36,0.45)] transition-colors"
-          >
-            <Play size={16} fill="currentColor" />
-            Ver ahora
-          </motion.button>
-          <motion.button
-            whileTap={{ scale: 0.97 }}
-            onClick={() => onSchedule(winner)}
-            className="w-full h-12 bg-white/[0.06] hover:bg-white/10 text-zinc-300 font-medium rounded-2xl flex items-center justify-center gap-2 border border-white/[0.08] transition-colors"
-          >
-            <CalendarDays size={15} />
-            Programar para más tarde
-          </motion.button>
-          {isAdmin && (
-            <button
-              onClick={handleCancel}
-              className="w-full h-9 text-zinc-600 text-[13px] hover:text-zinc-400 transition-colors"
-            >
-              Nuevo duelo
-            </button>
-          )}
-        </div>
-      </motion.div>
-    );
-  }
-
-  // ── Tie state ───────────────────────────────────────────────────────────────
-  if (duel?.status === 'tie') {
-    const votesA = duel.votes.filter((v) => v.movie_id === duel.movie_a.id).length;
-    const votesB = duel.votes.filter((v) => v.movie_id === duel.movie_b.id).length;
-
-    return (
-      <>
-        {/* Fate animation overlay */}
-        <AnimatePresence>
-          {randomSpinning && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2 }}
-              className="fixed inset-0 z-50 bg-zinc-950/96 backdrop-blur-xl flex flex-col items-center justify-center gap-8 px-8"
-            >
-              <div className="flex items-center gap-6">
-                <motion.div
-                  animate={{ rotate: [-6, 6, -6], x: [0, -5, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
-                  className="w-[78px] h-[112px] rounded-xl overflow-hidden ring-2 ring-white/15 flex-shrink-0"
-                >
-                  {duel.movie_a.poster_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`https://image.tmdb.org/t/p/w185${duel.movie_a.poster_path}`} alt={duel.movie_a.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                      <Film size={22} className="text-zinc-600" />
-                    </div>
-                  )}
-                </motion.div>
-
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ repeat: Infinity, duration: 0.7, ease: 'linear' }}
-                  className="w-12 h-12 rounded-full bg-amber-400/15 border border-amber-400/30 flex items-center justify-center flex-shrink-0"
-                >
-                  <Shuffle size={20} className="text-amber-400" />
-                </motion.div>
-
-                <motion.div
-                  animate={{ rotate: [6, -6, 6], x: [0, 5, 0] }}
-                  transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
-                  className="w-[78px] h-[112px] rounded-xl overflow-hidden ring-2 ring-white/15 flex-shrink-0"
-                >
-                  {duel.movie_b.poster_path ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img src={`https://image.tmdb.org/t/p/w185${duel.movie_b.poster_path}`} alt={duel.movie_b.title} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
-                      <Film size={22} className="text-zinc-600" />
-                    </div>
-                  )}
-                </motion.div>
-              </div>
-
-              <div className="text-center space-y-2">
-                <motion.p
-                  animate={{ opacity: [0.5, 1, 0.5] }}
-                  transition={{ repeat: Infinity, duration: 1.1 }}
-                  className="text-white font-bold text-xl"
-                >
-                  La suerte está decidiendo...
-                </motion.p>
-                <p className="text-zinc-500 text-sm">
-                  {duel.movie_a.title} vs {duel.movie_b.title}
-                </p>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
+      return (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -463,7 +438,76 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
           className="px-5 flex flex-col gap-3"
           style={{ height: CONTENT_HEIGHT }}
         >
-          {/* Tie header */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <Trophy size={22} className="text-amber-400 flex-shrink-0" />
+            <div>
+              <p className="text-white font-bold text-xl">¡Tenemos ganadora!</p>
+              <p className="text-zinc-500 text-[13px]">La votación ha concluido</p>
+            </div>
+          </div>
+
+          <WinnerCard movie={winner} style={{ flex: 1, minHeight: 0 }} />
+
+          <div className="flex items-center gap-2.5 flex-shrink-0">
+            <div className="w-7 h-7 rounded-lg overflow-hidden flex-shrink-0 opacity-35">
+              {loser.poster_path ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={`https://image.tmdb.org/t/p/w92${loser.poster_path}`} alt={loser.title} className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                  <Film size={12} className="text-zinc-600" />
+                </div>
+              )}
+            </div>
+            <div className="opacity-35 min-w-0">
+              <p className="text-zinc-400 text-[12px] font-medium truncate">{loser.title}</p>
+              <p className="text-zinc-600 text-[11px]">Queda pendiente para otro día</p>
+            </div>
+          </div>
+
+          <div className="flex-shrink-0 space-y-2">
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onWatch(winner)}
+              className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold rounded-2xl flex items-center justify-center gap-2 shadow-[0_4px_20px_-4px_rgba(251,191,36,0.45)] transition-colors"
+            >
+              <Play size={16} fill="currentColor" />
+              Ver ahora
+            </motion.button>
+            <motion.button
+              whileTap={{ scale: 0.97 }}
+              onClick={() => onSchedule(winner)}
+              className="w-full h-12 bg-white/[0.06] hover:bg-white/10 text-zinc-300 font-medium rounded-2xl flex items-center justify-center gap-2 border border-white/[0.08] transition-colors"
+            >
+              <CalendarDays size={15} />
+              Programar para más tarde
+            </motion.button>
+            {isAdmin && (
+              <button
+                onClick={handleCancel}
+                className="w-full h-9 text-zinc-600 text-[13px] hover:text-zinc-400 transition-colors"
+              >
+                Nuevo duelo
+              </button>
+            )}
+          </div>
+        </motion.div>
+      );
+    }
+
+    // ── Tie ─────────────────────────────────────────────────────────────────
+    if (duel?.status === 'tie') {
+      const votesA = duel.votes.filter((v) => v.movie_id === duel.movie_a.id).length;
+      const votesB = duel.votes.filter((v) => v.movie_id === duel.movie_b.id).length;
+
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          className="px-5 flex flex-col gap-3"
+          style={{ height: CONTENT_HEIGHT }}
+        >
           <div className="flex items-center gap-3 flex-shrink-0">
             <div className="w-10 h-10 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center flex-shrink-0">
               <Scale size={18} className="text-indigo-400" />
@@ -474,7 +518,6 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
             </div>
           </div>
 
-          {/* Tied movie cards — fill available space */}
           <div className="flex gap-3 flex-1 min-h-0">
             {[duel.movie_a, duel.movie_b].map((movie) => {
               const platform = getPlatform(movie.platform);
@@ -508,7 +551,6 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
             })}
           </div>
 
-          {/* Resolution options */}
           <div className="flex-shrink-0 space-y-2">
             {isAdmin ? (
               <>
@@ -547,123 +589,199 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
             )}
           </div>
         </motion.div>
-      </>
-    );
-  }
+      );
+    }
 
-  // ── Voting state ────────────────────────────────────────────────────────────
-  if (duel?.status === 'voting') {
-    const votesA = duel.votes.filter((v) => v.movie_id === duel.movie_a.id).length;
-    const votesB = duel.votes.filter((v) => v.movie_id === duel.movie_b.id).length;
-    const totalVoters = members.length;
-    const allVoted = duel.votes.length === totalVoters;
+    // ── Voting ───────────────────────────────────────────────────────────────
+    if (duel?.status === 'voting') {
+      const votesA = duel.votes.filter((v) => v.movie_id === duel.movie_a.id).length;
+      const votesB = duel.votes.filter((v) => v.movie_id === duel.movie_b.id).length;
+      const totalVoters = members.length;
+      const allVoted = duel.votes.length === totalVoters;
 
+      return (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ type: 'spring', stiffness: 300, damping: 28 }}
+          className="px-5 flex flex-col gap-3"
+          style={{ height: CONTENT_HEIGHT }}
+        >
+          <div className="flex items-center justify-between flex-shrink-0">
+            <div>
+              <p className="text-white font-bold text-lg">Duelo en curso</p>
+              <p className="text-zinc-500 text-[12px]">
+                {allVoted ? '¡Todos han votado!' : `${duel.votes.length} de ${totalVoters} han votado`}
+              </p>
+            </div>
+            {isAdmin && (
+              <button
+                onClick={handleCancel}
+                disabled={cancelDuel.isPending}
+                className="w-7 h-7 rounded-full bg-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
+              >
+                <X size={13} />
+              </button>
+            )}
+          </div>
+
+          <div className="relative flex gap-3 flex-1 min-h-0">
+            <DuelCard
+              movie={duel.movie_a}
+              votedFor={votedMovieId === duel.movie_a.id}
+              votes={votesA}
+              totalMembers={totalVoters}
+              onVote={() => handleVote(duel.movie_a.id)}
+              isPending={voteDuel.isPending || closeDuel.isPending}
+            />
+
+            <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
+              <div className="w-8 h-8 rounded-full bg-zinc-950 border-2 border-amber-400/40 flex items-center justify-center shadow-[0_0_16px_-2px_rgba(251,191,36,0.4)]">
+                <Swords size={13} className="text-amber-400" />
+              </div>
+            </div>
+
+            <DuelCard
+              movie={duel.movie_b}
+              votedFor={votedMovieId === duel.movie_b.id}
+              votes={votesB}
+              totalMembers={totalVoters}
+              onVote={() => handleVote(duel.movie_b.id)}
+              isPending={voteDuel.isPending || closeDuel.isPending}
+            />
+          </div>
+
+          <div className="flex-shrink-0 space-y-2">
+            <VoteRow duel={duel} members={members} />
+
+            {isAdmin && (
+              <motion.button
+                whileTap={{ scale: 0.97 }}
+                onClick={handleClose}
+                disabled={closeDuel.isPending || duel.votes.length === 0}
+                className="w-full h-12 bg-amber-400/15 hover:bg-amber-400/25 text-amber-400 font-semibold rounded-2xl flex items-center justify-center gap-2 border border-amber-400/25 transition-colors disabled:opacity-40"
+              >
+                {closeDuel.isPending ? 'Cerrando...' : 'Cerrar votación'}
+              </motion.button>
+            )}
+
+            {!isAdmin && allVoted && (
+              <div className="flex items-center justify-center gap-2 py-2 px-4 bg-zinc-900 rounded-2xl border border-white/[0.06]">
+                <span className="text-[13px] text-zinc-400">Esperando que el admin cierre la votación</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+      );
+    }
+
+    // ── Idle ─────────────────────────────────────────────────────────────────
     return (
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: 'spring', stiffness: 300, damping: 28 }}
-        className="px-5 flex flex-col gap-3"
+        transition={{ type: 'spring', stiffness: 280, damping: 26 }}
+        className="px-5 flex flex-col items-center justify-center"
         style={{ height: CONTENT_HEIGHT }}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between flex-shrink-0">
-          <div>
-            <p className="text-white font-bold text-lg">Duelo en curso</p>
-            <p className="text-zinc-500 text-[12px]">
-              {allVoted ? '¡Todos han votado!' : `${duel.votes.length} de ${totalVoters} han votado`}
-            </p>
-          </div>
-          {isAdmin && (
-            <button
-              onClick={handleCancel}
-              disabled={cancelDuel.isPending}
-              className="w-7 h-7 rounded-full bg-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-            >
-              <X size={13} />
-            </button>
-          )}
+        <div className="w-20 h-20 rounded-[22px] bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mb-5">
+          <Swords size={34} className="text-amber-400" />
         </div>
 
-        {/* Cards — fill remaining space */}
-        <div className="relative flex gap-3 flex-1 min-h-0">
-          <DuelCard
-            movie={duel.movie_a}
-            votedFor={votedMovieId === duel.movie_a.id}
-            votes={votesA}
-            totalMembers={totalVoters}
-            onVote={() => handleVote(duel.movie_a.id)}
-            isPending={voteDuel.isPending || closeDuel.isPending}
-          />
+        <h2 className="text-white font-bold text-2xl mb-2">Duelo de Películas</h2>
+        <p className="text-zinc-500 text-[14px] text-center leading-relaxed max-w-[260px] mb-8">
+          Sorteamos dos pelis y todos votáis. La más votada es la que veréis esta noche.
+        </p>
 
-          <div className="absolute left-1/2 top-[42%] -translate-x-1/2 -translate-y-1/2 z-10 pointer-events-none">
-            <div className="w-8 h-8 rounded-full bg-zinc-950 border-2 border-amber-400/40 flex items-center justify-center shadow-[0_0_16px_-2px_rgba(251,191,36,0.4)]">
-              <Swords size={13} className="text-amber-400" />
-            </div>
-          </div>
-
-          <DuelCard
-            movie={duel.movie_b}
-            votedFor={votedMovieId === duel.movie_b.id}
-            votes={votesB}
-            totalMembers={totalVoters}
-            onVote={() => handleVote(duel.movie_b.id)}
-            isPending={voteDuel.isPending || closeDuel.isPending}
-          />
-        </div>
-
-        {/* Footer */}
-        <div className="flex-shrink-0 space-y-2">
-          <VoteRow duel={duel} members={members} />
-
-          {isAdmin && (
-            <motion.button
-              whileTap={{ scale: 0.97 }}
-              onClick={handleClose}
-              disabled={closeDuel.isPending || duel.votes.length === 0}
-              className="w-full h-12 bg-amber-400/15 hover:bg-amber-400/25 text-amber-400 font-semibold rounded-2xl flex items-center justify-center gap-2 border border-amber-400/25 transition-colors disabled:opacity-40"
-            >
-              {closeDuel.isPending ? 'Cerrando...' : 'Cerrar votación'}
-            </motion.button>
-          )}
-
-          {!isAdmin && allVoted && (
-            <div className="flex items-center justify-center gap-2 py-2 px-4 bg-zinc-900 rounded-2xl border border-white/[0.06]">
-              <span className="text-[13px] text-zinc-400">Esperando que el admin cierre la votación</span>
-            </div>
-          )}
-        </div>
+        <motion.button
+          whileTap={{ scale: 0.96 }}
+          onClick={handleStart}
+          disabled={createDuel.isPending || showIntro}
+          className="h-13 px-10 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-[15px] rounded-2xl flex items-center gap-2.5 shadow-[0_4px_24px_-4px_rgba(251,191,36,0.45)] transition-colors disabled:opacity-50"
+        >
+          <Swords size={16} />
+          Iniciar duelo
+        </motion.button>
       </motion.div>
     );
-  }
+  };
 
-  // ── No duel (idle) state ────────────────────────────────────────────────────
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ type: 'spring', stiffness: 280, damping: 26 }}
-      className="px-5 flex flex-col items-center justify-center"
-      style={{ height: CONTENT_HEIGHT }}
-    >
-      <div className="w-20 h-20 rounded-[22px] bg-amber-400/10 border border-amber-400/20 flex items-center justify-center mb-5">
-        <Swords size={34} className="text-amber-400" />
-      </div>
+    <>
+      {/* Sword intro — rendered outside renderContent so this AnimatePresence
+          survives the idle → voting state transition without unmounting */}
+      <AnimatePresence>
+        {showIntro && <SwordIntroOverlay key="sword-intro" />}
+      </AnimatePresence>
 
-      <h2 className="text-white font-bold text-2xl mb-2">Duelo de Películas</h2>
-      <p className="text-zinc-500 text-[14px] text-center leading-relaxed max-w-[260px] mb-8">
-        Sorteamos dos pelis y todos votáis. La más votada es la que veréis esta noche.
-      </p>
+      {/* Random fate spinner */}
+      <AnimatePresence>
+        {randomSpinning && duel && (
+          <motion.div
+            key="random-spin"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            className="fixed inset-0 z-50 bg-zinc-950/96 backdrop-blur-xl flex flex-col items-center justify-center gap-8 px-8"
+          >
+            <div className="flex items-center gap-6">
+              <motion.div
+                animate={{ rotate: [-6, 6, -6], x: [0, -5, 0] }}
+                transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+                className="w-[78px] h-[112px] rounded-xl overflow-hidden ring-2 ring-white/15 flex-shrink-0"
+              >
+                {duel.movie_a.poster_path ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://image.tmdb.org/t/p/w185${duel.movie_a.poster_path}`} alt={duel.movie_a.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                    <Film size={22} className="text-zinc-600" />
+                  </div>
+                )}
+              </motion.div>
 
-      <motion.button
-        whileTap={{ scale: 0.96 }}
-        onClick={handleStart}
-        disabled={createDuel.isPending}
-        className="h-13 px-10 bg-amber-400 hover:bg-amber-300 text-zinc-950 font-bold text-[15px] rounded-2xl flex items-center gap-2.5 shadow-[0_4px_24px_-4px_rgba(251,191,36,0.45)] transition-colors disabled:opacity-50"
-      >
-        <Swords size={16} />
-        {createDuel.isPending ? 'Iniciando...' : 'Iniciar duelo'}
-      </motion.button>
-    </motion.div>
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ repeat: Infinity, duration: 0.7, ease: 'linear' }}
+                className="w-12 h-12 rounded-full bg-amber-400/15 border border-amber-400/30 flex items-center justify-center flex-shrink-0"
+              >
+                <Shuffle size={20} className="text-amber-400" />
+              </motion.div>
+
+              <motion.div
+                animate={{ rotate: [6, -6, 6], x: [0, 5, 0] }}
+                transition={{ repeat: Infinity, duration: 0.55, ease: 'easeInOut' }}
+                className="w-[78px] h-[112px] rounded-xl overflow-hidden ring-2 ring-white/15 flex-shrink-0"
+              >
+                {duel.movie_b.poster_path ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img src={`https://image.tmdb.org/t/p/w185${duel.movie_b.poster_path}`} alt={duel.movie_b.title} className="w-full h-full object-cover" />
+                ) : (
+                  <div className="w-full h-full bg-zinc-800 flex items-center justify-center">
+                    <Film size={22} className="text-zinc-600" />
+                  </div>
+                )}
+              </motion.div>
+            </div>
+
+            <div className="text-center space-y-2">
+              <motion.p
+                animate={{ opacity: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 1.1 }}
+                className="text-white font-bold text-xl"
+              >
+                La suerte está decidiendo...
+              </motion.p>
+              <p className="text-zinc-500 text-sm">
+                {duel.movie_a.title} vs {duel.movie_b.title}
+              </p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {renderContent()}
+    </>
   );
 }
