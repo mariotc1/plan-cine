@@ -11,7 +11,7 @@ class Rating extends Model
     protected $keyType = 'string';
     protected $table = 'ratings';
 
-    protected $fillable = ['session_id', 'user_id', 'score'];
+    protected $fillable = ['session_id', 'user_id', 'score', 'comment'];
 
     protected static function boot(): void
     {

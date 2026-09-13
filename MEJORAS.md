@@ -505,6 +505,30 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## FEATURE — Comentarios en valoraciones ✅
+
+> Petición del usuario: además de la puntuación por estrellas, poder dejar un
+> comentario corto ("Muy buena", "tan mala que me dormí"), editable/borrable,
+> pero solo si ya se ha valorado con estrellas. Borrar el comentario nunca debe
+> borrar la puntuación — son independientes. Debe poder añadirse tanto al valorar
+> como en cualquier momento posterior, y verse bien en móvil y desktop.
+
+- **Backend:**
+  - Migración `add_comment_to_ratings_table` — columna `comment` (text, nullable) en `ratings`.
+  - `Rating::$fillable` incluye `comment`.
+  - `RatingRequest` — `score` pasa de obligatorio a `sometimes|integer|between:1,5`; nuevo `comment` → `sometimes|nullable|string|max:280`.
+  - `RatingController::store` — deja de exigir siempre `score`. Si no existe ya una valoración para ese usuario/sesión y no se envía `score`, devuelve `422` ("Debes valorar con estrellas antes de comentar."). Si existe, hace `updateOrCreate` solo con los campos presentes en la request — así el mismo endpoint sirve para valorar por primera vez, valorar+comentar a la vez, o editar solo el comentario más tarde sin tocar la puntuación.
+  - `RatingController::destroyComment` (nuevo, `DELETE sessions/{id}/ratings/comment`) — pone `comment = null` sobre la valoración existente del usuario. Nunca borra la fila `Rating` ni su `score`.
+  - `RatingResource` expone el nuevo campo `comment`.
+- **Frontend:**
+  - `types/index.ts` — `Rating.comment: string | null`. `lib/api.ts` — `ratingsApi.rate()` acepta `{score?, comment?}`; nuevo `ratingsApi.deleteComment()`.
+  - `useSessions.ts` — `useRateSession` adaptado al nuevo shape; nuevo hook `useDeleteRatingComment()`.
+  - `sessions/[sessionId]/page.tsx` — el sheet de valoración gana un `<Textarea>` opcional (máx. 280) bajo las estrellas. En la lista "Valoraciones", cada fila muestra su comentario en cursiva bajo el nombre; solo en la fila del usuario logueado aparecen iconos de lápiz (abre un `ResponsiveSheet` compacto "Tu comentario" — bottom-sheet en móvil / diálogo centrado en desktop, reutilizando la primitiva de la Fase 7.2) y, si ya hay comentario, de papelera (borra al momento, con toast, sin confirmación previa por ser una acción reversible y de bajo riesgo). Las filas de otros usuarios son de solo lectura.
+  - `memories/page.tsx` — mismo tratamiento visual del comentario, siempre de solo lectura (la edición vive únicamente en el detalle de sesión).
+- **Qué probé:** contra Docker, con Playwright, en desktop (1440×900) y móvil (390×844): valorar con estrellas + comentario a la vez; editar el comentario después; borrarlo y confirmar que **la puntuación de estrellas permanece intacta** y solo desaparece el texto (reaparece el icono de "+"); toasts de guardado/eliminado correctos en ambos flujos; comentarios de otros usuarios visibles en solo lectura sin iconos de edición. `npm run build` y `eslint` limpios. Sin errores de consola.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -523,6 +547,8 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-08 | Fase 7.7 | Pulido final: grids, dashboard de stats, perfil 2 columnas. Fase 7 completa |
 | 2026-09-13 | Fase 7 fix | Grids de cards a ancho fijo (auto-fill) tras feedback de tamaño inconsistente |
 | 2026-09-13 | Bug crítico | Service Worker atascado servía HTML cacheado para siempre → sesión "se perdía". Arreglado |
+| 2026-09-13 | Bug crítico #2 | `tokens()->delete()` en login mataba sesiones de otros dispositivos. Arreglado (multi-sesión) |
+| 2026-09-13 | Feature | Comentarios en valoraciones: opcional, editable/borrable, independiente de la puntuación |
 
 ---
 

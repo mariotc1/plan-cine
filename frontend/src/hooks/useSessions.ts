@@ -109,11 +109,22 @@ export function useReturnToPending(groupId: string) {
 export function useRateSession() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ sessionId, score }: { sessionId: string; score: number }) =>
-      ratingsApi.rate(sessionId, score),
+    mutationFn: ({ sessionId, score, comment }: { sessionId: string; score?: number; comment?: string }) =>
+      ratingsApi.rate(sessionId, { score, comment }),
     onSuccess: (_, { sessionId }) => {
       qc.invalidateQueries({ queryKey: ['sessions', sessionId] });
       toast.success('¡Valoración guardada! ⭐');
+    },
+  });
+}
+
+export function useDeleteRatingComment() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (sessionId: string) => ratingsApi.deleteComment(sessionId),
+    onSuccess: (_, sessionId) => {
+      qc.invalidateQueries({ queryKey: ['sessions', sessionId] });
+      toast.success('Comentario eliminado');
     },
   });
 }

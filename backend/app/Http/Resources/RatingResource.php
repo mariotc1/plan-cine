@@ -13,6 +13,7 @@ class RatingResource extends JsonResource
             'id' => $this->id,
             'user' => $this->whenLoaded('user', fn() => new UserResource($this->user)),
             'score' => $this->score,
+            'comment' => $this->comment,
             'created_at' => $this->created_at,
         ];
     }
