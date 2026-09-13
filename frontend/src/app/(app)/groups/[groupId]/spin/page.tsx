@@ -103,7 +103,7 @@ export default function SpinPage({ params }: Props) {
   return (
     <div>
       {/* Mode switcher */}
-      <div className="flex gap-2 px-5 pt-1 pb-4 lg:px-8 lg:justify-start">
+      <div className="flex gap-2 px-5 pt-1 pb-4 lg:px-8 lg:justify-center">
         <ModeButton
           active={mode === 'ruleta'}
           onClick={() => setMode('ruleta')}

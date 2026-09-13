@@ -384,6 +384,46 @@ Breakpoint: `lg:` (1024px). Navegación desktop: sidebar persistente estilo Line
 - **Fix:** en los 4 grids de cards (`groups/[groupId]/page.tsx` películas, `groups/page.tsx` lista y skeleton, `memories/page.tsx`, `members/page.tsx`) cambié `repeat(auto-fit, minmax(Npx, 1fr))` por `repeat(auto-fill, Npx)` — ancho de columna fijo (380px películas, 340px grupos/recuerdos, 320px miembros), el navegador decide solo cuántas caben. Ya no hay "salto" de tamaño al redimensionar.
 - **Qué probé:** Docker a 3440px (simulando un monitor ultra-wide de 34") — 4 columnas, todas exactamente del mismo tamaño, con margen vacío a la derecha en vez de cards estiradas; y a 1180px (el caso límite que antes rompía) — 2 columnas limpias y consistentes, sin fragmentación. `npm run build` limpio.
 
+### 7.5 (fix) — Ruleta: botones sin centrar y rueda del tamaño de móvil ✅
+- **Feedback del usuario:** los botones Ruleta/Duelo no estaban centrados respecto a la rueda, y la rueda en sí seguía teniendo el tamaño fijo de móvil (300px) sin aprovechar el espacio de escritorio — pero sin llegar a provocar scroll para llegar al botón "¿Qué vemos hoy?" en ninguna pantalla.
+- **Fix:**
+  - `spin/page.tsx` — el selector de modo pasa de `lg:justify-start` a `lg:justify-center`.
+  - `SpinWheel.tsx` — la rueda (antes un SVG con `width`/`height` fijos a 300px, código duro para toda resolución) pasa a usar `viewBox="0 0 300 300"` + `width="100%" height="100%"`: toda la geometría interna (segmentos, textos, centro) sigue calculada sobre las mismas 300 unidades, pero el tamaño *visual* ahora lo decide un contenedor con `lg:w-[clamp(260px,42vh,460px)]` — crece con la altura real de la ventana hasta un máximo de 460px, y se encoge en ventanas bajas, para que el botón de girar quede siempre visible sin scroll. Se quitó el `minHeight` fijo de 600px en desktop (ya no hace falta, el propio tamaño de la rueda ya se adapta).
+- **Qué probé:** Docker a 1440×900, 1920×1200 (rueda grande pero sin pasarse) y 1200×700 como caso límite de ventana baja — en los tres, el botón "¿Qué vemos hoy?" y el texto de ayuda quedan completamente visibles sin necesidad de scroll. `npm run build` limpio.
+
+### 7.5 (fix 2) — Triángulo pegado a los botones (desktop) / demasiado espacio (móvil) ✅
+- **Feedback del usuario:** en desktop el triángulo indicador de la rueda quedaba pegado a los botones Ruleta/Duelo; en móvil pasaba lo contrario — demasiado margen, la rueda quedaba muy abajo.
+- **Causa:** el contenedor de la rueda usaba `justify-center` dentro de una caja con `minHeight: calc(100svh - 230px)` en móvil — es decir, centraba verticalmente el contenido dentro de casi toda la altura de la pantalla, empujándolo hacia el medio/abajo en vez de dejarlo arriba con un margen razonable. En desktop, al quitar ese `minHeight` (fix anterior), no quedaba ningún espaciado superior explícito.
+- **Fix:** se sustituye el centrado vertical "a lo bruto" por un espaciado superior fijo y ajustado por pantalla: `pt-6` en móvil (justo el aire que hacía falta, sin la caja gigante) y `lg:pt-12` en desktop (separación clara respecto a los botones).
+- **Qué probé:** Docker a 1440px (desktop — separación clara entre botones y triángulo) y 390px (móvil — la rueda ya no queda "muy abajo", aparece justo debajo de los botones con un margen natural). `npm run build` limpio.
+
+### 7.5 (rediseño visual) — La rueda tenía pinta de "ruleta de premios" genérica ✅
+- **Feedback del usuario:** los colores de los segmentos no pegaban con la estética de la app, el indicador ("pico") se veía plano, y en general faltaba sensación 3D y mejores animaciones.
+- **Colores:** de una paleta arcoíris de 12 colores (rojo, naranja, lima, verde, cian...) a una familia coherente índigo → violeta → púrpura → fucsia → rosa — los mismos tonos que ya usa la marca (`indigo-500` es el acento de toda la app), en vez de colores que no tienen nada que ver con el resto de la interfaz.
+- **Indicador ("pico"):** de un triángulo blanco plano a un pin con degradado índigo, sombra propia y borde — con dos animaciones: en reposo hace un pequeño balanceo constante (respira), y durante el giro vibra rápido como si golpeara los separadores de los segmentos (el típico "tic-tic-tic" de una ruleta real).
+- **Sensación 3D:** bisel oscuro exterior con sombra de elevación e "glow" índigo alrededor de toda la rueda, un brillo de cristal superpuesto sobre los colores (efecto cúpula), y el centro (`hub`) pasa de un punto plano a un círculo con degradado, borde y el emoji 🎬.
+- **Qué probé:** Docker a 1440px — capturé la rueda en reposo, a mitad de giro (para confirmar que el pin vibra) y en el resultado final; y en 390px para confirmar que se ve igual de bien en móvil. `npm run build` limpio.
+
+### 7.5 (ajuste tras feedback) — Puntero de vuelta a triángulo + golpe sincronizado, logo en el centro ✅
+- **Feedback del usuario:** el pin/gota no gustaba nada ("quiero mejor el triángulo"), y quería que el puntero diera la sensación de "chocar" contra la línea de cada gajo al pasar, no un balanceo genérico. También pidió el icono de la app en el centro en vez del emoji 🎬.
+- **Puntero:** vuelve a ser un triángulo limpio (`M12,27 L2,4 L22,4 Z`), con relleno degradado índigo y sombra — ya no es una forma redondeada tipo pin.
+- **Golpe sincronizado de verdad:** la rotación de la rueda dejó de animarse de forma declarativa (`animate={{rotate: wheelRotation}}`) y pasa a un `motion value` (`wheelRotate`) animado de forma imperativa con `animate()` de Framer Motion, que expone un callback `onUpdate` en cada frame. Ahí se calcula en qué segmento está la rueda en cada instante (`Math.floor(rotación / ánguloDeSegmento)`); en cuanto cambia de segmento, se dispara un "golpe" (`pointerKick`, un `motion value` propio del puntero con un `[0,-16,0]` rápido) — el puntero golpea la línea divisoria justo cuando la rueda la cruza, no un temporizador aproximado. Confirmado visualmente con capturas a distintos instantes del giro: el triángulo aparece inclinado en momentos distintos, señal de que el golpe está disparándose.
+- **Centro:** el emoji 🎬 se sustituye por el propio logo de la app (`/logo.png`, insertado como `<image>` dentro del SVG) sobre el círculo con degradado — con la casualidad de que el logo de Plan Cine ya es literalmente un icono de ruleta/carrete, encaja perfecto.
+- **Qué probé:** Docker a 1440px — reposo (logo visible en el centro, triángulo limpio) y varias capturas durante el giro para confirmar el golpe sincronizado. `npm run build` limpio.
+
+### 7.5 (ajuste fino) — Puntero flotando + color que se confundía con la rueda ✅
+- **Feedback del usuario:** el balanceo en reposo ("flotando") no encajaba — lo quería estático; y el degradado índigo del triángulo se parecía demasiado a los gajos del mismo tono, costaba distinguirlo.
+- **Fix:** se quita por completo la animación de reposo (antes `animate={{y:[0,3,0]}}` en bucle infinito) — ahora el triángulo no se mueve salvo por el golpe sincronizado durante el giro, que se mantiene igual. Color de relleno de índigo a blanco (`#ffffff → #e2e8f0`), que contrasta con cualquier color de la paleta de la rueda (todos son tonos índigo/violeta/rosa, ninguno blanco), con contorno oscuro neutro en vez del contorno con tinte índigo de antes.
+- **Qué probé:** Docker a 1440px — el triángulo blanco se distingue con claridad sobre cualquier gajo de fondo y permanece inmóvil hasta que empieza a girar. `npm run build` limpio.
+
+### 7.5 (cierre) — Rueda de móvil más grande ✅
+- **Petición del usuario:** agrandar la rueda en móvil para que se lean mejor los títulos.
+- **Tamaño en móvil:** de 300px fijos a `min(340px, 100vw - 48px)` — crece hasta 340px en la mayoría de móviles, pero se adapta hacia abajo con seguridad en pantallas más estrechas para no desbordar nunca horizontalmente (verificado en 375px y 430px, sin scroll lateral en ninguno).
+- **Sobre la orientación del texto:** probé a añadir una inclinación diagonal fija de 14° sobre la base radial, pero el usuario aclaró que se refería a la diagonal respecto al "pico" del gajo (la orientación radial que ya existía), no un giro añadido — con el añadido se veían "torcidas". Revertido a la orientación radial original tal cual estaba.
+- **Qué probé:** Docker a 375px (iPhone SE) y 430px (iPhone Pro Max) — la rueda es visiblemente más grande, los títulos se leen mejor, sin overflow horizontal en ningún caso. `npm run build` limpio.
+
+**Fase 7.5 (Ruleta) dada por cerrada tras varias rondas de ajuste fino con el usuario.**
+
 ---
 
 ## Fase 7 — Vista Desktop: COMPLETA (7.1 → 7.7)
@@ -439,6 +479,29 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
   (`caches.keys()` / `cache.keys()`) contiene únicamente los 4 assets estáticos —
   ninguna ruta HTML. Esto es justo lo que garantiza que un despliegue nuevo nunca
   vuelva a dejar a nadie atascado.
+
+### BUG CRÍTICO #2 — "Una sola sesión activa" mataba sesiones de otros dispositivos ✅
+- **Lo que pasó:** tras el fix del Service Worker, el usuario reportó que su sesión
+  volvió a perderse justo mientras yo verificaba los siguientes cambios (rueda de
+  la ruleta). Causa: `AuthController::login` (backend) hacía
+  `$user->tokens()->delete()` antes de crear el nuevo token — es decir, **solo
+  puede haber un token activo por cuenta a la vez**. Cada vez que mis scripts de
+  verificación automatizados iniciaban sesión con `mario@plancine.app` (la misma
+  cuenta de seed que usa el usuario para probar) para comprobar una pantalla,
+  invalidaban en el servidor el token de su sesión real en curso.
+- **Por qué era un bug real más allá de mis pruebas:** el mismo problema afecta a
+  cualquier uso legítimo con dos dispositivos a la vez (móvil + escritorio), que
+  es justo el caso de uso que tiene sentido ahora que la app funciona bien en
+  desktop — entrar en un dispositivo cerraría la sesión del otro sin avisar.
+- **Fix (con confirmación explícita del usuario):** `backend/app/Http/Controllers/Api/AuthController.php`
+  — se quita el `$user->tokens()->delete()` del método `login`. Cada login crea su
+  propio token independiente; `logout` ya solo borraba
+  `$request->user()->currentAccessToken()` (el token de esa sesión concreta), así
+  que no hizo falta tocarlo.
+- **Qué probé:** dos `curl` de login seguidos contra el backend de Docker con la
+  misma cuenta — ambos tokens resultantes siguen devolviendo `200` en
+  `/auth/me` simultáneamente (antes, el segundo login habría invalidado el
+  primero). Multi-dispositivo confirmado funcionando.
 
 ---
 
