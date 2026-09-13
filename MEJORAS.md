@@ -390,6 +390,58 @@ Breakpoint: `lg:` (1024px). Navegación desktop: sidebar persistente estilo Line
 
 ---
 
+## BUG CRÍTICO — Persistencia de sesión / Service Worker atascado ✅
+
+> Reportado por el usuario: tanto en producción como en desarrollo, la sesión se
+> "pierde" tras un rato de uso. En la PWA se queda en carga infinita y termina
+> pidiendo volver a registrarse; en desktop se queda cargando la página sin más,
+> obligando a borrar la caché del navegador para poder entrar de nuevo.
+
+**No era un bug de tokens ni del store de auth.** Comprobado: Sanctum tiene
+`'expiration' => null` (los tokens de acceso no caducan solos), y zustand-persist
+(v5) rehidrata el store de forma síncrona desde `localStorage` antes de que
+cualquier componente lo lea — no hay hueco de carrera ahí.
+
+**La causa real estaba en el Service Worker (`public/sw.js`) y en cómo se registra
+(`usePWAInstall.ts`):**
+
+1. `usePWAInstall.ts` solo llamaba a `navigator.serviceWorker.register('/sw.js')`
+   dentro de un `if` que se saltaba por completo en cuanto la PWA estaba instalada
+   (`isStandalone()`) **o** el usuario ya había cerrado el banner de instalación
+   una vez (`DISMISSED_KEY`). Es decir: justo en el momento en que más importa que
+   el Service Worker se mantenga actualizado (la app instalada, en uso real), el
+   código dejaba de intentar registrarlo/revisarlo para siempre.
+2. El `fetch` handler del Service Worker cacheaba `/`, `/login` y `/register` con
+   una estrategia "cache-first para siempre, sin revalidar nunca". La primera vez
+   que se instalaba el Service Worker, esas páginas quedaban congeladas tal cual
+   estaban en ese momento. En el siguiente despliegue, esa página vieja intenta
+   cargar sus chunks de JS con hash antiguo — que ya no existen en el servidor —
+   y la app se queda colgada en una carga infinita, sin ningún aviso, hasta que el
+   usuario borra la caché a mano.
+
+**Fix:**
+- `usePWAInstall.ts` — el registro (y comprobación de actualización vía
+  `reg.update()`) del Service Worker ahora se ejecuta siempre, fuera de los
+  `if` de instalado/descartado. Añadido también un listener de
+  `controllerchange` que recarga la página una vez cuando un Service Worker nuevo
+  toma el control, para no quedarse nunca corriendo JS antiguo con un SW nuevo.
+- `public/sw.js` — `/`, `/login` y `/register` **ya no se cachean en absoluto**.
+  El `fetch` handler solo sirve desde caché los 4 assets estáticos que de verdad
+  no cambian (logo, iconos, manifest); todo lo demás — HTML, chunks de
+  `/_next/static`, la API — va siempre directo a red. El Service Worker pasa a
+  tener un único trabajo (instalabilidad + notificaciones push), no una caché de
+  app-shell offline — y así una versión vieja atascada nunca puede volver a
+  secuestrar el arranque de la app. Versión de caché subida a `plan-cine-v3` para
+  forzar la limpieza de la caché vieja (`plan-cine-v2`) en cuanto el nuevo SW se
+  active.
+- **Qué probé:** en Docker, tras iniciar sesión, confirmé por consola que el
+  Service Worker se registra y queda `activated`, y que el contenido de la caché
+  (`caches.keys()` / `cache.keys()`) contiene únicamente los 4 assets estáticos —
+  ninguna ruta HTML. Esto es justo lo que garantiza que un despliegue nuevo nunca
+  vuelva a dejar a nadie atascado.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -406,6 +458,8 @@ Breakpoint: `lg:` (1024px). Navegación desktop: sidebar persistente estilo Line
 | 2026-09-08 | Fase 7.5 | Ruleta y Duelo: alturas dinámicas para desktop, mode-switcher no estirado |
 | 2026-09-08 | Fase 7.6 | Auth: card con glow en desktop para login/register |
 | 2026-09-08 | Fase 7.7 | Pulido final: grids, dashboard de stats, perfil 2 columnas. Fase 7 completa |
+| 2026-09-13 | Fase 7 fix | Grids de cards a ancho fijo (auto-fill) tras feedback de tamaño inconsistente |
+| 2026-09-13 | Bug crítico | Service Worker atascado servía HTML cacheado para siempre → sesión "se perdía". Arreglado |
 
 ---
 

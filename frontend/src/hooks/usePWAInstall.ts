@@ -37,17 +37,32 @@ export function usePWAInstall(): PWAInstallState {
   useEffect(() => {
     setPlatform(detectPlatform());
 
+    // Always register (and re-check for updates on) the service worker, regardless
+    // of install/dismissed state — this used to be gated behind the early returns
+    // below, which meant it stopped running the moment the PWA was installed or the
+    // banner dismissed, exactly when a stale SW mattered most. A stuck old SW then
+    // served an old cached shell forever, with no way to notice a new deploy.
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').then((reg) => {
+        reg.update().catch(() => {});
+      }).catch(() => {});
+
+      // If a new SW takes control mid-session, reload once to pick up the fresh
+      // build instead of leaving the tab running on stale JS indefinitely.
+      let reloaded = false;
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (reloaded) return;
+        reloaded = true;
+        window.location.reload();
+      });
+    }
+
     if (isStandalone()) {
       setIsInstalled(true);
       return;
     }
 
     if (localStorage.getItem(DISMISSED_KEY) === 'true') return;
-
-    // Register service worker
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
-    }
 
     // Android: capture install prompt
     const handler = (e: Event) => {
