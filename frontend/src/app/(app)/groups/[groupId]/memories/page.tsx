@@ -30,8 +30,13 @@ export default function MemoriesPage({ params }: Props) {
   }
 
   return (
-    <div className="px-5 pb-8">
-      <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-4">
+    <div className="px-5 pb-8 lg:px-8">
+      <motion.div
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[repeat(auto-fill,340px)] lg:gap-4 lg:items-start"
+      >
         {memories.map((memory, i) => {
           const platform = getPlatform(memory.movie.platform);
           return (
@@ -78,9 +83,16 @@ export default function MemoriesPage({ params }: Props) {
                 {memory.ratings.length > 0 && (
                   <div className="space-y-2">
                     {memory.ratings.map((rating) => (
-                      <div key={rating.id} className="flex items-center justify-between">
-                        <span className="text-sm text-zinc-400">{rating.user.name}</span>
-                        <RatingStars value={rating.score} readonly size={14} />
+                      <div key={rating.id}>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-zinc-400">{rating.user.name}</span>
+                          <RatingStars value={rating.score} readonly size={14} />
+                        </div>
+                        {rating.comment && (
+                          <p className="text-[13px] text-zinc-500 italic leading-snug mt-1">
+                            &ldquo;{rating.comment}&rdquo;
+                          </p>
+                        )}
                       </div>
                     ))}
                     {memory.average_rating && (

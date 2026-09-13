@@ -53,7 +53,7 @@ export function NowPlayingBanner({ groupId }: Props) {
           exit={{ opacity: 0, y: -12, scale: 0.97 }}
           transition={{ type: 'spring', stiffness: 440, damping: 38 }}
           onClick={() => router.push(`/groups/${groupId}/sessions/${session.id}`)}
-          className="mx-4 mb-2 w-[calc(100%-2rem)] flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-500/12 border border-emerald-500/25 active:bg-emerald-500/20 transition-colors text-left"
+          className="mx-4 mb-2 w-[calc(100%-2rem)] flex items-center gap-3 px-4 py-3 rounded-2xl bg-emerald-500/12 border border-emerald-500/25 active:bg-emerald-500/20 transition-colors text-left lg:mx-8 lg:w-[calc(100%-4rem)]"
         >
           {/* Pulsing dot */}
           <span className="relative flex-shrink-0 w-2.5 h-2.5">

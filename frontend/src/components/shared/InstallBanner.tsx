@@ -45,7 +45,7 @@ export function InstallBanner() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 100, opacity: 0 }}
             transition={{ type: 'spring', stiffness: 340, damping: 30 }}
-            className="fixed bottom-24 left-4 right-4 z-50 md:left-auto md:right-6 md:w-96"
+            className="fixed bottom-24 left-4 right-4 z-50 md:left-auto md:right-6 md:w-96 lg:bottom-6"
           >
             <div className="bg-zinc-900 border border-white/10 rounded-2xl p-4 shadow-2xl shadow-black/60 flex items-center gap-3">
               <Image src="/icon-192.png" alt="Plan Cine" width={44} height={44} className="rounded-xl flex-shrink-0" />

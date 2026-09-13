@@ -81,9 +81,9 @@ export default function GroupsPage() {
         }
       />
 
-      <div className="px-5 pb-8">
+      <div className="px-5 pb-8 lg:px-8">
         {isLoading ? (
-          <div className="space-y-3">
+          <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-[repeat(auto-fill,340px)] lg:gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="bg-zinc-900 rounded-2xl border border-white/[0.07] overflow-hidden">
                 <div className="flex items-center gap-4 px-5 pt-5 pb-4">
@@ -130,7 +130,7 @@ export default function GroupsPage() {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="space-y-3"
+            className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-[repeat(auto-fill,340px)] lg:gap-4 lg:items-start"
           >
             <AnimatePresence>
               {groups.map((group: Group) => (

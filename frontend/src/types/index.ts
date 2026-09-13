@@ -68,6 +68,7 @@ export interface Rating {
   id: string;
   user: User;
   score: 1 | 2 | 3 | 4 | 5;
+  comment: string | null;
   created_at: string;
 }
 

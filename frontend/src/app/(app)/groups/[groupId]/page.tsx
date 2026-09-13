@@ -15,6 +15,7 @@ import { StartSessionSheet } from '@/components/sessions/StartSessionSheet';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { EmptyState } from '@/components/shared/EmptyState';
 import { MovieCardSkeleton } from '@/components/movies/MovieCardSkeleton';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { Button } from '@/components/ui/button';
 import { staggerContainer } from '@/lib/animations';
 import { useFilterStore } from '@/stores/filterStore';
@@ -126,7 +127,7 @@ export default function MoviesPage({ params }: Props) {
   };
 
   return (
-    <div className="px-5 pb-28">
+    <div className="px-5 pb-28 lg:px-8">
 
       {/* Search + Filters unified toolbar */}
       <MovieFilters
@@ -134,6 +135,7 @@ export default function MoviesPage({ params }: Props) {
         onChange={(f) => setFilters(groupId, f)}
         searchQuery={searchQuery}
         onSearchChange={setSearchQuery}
+        onAddMovie={() => setShowAdd(true)}
       />
 
       <div className="mt-3">
@@ -164,7 +166,7 @@ export default function MoviesPage({ params }: Props) {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="space-y-3"
+            className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-[repeat(auto-fill,380px)] lg:gap-4 lg:items-start"
           >
             <AnimatePresence mode="popLayout">
               {filteredMovies.map((movie) => (
@@ -182,11 +184,11 @@ export default function MoviesPage({ params }: Props) {
         )}
       </div>
 
-      {/* FAB */}
+      {/* FAB — mobile/tablet only, desktop uses the "Añadir película" button in the toolbar */}
       <motion.button
         whileTap={{ scale: 0.91 }}
         onClick={() => setShowAdd(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full flex items-center justify-center z-40 bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-[0_8px_28px_-2px_rgba(99,102,241,0.65)] sm:right-[max(1.25rem,calc(50%-240px+1.25rem))]"
+        className="fixed bottom-24 right-5 w-14 h-14 rounded-full flex items-center justify-center z-40 bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-[0_8px_28px_-2px_rgba(99,102,241,0.65)] sm:right-[max(1.25rem,calc(50%-240px+1.25rem))] lg:hidden"
       >
         <Plus size={22} className="text-white" strokeWidth={2.5} />
       </motion.button>
@@ -229,55 +231,37 @@ export default function MoviesPage({ params }: Props) {
       />
 
       {/* Delete confirm sheet */}
-      <AnimatePresence>
+      <ResponsiveSheet open={!!deleteTarget} onClose={() => setDeleteTarget(null)} size="sm">
         {deleteTarget && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-[60] backdrop-blur-sm"
-              onClick={() => setDeleteTarget(null)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl px-6 pb-[max(env(safe-area-inset-bottom),24px)]"
-            >
-              <div className="flex justify-center pt-3 pb-4">
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
+          <div className="px-6 pb-[max(env(safe-area-inset-bottom),24px)] lg:pb-8">
+            <div className="flex flex-col items-center text-center mb-6 pt-2">
+              <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
+                <Trash2 size={22} className="text-red-400" />
               </div>
-              <div className="flex flex-col items-center text-center mb-6">
-                <div className="w-14 h-14 rounded-2xl bg-red-500/10 flex items-center justify-center mb-4">
-                  <Trash2 size={22} className="text-red-400" />
-                </div>
-                <h2 className="text-white font-bold text-xl">Eliminar película</h2>
-                <p className="text-zinc-400 text-sm mt-2 leading-relaxed max-w-xs">
-                  «{deleteTarget.title}» se eliminará de la lista permanentemente.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Button
-                  onClick={handleDelete}
-                  disabled={deleteMovie.isPending}
-                  className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
-                >
-                  {deleteMovie.isPending ? 'Eliminando...' : 'Sí, eliminar'}
-                </Button>
-                <Button
-                  onClick={() => setDeleteTarget(null)}
-                  variant="ghost"
-                  className="w-full h-12 rounded-xl text-zinc-400"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </motion.div>
-          </>
+              <h2 className="text-white font-bold text-xl">Eliminar película</h2>
+              <p className="text-zinc-400 text-sm mt-2 leading-relaxed max-w-xs">
+                «{deleteTarget.title}» se eliminará de la lista permanentemente.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                onClick={handleDelete}
+                disabled={deleteMovie.isPending}
+                className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
+              >
+                {deleteMovie.isPending ? 'Eliminando...' : 'Sí, eliminar'}
+              </Button>
+              <Button
+                onClick={() => setDeleteTarget(null)}
+                variant="ghost"
+                className="w-full h-12 rounded-xl text-zinc-400"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </ResponsiveSheet>
     </div>
   );
 }

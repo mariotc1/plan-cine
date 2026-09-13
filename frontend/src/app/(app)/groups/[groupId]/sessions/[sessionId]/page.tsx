@@ -3,21 +3,25 @@
 import { use, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
-import { useSession, useStartSession, useFinishSession, useReturnToPending, useRescheduleSession, useRateSession } from '@/hooks/useSessions';
+import { useSession, useStartSession, useFinishSession, useReturnToPending, useRescheduleSession, useRateSession, useDeleteRatingComment } from '@/hooks/useSessions';
 import { useGroupMembers, useGroup } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { RatingStars } from '@/components/sessions/RatingStars';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { ConfirmSheet } from '@/components/sessions/ConfirmSheet';
 import { ShareCardSheet } from '@/components/sessions/ShareCardSheet';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
 import Image from 'next/image';
-import { ArrowLeft, Clock, Film, Users, Calendar, Star, CalendarDays, Play, Share2 } from 'lucide-react';
+import { ArrowLeft, Clock, Film, Users, Calendar, Star, CalendarDays, Play, Share2, Pencil, Trash2, MessageSquarePlus } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { cn } from '@/lib/utils';
+
+const COMMENT_MAX = 280;
 
 interface Props {
   params: Promise<{ groupId: string; sessionId: string }>;
@@ -33,18 +37,22 @@ export default function SessionDetailPage({ params }: Props) {
   const returnToPending = useReturnToPending(groupId);
   const rescheduleSession = useRescheduleSession(groupId);
   const rateSession = useRateSession();
+  const deleteRatingComment = useDeleteRatingComment();
 
   const { data: groupMembers = [] } = useGroupMembers(groupId);
   const { data: group } = useGroup(groupId);
   const members = groupMembers.map((m) => m.user);
 
   const [promptScore, setPromptScore] = useState(0);
+  const [promptComment, setPromptComment] = useState('');
   const [submittingRating, setSubmittingRating] = useState(false);
   const [showRatingPrompt, setShowRatingPrompt] = useState(false);
   const [ratingStep, setRatingStep] = useState<'rate' | 'share'>('rate');
   const [showEditSheet, setShowEditSheet] = useState(false);
   const [showConfirmCancel, setShowConfirmCancel] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
+  const [commentDraft, setCommentDraft] = useState<{ text: string } | null>(null);
+  const [savingComment, setSavingComment] = useState(false);
 
   // Auto-refetch when estimated_end_at arrives so the UI picks up backend auto-finish
   useEffect(() => {
@@ -73,11 +81,11 @@ export default function SessionDetailPage({ params }: Props) {
   const platform = session.movie ? getPlatform(session.movie.platform) : null;
   const genre = session.movie ? getGenre(session.movie.genre) : null;
 
-  const handleRate = async (score: number) => {
+  const handleRate = async (score: number, comment: string) => {
     if (!score) return;
     setSubmittingRating(true);
     try {
-      await rateSession.mutateAsync({ sessionId, score });
+      await rateSession.mutateAsync({ sessionId, score, comment: comment.trim() || undefined });
       await refetch();
       setRatingStep('share'); // transition to share nudge in same sheet
     } finally {
@@ -89,6 +97,24 @@ export default function SessionDetailPage({ params }: Props) {
     setShowRatingPrompt(false);
     setRatingStep('rate');
     setPromptScore(0);
+    setPromptComment('');
+  };
+
+  const handleSaveComment = async () => {
+    if (!commentDraft) return;
+    setSavingComment(true);
+    try {
+      await rateSession.mutateAsync({ sessionId, comment: commentDraft.text.trim() });
+      await refetch();
+      setCommentDraft(null);
+    } finally {
+      setSavingComment(false);
+    }
+  };
+
+  const handleDeleteComment = async () => {
+    await deleteRatingComment.mutateAsync(sessionId);
+    await refetch();
   };
 
   const STATUS_CONFIG: Record<string, { label: string; dot: string; text: string; bg: string }> = {
@@ -103,7 +129,7 @@ export default function SessionDetailPage({ params }: Props) {
   return (
     <div>
       {/* Breadcrumb */}
-      <div className="px-5 pt-3 pb-4">
+      <div className="px-5 pt-3 pb-4 lg:px-8 lg:max-w-2xl lg:mx-auto">
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={() => router.back()}
@@ -114,7 +140,7 @@ export default function SessionDetailPage({ params }: Props) {
         </motion.button>
       </div>
 
-      <div className="px-5 pb-10 space-y-4">
+      <div className="px-5 pb-10 space-y-4 lg:px-8 lg:max-w-2xl lg:mx-auto">
         {/* Title + status */}
         <div>
           <div className="flex items-start gap-2">
@@ -268,21 +294,61 @@ export default function SessionDetailPage({ params }: Props) {
                 <Star size={13} className="text-zinc-500" />
                 <h3 className="text-xs font-semibold text-zinc-500 uppercase tracking-wider">Valoraciones</h3>
               </div>
-              <div className="space-y-3">
-                {session.ratings.map((rating) => (
-                  <div key={rating.id} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span
-                        className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
-                        style={{ backgroundColor: `${rating.user.color}25` }}
-                      >
-                        {rating.user.avatar}
-                      </span>
-                      <span className="text-sm text-zinc-300">{rating.user.name}</span>
+              <div className="space-y-4">
+                {session.ratings.map((rating) => {
+                  const isMine = rating.user.id === user?.id;
+                  return (
+                    <div key={rating.id}>
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className="w-7 h-7 rounded-lg flex items-center justify-center text-sm"
+                            style={{ backgroundColor: `${rating.user.color}25` }}
+                          >
+                            {rating.user.avatar}
+                          </span>
+                          <span className="text-sm text-zinc-300">{rating.user.name}</span>
+                        </div>
+                        <div className="flex items-center gap-2.5">
+                          <RatingStars value={rating.score} readonly size={15} />
+                          {isMine && rating.comment && (
+                            <div className="flex items-center gap-1">
+                              <button
+                                onClick={() => setCommentDraft({ text: rating.comment ?? '' })}
+                                aria-label="Editar comentario"
+                                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-600 hover:text-zinc-300 hover:bg-white/5 transition-colors"
+                              >
+                                <Pencil size={12} />
+                              </button>
+                              <button
+                                onClick={handleDeleteComment}
+                                disabled={deleteRatingComment.isPending}
+                                aria-label="Eliminar comentario"
+                                className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-600 hover:text-red-400 hover:bg-red-500/10 transition-colors disabled:opacity-50"
+                              >
+                                <Trash2 size={12} />
+                              </button>
+                            </div>
+                          )}
+                          {isMine && !rating.comment && (
+                            <button
+                              onClick={() => setCommentDraft({ text: '' })}
+                              aria-label="Añadir comentario"
+                              className="w-6 h-6 rounded-lg flex items-center justify-center text-zinc-600 hover:text-indigo-400 hover:bg-indigo-500/10 transition-colors"
+                            >
+                              <MessageSquarePlus size={13} />
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                      {rating.comment && (
+                        <p className="text-[13px] text-zinc-500 italic leading-snug mt-1.5 pl-9 pr-1">
+                          &ldquo;{rating.comment}&rdquo;
+                        </p>
+                      )}
                     </div>
-                    <RatingStars value={rating.score} readonly size={15} />
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </motion.div>
           )}
@@ -359,26 +425,12 @@ export default function SessionDetailPage({ params }: Props) {
       </div>
 
       {/* ─── Rating prompt sheet ─────────────────────────────── */}
-      <AnimatePresence>
-        {showRatingPrompt && (
-          <>
-            <motion.div
-              key="rating-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/75 z-[60] backdrop-blur-sm"
-              onClick={ratingStep === 'rate' ? handleCloseRatingSheet : undefined}
-            />
-
-            <motion.div
-              key="rating-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 340, damping: 34 }}
-              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 rounded-t-3xl overflow-hidden border-t border-white/[0.08]"
-            >
+      <ResponsiveSheet
+        open={showRatingPrompt}
+        onClose={ratingStep === 'rate' ? handleCloseRatingSheet : () => {}}
+        size="md"
+        className="overflow-hidden"
+      >
               {/* Poster hero */}
               {session.movie?.poster_path ? (
                 <div className="relative w-full h-52">
@@ -394,7 +446,7 @@ export default function SessionDetailPage({ params }: Props) {
                 <div className="pt-5" />
               )}
 
-              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)] lg:pb-8">
                 <AnimatePresence mode="wait">
 
                   {/* Step 1 — Rate */}
@@ -415,12 +467,22 @@ export default function SessionDetailPage({ params }: Props) {
                         </h2>
                       </div>
 
-                      <div className="flex justify-center mb-7">
+                      <div className="flex justify-center mb-6">
                         <RatingStars value={promptScore} onChange={setPromptScore} size={52} />
                       </div>
 
+                      <div className="mb-6">
+                        <Textarea
+                          value={promptComment}
+                          onChange={(e) => setPromptComment(e.target.value.slice(0, COMMENT_MAX))}
+                          placeholder="¿Qué os ha parecido? (opcional)"
+                          className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl resize-none text-sm"
+                          rows={2}
+                        />
+                      </div>
+
                       <Button
-                        onClick={() => handleRate(promptScore)}
+                        onClick={() => handleRate(promptScore, promptComment)}
                         disabled={!promptScore || submittingRating}
                         className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold disabled:opacity-35 transition-all"
                       >
@@ -467,10 +529,7 @@ export default function SessionDetailPage({ params }: Props) {
 
                 </AnimatePresence>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      </ResponsiveSheet>
 
       {/* Edit session sheet (participants + date/time) */}
       <ScheduleSessionSheet
@@ -513,6 +572,28 @@ export default function SessionDetailPage({ params }: Props) {
           router.replace(`/groups/${groupId}/sessions`);
         }}
       />
+
+      {/* Add/edit comment sheet — reachable any time from the ratings list, independent of the initial rating prompt */}
+      <ResponsiveSheet open={!!commentDraft} onClose={() => setCommentDraft(null)} size="sm">
+        <div className="px-6 pb-[max(env(safe-area-inset-bottom),24px)] lg:pb-8">
+          <h2 className="text-white font-bold text-lg mb-4 lg:pr-8">Tu comentario</h2>
+          <Textarea
+            value={commentDraft?.text ?? ''}
+            onChange={(e) => setCommentDraft({ text: e.target.value.slice(0, COMMENT_MAX) })}
+            placeholder="¿Qué os ha parecido?"
+            className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl resize-none text-sm mb-5"
+            rows={3}
+            autoFocus
+          />
+          <Button
+            onClick={handleSaveComment}
+            disabled={savingComment || !commentDraft?.text.trim()}
+            className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold disabled:opacity-35"
+          >
+            {savingComment ? 'Guardando...' : 'Guardar comentario'}
+          </Button>
+        </div>
+      </ResponsiveSheet>
     </div>
   );
 }

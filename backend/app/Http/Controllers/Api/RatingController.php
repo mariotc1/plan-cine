@@ -24,9 +24,27 @@ class RatingController extends Controller
             'No participaste en esta sesión.'
         );
 
+        $existing = Rating::where('session_id', $sessionId)
+            ->where('user_id', $request->user()->id)
+            ->first();
+
+        abort_if(
+            !$existing && !$request->filled('score'),
+            422,
+            'Debes valorar con estrellas antes de comentar.'
+        );
+
+        $data = [];
+        if ($request->filled('score')) {
+            $data['score'] = $request->score;
+        }
+        if ($request->has('comment')) {
+            $data['comment'] = $request->comment;
+        }
+
         $rating = Rating::updateOrCreate(
             ['session_id' => $sessionId, 'user_id' => $request->user()->id],
-            ['score' => $request->score, 'id' => (string) Str::uuid()]
+            $data + ($existing ? [] : ['id' => (string) Str::uuid()])
         );
 
         $rating->load('user');
@@ -34,6 +52,21 @@ class RatingController extends Controller
         return response()->json([
             'data' => new RatingResource($rating),
             'message' => '¡Valoración guardada!',
+        ]);
+    }
+
+    public function destroyComment(Request $request, string $sessionId): JsonResponse
+    {
+        $rating = Rating::where('session_id', $sessionId)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $rating->update(['comment' => null]);
+        $rating->load('user');
+
+        return response()->json([
+            'data' => new RatingResource($rating),
+            'message' => 'Comentario eliminado.',
         ]);
     }
 }

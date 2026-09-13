@@ -5,6 +5,12 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Desktop shell (sidebar, grids, hover-actions, ResponsiveSheet-as-dialog) kicks in
+     at 768px instead of Tailwind's default 1024px — a halved MacBook window or an
+     iPad should get the desktop experience (sidebar, collapsible), not the phone one.
+     True single-column mobile UI (bottom nav, swipe, bottom sheets) only applies below
+     this — comfortably covers every real phone. Keep in sync with useIsDesktop.ts. */
+  --breakpoint-lg: 48rem;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;

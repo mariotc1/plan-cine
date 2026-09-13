@@ -1,8 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSheetAnimation } from '@/hooks/useSheetAnimation';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { Check, Clock, Users, Play } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Movie, User } from '@/types';
@@ -19,7 +18,6 @@ interface StartSessionSheetProps {
 }
 
 export function StartSessionSheet({ open, onClose, movie, members, onStart, loading }: StartSessionSheetProps) {
-  const { motionProps, handleProps } = useSheetAnimation(onClose);
   const [selected, setSelected] = useState<string[]>([]);
 
   useEffect(() => {
@@ -36,27 +34,9 @@ export function StartSessionSheet({ open, onClose, movie, members, onStart, load
   const genre = movie ? getGenre(movie.genre) : null;
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <motion.div
-            {...motionProps}
-            className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col"
-            style={{ maxHeight: '85vh' }}
-          >
-            {/* Handle */}
-            <div className="flex justify-center pt-3 pb-0 flex-shrink-0 select-none" {...handleProps}>
-              <div className="w-10 h-1 bg-white/20 rounded-full" />
-            </div>
-
+    <ResponsiveSheet open={open} onClose={onClose} size="md" className="flex flex-col" style={{ maxHeight: '85vh' }}>
             {/* Movie header */}
-            <div className="px-6 pt-4 pb-4 flex-shrink-0 border-b border-white/[0.06]">
+            <div className="px-6 pt-4 pb-4 flex-shrink-0 border-b border-white/[0.06] lg:pr-12">
               <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-widest mb-1">
                 ¡A ver la película!
               </p>
@@ -124,7 +104,7 @@ export function StartSessionSheet({ open, onClose, movie, members, onStart, load
             </div>
 
             {/* Footer */}
-            <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-white/[0.06] bg-zinc-950">
+            <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] lg:pb-5 border-t border-white/[0.06] bg-zinc-950 lg:rounded-b-3xl">
               <Button
                 onClick={() => { if (selected.length > 0 && movie) onStart(selected); }}
                 disabled={selected.length === 0 || loading}
@@ -134,9 +114,6 @@ export function StartSessionSheet({ open, onClose, movie, members, onStart, load
                 {loading ? 'Iniciando...' : `Empezar · ${selected.length} ${selected.length !== 1 ? 'participantes' : 'participante'}`}
               </Button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </ResponsiveSheet>
   );
 }

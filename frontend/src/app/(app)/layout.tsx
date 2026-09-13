@@ -4,6 +4,7 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
 import { BottomNav } from '@/components/shared/BottomNav';
+import { Sidebar } from '@/components/shared/Sidebar';
 import { InstallBanner } from '@/components/shared/InstallBanner';
 import { NotificationBanner } from '@/components/shared/NotificationBanner';
 import { OfflineBanner } from '@/components/shared/OfflineBanner';
@@ -38,17 +39,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   if (!isAuthenticated) return null;
 
   return (
-    <div className="min-h-screen">
-      {/* Centered column — full width on mobile, 480px centered on desktop */}
-      <div className="max-w-[480px] mx-auto min-h-screen relative sm:shadow-[0_0_0_1px_rgba(255,255,255,0.06)]">
-        <OfflineBanner />
-        <main className="pb-20">
-          {children}
-        </main>
-        <BottomNav />
-        <NotificationBanner />
-        <InstallBanner />
-        <PullToRefresh />
+    <div className="min-h-screen lg:flex">
+      <Sidebar />
+
+      {/* Content column — 480px centered card on mobile/tablet, fills the remaining
+          width next to the sidebar on desktop (capped only on very wide monitors so
+          line lengths stay sane — never a fixed narrow box on a big screen) */}
+      <div className="lg:flex-1 lg:min-w-0">
+        <div className="max-w-[480px] mx-auto min-h-screen relative sm:shadow-[0_0_0_1px_rgba(255,255,255,0.06)] lg:max-w-none lg:shadow-none 2xl:max-w-[1800px]">
+          <OfflineBanner />
+          <main className="pb-20 lg:pb-12">
+            {children}
+          </main>
+          <BottomNav />
+          <NotificationBanner />
+          <InstallBanner />
+          <PullToRefresh />
+        </div>
       </div>
     </div>
   );

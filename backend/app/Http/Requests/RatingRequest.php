@@ -11,7 +11,8 @@ class RatingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'score' => 'required|integer|between:1,5',
+            'score' => 'sometimes|integer|between:1,5',
+            'comment' => 'sometimes|nullable|string|max:280',
         ];
     }
 }

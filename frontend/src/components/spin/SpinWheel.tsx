@@ -1,16 +1,20 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, useMotionValue, animate as fmAnimate } from 'framer-motion';
 import { Play, Shuffle, X, CalendarDays } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
 
+// A cohesive indigo → violet → purple → fuchsia → pink family instead of a full
+// rainbow — matches the app's own brand palette instead of looking like a
+// generic prize wheel. Ordered so adjacent slices alternate light/dark for
+// contrast even when only the first few colors are in use.
 const SEGMENT_COLORS = [
-  '#6366f1', '#8b5cf6', '#a855f7', '#ec4899',
-  '#f43f5e', '#f97316', '#f59e0b', '#84cc16',
-  '#10b981', '#14b8a6', '#06b6d4', '#3b82f6',
+  '#6366f1', '#c084fc', '#7c3aed', '#f472b6',
+  '#8b5cf6', '#e879f9', '#4f46e5', '#d946ef',
+  '#a78bfa', '#9333ea', '#818cf8', '#ec4899',
 ];
 
 const SIZE = 300;
@@ -44,15 +48,36 @@ interface SpinWheelProps {
 export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProps) {
   const [spinning, setSpinning] = useState(false);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [wheelRotation, setWheelRotation] = useState(0);
   const [result, setResult] = useState<Movie | null>(null);
   const [showResult, setShowResult] = useState(false);
   const rotRef = useRef(0);
+
+  // Driven imperatively (not via the declarative `animate` prop) so onUpdate can
+  // fire the pointer "knock" exactly when the wheel crosses a segment boundary,
+  // instead of an arbitrary wobble that isn't actually synced to the dividers.
+  const wheelRotate = useMotionValue(0);
+  const pointerKick = useMotionValue(0);
+  const lastBoundaryRef = useRef(0);
 
   const n = movies.length;
   const segAngle = n > 0 ? 360 / n : 360;
   const fontSize = n <= 5 ? 11 : n <= 8 ? 9.5 : n <= 12 ? 8 : 7;
   const maxChars = n <= 5 ? 15 : n <= 8 ? 12 : n <= 12 ? 10 : 8;
+
+  // Precomputed once so the segment paths and their text labels can be drawn as
+  // two separate passes (paths, then a gloss overlay, then text on top of that)
+  // without duplicating the trig.
+  const segments = movies.map((movie, i) => {
+    const startDeg = i * segAngle;
+    const endDeg = (i + 1) * segAngle;
+    const midDeg = startDeg + segAngle / 2;
+    const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
+    const textR = R * 0.63;
+    const tp = polar(CX, CY, textR, midDeg);
+    // Radial — reads outward along the wedge, toward its tip at the center.
+    const textRot = midDeg > 90 && midDeg < 270 ? midDeg + 180 : midDeg;
+    return { movie, startDeg, endDeg, color, tp, textRot };
+  });
 
   const handleSpin = async () => {
     if (spinning || n === 0) return;
@@ -72,7 +97,22 @@ export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProp
 
     rotRef.current = finalRot;
     setIsAnimating(true);
-    setWheelRotation(finalRot);
+    lastBoundaryRef.current = Math.floor(wheelRotate.get() / segAngle);
+
+    fmAnimate(wheelRotate, finalRot, {
+      duration: 4,
+      ease: [0.05, 0.4, 0.1, 1.0],
+      onUpdate: (v) => {
+        // Every time the rotation crosses into a new segment, "knock" the pointer
+        // — a quick out-and-spring-back rotation, like it physically hit the
+        // divider line between two wedges.
+        const boundary = Math.floor(v / segAngle);
+        if (boundary !== lastBoundaryRef.current) {
+          lastBoundaryRef.current = boundary;
+          fmAnimate(pointerKick, [0, -16, 0], { duration: 0.22, ease: 'easeOut' });
+        }
+      },
+    });
 
     await new Promise((r) => setTimeout(r, 4300));
     setIsAnimating(false);
@@ -90,57 +130,94 @@ export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProp
   const genre = result ? getGenre(result.genre) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center px-5" style={{ minHeight: 'calc(100svh - 230px)' }}>
+    <div className="flex flex-col items-center px-5 pt-6 lg:pt-12">
 
-      {/* Wheel */}
-      <div className="relative flex items-center justify-center mb-8">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 drop-shadow-md">
-          <svg width="22" height="18">
-            <polygon points="11,18 1,0 21,0" fill="#fff" opacity="0.95" />
-          </svg>
+      {/* Wheel — fixed 300×300 viewBox for all the geometry math, but the visual
+          size scales with the viewport on desktop (clamped so it's always much
+          bigger than mobile without ever pushing the spin button off-screen) */}
+      <div className="relative flex items-center justify-center mb-8 w-[min(340px,calc(100vw_-_48px))] h-[min(340px,calc(100vw_-_48px))] lg:w-[clamp(260px,42vh,460px)] lg:h-[clamp(260px,42vh,460px)]">
+
+        {/* Static bezel + elevation shadow — sits outside the rotating disc */}
+        <div className="absolute inset-[-8px] rounded-full bg-gradient-to-br from-white/[0.08] via-transparent to-black/30 pointer-events-none" />
+        <div
+          className="absolute inset-0 rounded-full pointer-events-none"
+          style={{ boxShadow: '0 24px 60px -18px rgba(99,102,241,0.55), 0 0 0 1px rgba(255,255,255,0.07)' }}
+        />
+
+        {/* Pointer — static positioning wrapper (centering) + inner element that only ever
+            moves for the spin-time "knock" (pointerKick, driven imperatively in handleSpin
+            exactly when the wheel crosses a segment divider). No idle animation — it just
+            sits still until the wheel spins. White so it reads clearly against every
+            segment color, since the wheel's own palette is all indigo/violet/pink. */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 z-20 lg:scale-125" style={{ transformOrigin: 'top center' }}>
+          <motion.div style={{ rotate: pointerKick, transformOrigin: 'top center' }}>
+            <svg width="24" height="28" viewBox="0 0 24 28" style={{ filter: 'drop-shadow(0 3px 5px rgba(0,0,0,0.5))' }}>
+              <defs>
+                <linearGradient id="pointerGrad" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="100%" stopColor="#e2e8f0" />
+                </linearGradient>
+              </defs>
+              <path d="M12,27 L2,4 L22,4 Z" fill="url(#pointerGrad)" stroke="#18181b" strokeWidth="1" strokeLinejoin="round" />
+            </svg>
+          </motion.div>
         </div>
 
         <motion.div
-          animate={{ rotate: wheelRotation }}
-          transition={isAnimating ? { duration: 4, ease: [0.05, 0.4, 0.1, 1.0] } : { duration: 0 }}
-          className="rounded-full overflow-hidden"
+          style={{ rotate: wheelRotate, boxShadow: 'inset 0 2px 14px rgba(0,0,0,0.45)' }}
+          className="rounded-full overflow-hidden w-full h-full ring-1 ring-white/[0.08]"
         >
           {n === 0 ? (
-            <svg width={SIZE} height={SIZE}>
+            <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full">
               <circle cx={CX} cy={CY} r={R} fill="#18181b" stroke="#27272a" strokeWidth={2} />
               <text x={CX} y={CY - 10} textAnchor="middle" fill="#52525b" fontSize={13}>Sin</text>
               <text x={CX} y={CY + 10} textAnchor="middle" fill="#52525b" fontSize={13}>películas</text>
             </svg>
           ) : (
-            <svg width={SIZE} height={SIZE}>
-              {movies.map((movie, i) => {
-                const startDeg = i * segAngle;
-                const endDeg = (i + 1) * segAngle;
-                const midDeg = startDeg + segAngle / 2;
-                const color = SEGMENT_COLORS[i % SEGMENT_COLORS.length];
-                const textR = R * 0.63;
-                const tp = polar(CX, CY, textR, midDeg);
-                const textRot = midDeg > 90 && midDeg < 270 ? midDeg + 180 : midDeg;
-                return (
-                  <g key={movie.id}>
-                    <path d={slicePath(startDeg, endDeg)} fill={color} stroke="#09090b" strokeWidth={1.5} />
-                    {segAngle >= 18 && (
-                      <text
-                        x={tp.x} y={tp.y}
-                        textAnchor="middle" dominantBaseline="middle"
-                        fill="rgba(255,255,255,0.92)"
-                        fontSize={fontSize} fontWeight="700"
-                        transform={`rotate(${textRot},${tp.x},${tp.y})`}
-                        style={{ userSelect: 'none', pointerEvents: 'none' }}
-                      >
-                        {truncate(movie.title, maxChars)}
-                      </text>
-                    )}
-                  </g>
-                );
-              })}
-              <circle cx={CX} cy={CY} r={22} fill="#09090b" />
-              <circle cx={CX} cy={CY} r={10} fill="#6366f1" />
+            <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className="w-full h-full">
+              <defs>
+                <radialGradient id="glossGrad" cx="35%" cy="28%" r="75%">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0.30)" />
+                  <stop offset="55%" stopColor="rgba(255,255,255,0.06)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </radialGradient>
+                <radialGradient id="hubGrad" cx="50%" cy="32%" r="75%">
+                  <stop offset="0%" stopColor="#a5b4fc" />
+                  <stop offset="100%" stopColor="#4338ca" />
+                </radialGradient>
+              </defs>
+
+              {/* Segments */}
+              {segments.map((s) => (
+                <path key={s.movie.id} d={slicePath(s.startDeg, s.endDeg)} fill={s.color} stroke="#09090b" strokeWidth={1.5} />
+              ))}
+
+              {/* Glass sheen on top of the colors, underneath the labels */}
+              <circle cx={CX} cy={CY} r={R} fill="url(#glossGrad)" style={{ pointerEvents: 'none' }} />
+
+              {/* Labels */}
+              {segments.map((s) => segAngle >= 18 && (
+                <text
+                  key={s.movie.id}
+                  x={s.tp.x} y={s.tp.y}
+                  textAnchor="middle" dominantBaseline="middle"
+                  fill="rgba(255,255,255,0.94)"
+                  fontSize={fontSize} fontWeight="700"
+                  transform={`rotate(${s.textRot},${s.tp.x},${s.tp.y})`}
+                  style={{ userSelect: 'none', pointerEvents: 'none' }}
+                >
+                  {truncate(s.movie.title, maxChars)}
+                </text>
+              ))}
+
+              {/* Hub — the app's own mark instead of a generic emoji */}
+              <circle cx={CX} cy={CY} r={26} fill="#09090b" />
+              <circle cx={CX} cy={CY} r={22} fill="url(#hubGrad)" stroke="#312e81" strokeWidth={1.5} />
+              <image
+                href="/logo.png"
+                x={CX - 15} y={CY - 15} width={30} height={30}
+                style={{ pointerEvents: 'none' }}
+              />
             </svg>
           )}
         </motion.div>

@@ -58,6 +58,7 @@ Route::middleware('auth:sanctum')->group(function () {
 
     // Ratings
     Route::post('sessions/{id}/ratings', [RatingController::class, 'store']);
+    Route::delete('sessions/{id}/ratings/comment', [RatingController::class, 'destroyComment']);
 
     // TMDB proxy
     Route::get('tmdb/search', [TmdbController::class, 'search']);

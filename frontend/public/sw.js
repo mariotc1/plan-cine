@@ -1,5 +1,9 @@
-const CACHE = 'plan-cine-v2';
-const PRECACHE = ['/', '/login', '/register', '/logo.png', '/icon-192.png', '/icon-512.png', '/manifest.json'];
+const CACHE = 'plan-cine-v3';
+// HTML routes are deliberately NOT in this list — see the fetch handler below.
+// A cached login/home page would keep referencing JS chunks from whatever build
+// was live when it was cached, which 404 against a newer deploy and freeze the
+// app on an infinite load until the user manually clears site data.
+const PRECACHE = ['/logo.png', '/icon-192.png', '/icon-512.png', '/manifest.json'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(PRECACHE)));
@@ -20,9 +24,13 @@ self.addEventListener('fetch', (e) => {
 
   const url = new URL(e.request.url);
 
-  // Never cache cross-origin requests (the Laravel API lives on a different domain)
-  // or same-origin /api/ paths (for local dev where frontend and API share a host).
-  if (url.origin !== self.location.origin || url.pathname.startsWith('/api/')) return;
+  // Only ever serve from cache the handful of static assets explicitly listed in
+  // PRECACHE (icons, logo, manifest — small, rarely-changing, not content-hashed).
+  // Everything else — HTML navigations, hashed /_next/static chunks, the API —
+  // always goes straight to the network. This SW's job is installability and push
+  // notifications, not an offline app-shell cache; a stale cached page must never
+  // be able to trap a user on an old build.
+  if (url.origin !== self.location.origin || !PRECACHE.includes(url.pathname)) return;
 
   e.respondWith(
     caches.match(e.request).then((cached) => cached || fetch(e.request))

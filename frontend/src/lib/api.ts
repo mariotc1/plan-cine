@@ -96,7 +96,9 @@ export const sessionsApi = {
 };
 
 export const ratingsApi = {
-  rate: (sessionId: string, score: number) => api.post(`/sessions/${sessionId}/ratings`, { score }),
+  rate: (sessionId: string, data: { score?: number; comment?: string }) =>
+    api.post(`/sessions/${sessionId}/ratings`, data),
+  deleteComment: (sessionId: string) => api.delete(`/sessions/${sessionId}/ratings/comment`),
 };
 
 export const statsApi = {

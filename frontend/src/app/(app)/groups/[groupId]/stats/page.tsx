@@ -35,28 +35,24 @@ export default function StatsPage({ params }: Props) {
   const top = (stats.top_10 ?? []).slice(0, 10);
 
   return (
-    <div className="px-5 pb-8">
-      <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-3">
+    <div className="px-5 pb-8 lg:px-8 lg:pb-12">
+      <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-3 lg:space-y-4">
 
-        {/* Hero */}
-        <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
-          <div className="bg-zinc-900 rounded-2xl border border-white/5 p-5 flex flex-col">
+        {/* Hero + Favoritos — 2x2 on mobile, one 4-up row on desktop */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-5 lg:p-6 flex flex-col">
             <p className="text-4xl font-bold text-white tracking-tight leading-none">
               {stats.total_watched}
             </p>
             <p className="text-xs text-zinc-500 mt-2 leading-snug">noches de cine juntos</p>
-          </div>
-          <div className="bg-zinc-900 rounded-2xl border border-white/5 p-5 flex flex-col">
+          </motion.div>
+          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-5 lg:p-6 flex flex-col">
             <p className="text-4xl font-bold text-white tracking-tight leading-none">
               {stats.total_hours}<span className="text-xl text-zinc-500 ml-0.5">h</span>
             </p>
             <p className="text-xs text-zinc-500 mt-2 leading-snug">de palomitas y sofá</p>
-          </div>
-        </motion.div>
-
-        {/* Favoritos */}
-        <motion.div variants={staggerItem} className="grid grid-cols-2 gap-3">
-          <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col gap-2">
+          </motion.div>
+          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-6 flex flex-col gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Plataforma</p>
             {platform ? (
               <div className="flex items-center gap-2 mt-auto">
@@ -66,8 +62,8 @@ export default function StatsPage({ params }: Props) {
             ) : (
               <span className="text-sm text-zinc-500 mt-auto">—</span>
             )}
-          </div>
-          <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 flex flex-col gap-2">
+          </motion.div>
+          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-6 flex flex-col gap-2">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Género</p>
             <div className="flex items-center gap-2 mt-auto">
               {genre ? (
@@ -79,55 +75,56 @@ export default function StatsPage({ params }: Props) {
                 <span className="text-sm text-zinc-500">—</span>
               )}
             </div>
-          </div>
-        </motion.div>
-
-        {/* Protagonistas */}
-        {(stats.most_proposer || stats.most_demanding || stats.most_generous) && (
-          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
-            <div className="px-5 pt-4 pb-2">
-              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Protagonistas</h3>
-            </div>
-            <div className="divide-y divide-white/[0.04]">
-              {stats.most_proposer && (
-                <ProtagonistRow role="Quien más propone" badge="💡" user={stats.most_proposer.user} value={`${stats.most_proposer.count} pelis`} />
-              )}
-              {stats.most_generous && (
-                <ProtagonistRow role="Más generoso" badge="😊" user={stats.most_generous.user} value={`★ ${stats.most_generous.avg_score}`} />
-              )}
-              {stats.most_demanding && (
-                <ProtagonistRow role="Más exigente" badge="😤" user={stats.most_demanding.user} value={`★ ${stats.most_demanding.avg_score}`} />
-              )}
-            </div>
           </motion.div>
-        )}
+        </div>
 
-        {/* Top películas */}
-        {top.length > 0 && (
-          <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
-            <div className="px-5 pt-4 pb-2">
-              <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-                Top {top.length} películas
-              </h3>
-            </div>
-            <div className="divide-y divide-white/[0.04]">
-              {top.map((item, i) => (
-                <div key={item.movie.id} className="flex items-center gap-3 px-5 py-3.5">
-                  <span className={`text-sm font-bold w-5 flex-shrink-0 tabular-nums ${
-                    i === 0 ? 'text-amber-400' : i === 1 ? 'text-zinc-400' : i === 2 ? 'text-orange-600' : 'text-zinc-700'
-                  }`}>
-                    {i + 1}
-                  </span>
-                  <p className="flex-1 text-sm text-white truncate">{item.movie.title}</p>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
-                    <RatingStars value={Math.round(item.avg_rating)} readonly size={11} />
-                    <span className="text-xs text-zinc-500 tabular-nums">{item.avg_rating}</span>
+        {/* Protagonistas + Top películas — stacked on mobile, side by side on desktop */}
+        <div className="space-y-3 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4 lg:items-start">
+          {(stats.most_proposer || stats.most_demanding || stats.most_generous) && (
+            <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
+              <div className="px-5 pt-4 pb-2">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Protagonistas</h3>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {stats.most_proposer && (
+                  <ProtagonistRow role="Quien más propone" badge="💡" user={stats.most_proposer.user} value={`${stats.most_proposer.count} pelis`} />
+                )}
+                {stats.most_generous && (
+                  <ProtagonistRow role="Más generoso" badge="😊" user={stats.most_generous.user} value={`★ ${stats.most_generous.avg_score}`} />
+                )}
+                {stats.most_demanding && (
+                  <ProtagonistRow role="Más exigente" badge="😤" user={stats.most_demanding.user} value={`★ ${stats.most_demanding.avg_score}`} />
+                )}
+              </div>
+            </motion.div>
+          )}
+
+          {top.length > 0 && (
+            <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
+              <div className="px-5 pt-4 pb-2">
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
+                  Top {top.length} películas
+                </h3>
+              </div>
+              <div className="divide-y divide-white/[0.04]">
+                {top.map((item, i) => (
+                  <div key={item.movie.id} className="flex items-center gap-3 px-5 py-3.5">
+                    <span className={`text-sm font-bold w-5 flex-shrink-0 tabular-nums ${
+                      i === 0 ? 'text-amber-400' : i === 1 ? 'text-zinc-400' : i === 2 ? 'text-orange-600' : 'text-zinc-700'
+                    }`}>
+                      {i + 1}
+                    </span>
+                    <p className="flex-1 text-sm text-white truncate">{item.movie.title}</p>
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      <RatingStars value={Math.round(item.avg_rating)} readonly size={11} />
+                      <span className="text-xs text-zinc-500 tabular-nums">{item.avg_rating}</span>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </motion.div>
-        )}
+                ))}
+              </div>
+            </motion.div>
+          )}
+        </div>
 
       </motion.div>
     </div>
