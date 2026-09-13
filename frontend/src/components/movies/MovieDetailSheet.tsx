@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { useSheetAnimation } from '@/hooks/useSheetAnimation';
+import { motion } from 'framer-motion';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { X, Clock, Play, Pencil, Trash2, Film, ExternalLink, CalendarDays } from 'lucide-react';
 import Image from 'next/image';
 import { Movie } from '@/types';
@@ -20,7 +20,6 @@ interface MovieDetailSheetProps {
 }
 
 export function MovieDetailSheet({ movie, onClose, onWatchNow, onSchedule, onEdit, onDelete }: MovieDetailSheetProps) {
-  const { motionProps, handleProps } = useSheetAnimation(onClose);
   const [trailerKey, setTrailerKey] = useState<string | null>(null);
   const [trailerLoading, setTrailerLoading] = useState(false);
 
@@ -41,22 +40,11 @@ export function MovieDetailSheet({ movie, onClose, onWatchNow, onSchedule, onEdi
   const genre = movie ? getGenre(movie.genre) : null;
 
   return (
-    <AnimatePresence>
+    <ResponsiveSheet open={!!movie} onClose={onClose} size="md" className="overflow-hidden">
       {movie && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black/70 z-[70] backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <motion.div
-            {...motionProps}
-            className="fixed bottom-0 left-0 right-0 z-[71] bg-zinc-950 border-t border-white/10 rounded-t-3xl overflow-hidden sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px]"
-            style={{ maxHeight: '90vh' }}
-          >
             <div className="overflow-y-auto" style={{ maxHeight: '90vh' }}>
 
-              {/* Poster hero — handle pill overlaid at top */}
+              {/* Poster hero — close button overlaid on the image on mobile (ResponsiveSheet's own X handles desktop) */}
               {movie.poster_path ? (
                 <div className="relative w-full h-52 overflow-hidden flex-shrink-0">
                   <Image
@@ -67,40 +55,25 @@ export function MovieDetailSheet({ movie, onClose, onWatchNow, onSchedule, onEdi
                     unoptimized
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/30 to-transparent" />
-                  {/* Drag handle overlaid on poster */}
-                  <div
-                    className="absolute top-0 inset-x-0 flex justify-center pt-3 pb-4 select-none"
-                    {...handleProps}
-                  >
-                    <div className="w-10 h-1 bg-white/30 rounded-full" />
-                  </div>
                   <button
                     onClick={onClose}
-                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-colors"
+                    className="absolute top-4 right-4 w-8 h-8 rounded-full bg-black/50 backdrop-blur-sm border border-white/10 flex items-center justify-center text-white/80 hover:text-white transition-colors lg:hidden"
                   >
                     <X size={15} />
                   </button>
                 </div>
               ) : (
-                <>
-                  <div
-                    className="flex justify-center pt-3 pb-1 select-none"
-                    {...handleProps}
+                <div className="flex items-center justify-end px-6 pt-2 pb-1">
+                  <button
+                    onClick={onClose}
+                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors lg:hidden"
                   >
-                    <div className="w-10 h-1 bg-white/20 rounded-full" />
-                  </div>
-                  <div className="flex items-center justify-end px-6 pt-2 pb-1">
-                    <button
-                      onClick={onClose}
-                      className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 hover:text-white transition-colors"
-                    >
-                      <X size={15} />
-                    </button>
-                  </div>
-                </>
+                    <X size={15} />
+                  </button>
+                </div>
               )}
 
-              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)] lg:pb-8">
 
                 {/* Title + icon actions */}
                 <div className="flex items-start gap-3 mb-3">
@@ -241,9 +214,7 @@ export function MovieDetailSheet({ movie, onClose, onWatchNow, onSchedule, onEdi
                 )}
               </div>
             </div>
-          </motion.div>
-        </>
       )}
-    </AnimatePresence>
+    </ResponsiveSheet>
   );
 }

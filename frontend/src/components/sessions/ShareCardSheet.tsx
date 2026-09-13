@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { Share2 } from 'lucide-react';
 import { ShareCard, type ShareCardProps } from './ShareCard';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { CinemaSession } from '@/types';
@@ -309,25 +309,8 @@ export function ShareCardSheet({ open, onClose, session, groupName }: ShareCardS
   };
 
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed inset-0 bg-black/75 z-[80] backdrop-blur-sm"
-            onClick={onClose}
-          />
-          <motion.div
-            initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-            transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-            className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[81] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
-          >
-            <div className="flex justify-center pt-3">
-              <div className="w-10 h-1 bg-white/20 rounded-full" />
-            </div>
-
-            <div className="px-6 pt-3 pb-4 border-b border-white/[0.06]">
+    <ResponsiveSheet open={open} onClose={onClose} size="md">
+            <div className="px-6 pt-3 pb-4 border-b border-white/[0.06] lg:pr-12">
               <p className="text-[11px] font-semibold text-indigo-400 uppercase tracking-widest mb-1">Compartir</p>
               <h2 className="text-white font-bold text-lg leading-tight">{session.movie?.title}</h2>
             </div>
@@ -386,9 +369,6 @@ export function ShareCardSheet({ open, onClose, session, groupName }: ShareCardS
                 {sharing ? 'Generando imagen...' : 'Compartir imagen'}
               </Button>
             </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+    </ResponsiveSheet>
   );
 }

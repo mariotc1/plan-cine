@@ -251,6 +251,145 @@
 
 ---
 
+## FASE 7 — Vista Desktop
+
+> La app se diseñó 100% mobile-first (`max-w-[480px] mx-auto` en todo `(app)`, BottomNav,
+> bottom-sheets). En desktop se veía como un móvil flotando en una pantalla negra. Objetivo:
+> vista desktop pensada de verdad, sin tocar un solo píxel de la experiencia móvil (`<lg`,
+> 1024px). Plan completo en la conversación que originó esta fase.
+
+Breakpoint: `lg:` (1024px). Navegación desktop: sidebar persistente estilo Linear/Slack
+(decisión confirmada con el usuario), sustituye la `BottomNav`.
+
+### 7.1 Shell — sidebar + header/tabs de grupo ✅
+- **Archivos creados:** `src/components/shared/Sidebar.tsx` — sidebar fija (272px) con logo,
+  nav primaria (Grupos/Perfil, indicador `layoutId`) y lista de "Tus grupos" (vía `useGroups()`,
+  sin endpoint nuevo) para cambiar de grupo con un clic.
+- **Archivos tocados:**
+  - `src/app/(app)/layout.tsx` — shell de dos columnas en `lg:` (`Sidebar` + columna de
+    contenido `lg:max-w-5xl lg:shadow-none`, antes `max-w-[480px]` fijo). `pb-20 lg:pb-12`.
+  - `src/components/shared/BottomNav.tsx` — `lg:hidden`.
+  - `src/app/(app)/groups/[groupId]/layout.tsx` — header: back-button oculto en `lg:` (redundante
+    con la sidebar), título pasa de centrado-absoluto a alineado a la izquierda y más grande,
+    botón de ajustes gana label "Ajustes" visible. Tabs: de pill segmentado a tabs subrayadas
+    alineadas a la izquierda en `lg:` (patrón Linear/GitHub), mismo `layoutId` de indicador.
+  - `src/components/shared/InstallBanner.tsx`, `NotificationBanner.tsx`,
+    `src/components/sessions/NowPlayingBanner.tsx` — overrides `lg:`/`md:` para que estos
+    overlays fixed no asuman el contenedor de 480px (toast bottom-right en vez de banner
+    full-width, márgenes correctos).
+- **Qué probar:** Ventana de escritorio ≥1024px → sidebar visible, sin BottomNav, tabs de grupo
+  subrayadas a la izquierda. Redimensionar a <1024px → debe volver exactamente al diseño móvil
+  actual (sidebar desaparece, vuelve BottomNav, tabs vuelven a pill). Probar también en móvil real
+  para confirmar cero regresión.
+### 7.2 `ResponsiveSheet` — sheets del shell → modal centrado en desktop ✅
+- **Archivos creados:**
+  - `src/components/shared/ResponsiveSheet.tsx` — primitiva: bottom-sheet con drag-to-dismiss
+    en `<lg` (igual que antes, vía `useSheetAnimation`), modal centrado (fade+scale, sin drag,
+    cierre con click en backdrop/X/`Escape`) en `lg:`. Props: `size` (sm/md/lg → max-width en
+    desktop), `zIndex` (para sheets apiladas, ej. confirmación sobre miembros), `showHandle`,
+    `className`/`style` para paneles con `flex flex-col` + `maxHeight`.
+  - `src/hooks/useIsDesktop.ts` — `matchMedia('(min-width: 1024px)')`, espejo en JS del `lg:` de
+    Tailwind (necesario porque Framer Motion necesita valores reales, no solo CSS).
+- **Archivos migrados** (mismo contenido interno, solo cambia el wrapper — de
+  `AnimatePresence` + backdrop + `motion.div` a mano, a `<ResponsiveSheet>`):
+  - `src/app/(app)/groups/[groupId]/layout.tsx` — Ajustes, QR, Editar grupo, Miembros, Expulsar
+    (apilada sobre Miembros, `zIndex=70`), Eliminar grupo.
+  - `src/app/(app)/profile/page.tsx` — Editar perfil, Cerrar sesión.
+  - De paso normaliza una inconsistencia que ya existía: antes solo 2 de los 6 sheets de
+    `groups/[groupId]/layout.tsx` tenían centering `sm:` — ahora los 6 se comportan igual.
+- **Qué probé:** Verificación real contra los contenedores Docker (login con el usuario de seed
+  `mario@plancine.app`), capturas automatizadas con Playwright en 1440px/1920px (todas las
+  sheets migradas, incluida la de perfil con el `AvatarPicker`) y en 390px (confirma que sigue
+  siendo bottom-sheet con drag-handle, sin cambios). Sin errores de consola.
+### 7.3 Películas — grid, hover-actions y sheets sobre `ResponsiveSheet` ✅
+- **Archivos tocados:**
+  - `src/app/(app)/groups/[groupId]/page.tsx` — lista de pendientes pasa a
+    `lg:grid lg:grid-cols-2 xl:grid-cols-3` (antes columna única incluso en desktop). FAB oculto
+    en `lg:` (`lg:hidden`) — en desktop la acción "Añadir película" vive en la toolbar, no como
+    botón flotante (patrón mobile-only, no tiene sitio en un dashboard de escritorio). Sheet de
+    borrado migrado a `ResponsiveSheet`.
+  - `src/components/movies/MovieFilters.tsx` — nuevo prop `onAddMovie` que renderiza el botón
+    "Añadir película" (`hidden lg:flex`) junto a "Filtrar". Sheet de filtros migrado.
+  - `src/components/movies/AddMovieSheet.tsx` — sheet principal + `PickerSheet` anidado (selector
+    de plataforma/género) migrados a `ResponsiveSheet`. El picker usa `zIndex={80}` para apilarse
+    sobre el sheet principal (`zIndex` por defecto 60) — mismo comportamiento que antes.
+  - `src/components/movies/MovieDetailSheet.tsx` — migrado. Se simplifica el "handle" (antes
+    superpuesto sobre el póster con `useSheetAnimation` expuesto a mano; ahora usa el handle
+    estándar de `ResponsiveSheet` encima del póster en vez de superpuesto — pequeño cambio visual,
+    mantiene el drag-to-dismiss intacto).
+  - `src/components/movies/MovieCard.tsx` — en `lg:` el swipe-to-reveal se desactiva
+    (`useIsDesktop()`) y se sustituye por botones de acción (Ver ahora / Editar / Eliminar) que
+    aparecen al hover junto al chevron — el espacio queda siempre reservado (solo cambia opacity)
+    para que no haya salto de layout al pasar el ratón.
+- **Bug real encontrado y arreglado:** títulos de una sola palabra larga (ej. "Oppenheimer") se
+  recortaban sin wrap en el grid de 3 columnas porque el hueco reservado para los botones de hover
+  estrechaba demasiado la columna de texto y la palabra no rompía línea. Fix: `break-words` en el
+  `<h3>` del título.
+- **Qué probé:** Verificado en Docker con capturas Playwright a 1600px — grid de 3 columnas,
+  hover-actions (aparecen sin mover el layout), las 4 sheets (Añadir, Filtrar, Detalle, Borrar)
+  como modales centrados, y el picker anidado apilado correctamente sobre el sheet de Añadir.
+  Sin errores de consola (aparte del 404 de un poster de seed, ya conocido y ajeno a esta fase).
+  `npm run build` y `eslint` limpios (2 avisos de `react-hooks/set-state-in-effect` son
+  preexistentes, confirmado contra `HEAD`, no introducidos por esta fase).
+- **Pendiente de esta fase:** 7.5 ruleta/duelo, 7.6 auth, 7.7 pulido.
+
+### 7.4 Sesiones ✅
+- **Dead code encontrado y eliminado:** `RescheduleSheet.tsx` no se usaba en ningún sitio (`ScheduleSessionSheet` con `editMode` ya cubre ese flujo desde hace tiempo) — confirmado por grep antes de borrarlo.
+- **Migrados a `ResponsiveSheet`:** `ConfirmSheet`, `StartSessionSheet`, `ScheduleSessionSheet` (incluye el calendario inline y el `DrumPicker` de hora, sin tocar su lógica), `ShareCardSheet`, y el sheet de valoración (rating-prompt) que vivía hardcodeado dentro de `sessions/[sessionId]/page.tsx` — este último gana de paso el drag-to-dismiss que nunca tuvo.
+- **`ShareCardSheet`:** mantuve el `transform: scale()` que encoge la card de 390×620 en vez de quitarlo en desktop (como decía el plan inicial) — con `size="md"` (448px) el ancho real disponible tras el padding es demasiado justo para la card sin escalar; escalarla es más robusto que arriesgar un overflow.
+- **Layout:** `sessions/page.tsx` y `sessions/[sessionId]/page.tsx` ganan `lg:max-w-2xl lg:mx-auto lg:px-8` — se quedan como columna única (tiene sentido cronológico/de lectura) pero con más aire, en vez de estirarse a todo el ancho.
+- **Qué probé:** Verificado en Docker — `StartSessionSheet`, `ScheduleSessionSheet` con el calendario desplegado, la lista de sesiones y el detalle de una sesión terminada (con valoraciones) y su `ShareCardSheet`, todos como modales centrados. `ConfirmSheet` no se re-probó visualmente en esta fase (la seed no tiene sesiones programadas para disparar "Cancelar sesión") pero usa exactamente la misma primitiva ya verificada en 7.1-7.3, sin lógica nueva. `npm run build` limpio; los avisos de `eslint` que salieron son preexistentes (confirmado contra `HEAD`, líneas sin diff).
+
+### 7.5 Ruleta y Duelo ✅
+- **`SpinWheel.tsx`**: el contenedor de la rueda usaba `minHeight: 'calc(100svh - 230px)'` (asume el chrome móvil). Con `useIsDesktop()`, en `lg:` pasa a un `600px` fijo — la rueda queda bien centrada con aire alrededor en vez de con un cálculo pensado para pantalla de móvil. El modal de resultado ya era un card centrado (`fixed inset-x-5 ... max-w-sm mx-auto` con su propio backdrop) — no necesitaba cambios, ya sigue el mismo patrón "centrado a pantalla completa, sidebar incluida" que el resto de modales de la app.
+- **`DuelView.tsx`**: mismo problema con `CONTENT_HEIGHT = 'calc(100svh - 295px)'`, usado en 4 sitios (idle/voting/tie/winner) para que las cards de las películas llenen el alto disponible sin scroll. Añadí `CONTENT_HEIGHT_DESKTOP` (`calc(100svh - 260px)`, sin bottom-nav que restar) seleccionado vía `useIsDesktop()` — mantiene intacta toda la arquitectura de alturas en cascada (`flex-1 min-h-0`) que ya tenía, solo corrige el offset para el chrome de escritorio.
+- **`spin/page.tsx`**: el selector de modo (Ruleta/Duelo) dejaba de estirarse a todo el ancho en `lg:` (`lg:flex-none lg:px-6` en los botones).
+- **Qué probé:** Ruleta con el resultado revelado, Duelo en estado idle y en votación (2 cards lado a lado, alturas correctas) — todo en Docker a 1600px. Sin errores de consola nuevos.
+
+### 7.6 Auth ✅
+- **`(auth)/layout.tsx`**: en `lg:` la card de login/register/join gana un glow radial indigo de fondo y se convierte en una card real (`rounded-3xl`, borde, `shadow-2xl`, padding generoso) en vez de un formulario flotando suelto en negro. Mismo layout sirve a `login`, `register` y cualquier página futura bajo `(auth)` — no hizo falta tocar las páginas en sí.
+- **Qué probé:** Login y Register en Docker a 1600px — ambas cards se ven consistentes, el formulario largo de registro (avatar + color + 4 campos) se desplaza bien dentro de la card sin romper nada.
+
+### 7.7 Pulido final ✅
+- **`groups/page.tsx`**: grid `lg:grid-cols-2 xl:grid-cols-3` (antes columna única incluso con espacio de sobra).
+- **`PageHeader.tsx`** (usado por `groups/page.tsx`): más padding y tipografía más grande en `lg:`. De paso corregí un bug silencioso — el `lg:pt-2` que puse en la Fase 7.1 en el header del grupo nunca se aplicaba porque un `style={{paddingTop: ...}}` inline en el mismo elemento gana siempre a una clase Tailwind para la misma propiedad; aquí sí lo hice bien con `useIsDesktop()` para computar el valor en JS.
+- **`stats/page.tsx`**: pasa de bloques apilados a un dashboard real en `lg:` — las 4 stat-tiles (noches, horas, plataforma, género) en una sola fila de 4, y "Protagonistas" + "Top películas" lado a lado en vez de apilados.
+- **`profile/page.tsx`**: `lg:` dos columnas — identidad + botón de cerrar sesión en una columna izquierda `sticky`, grid de estadísticas a la derecha (el botón de cerrar sesión se duplica con `hidden lg:block` / `lg:hidden` según viewport, mismo handler).
+- **`memories/page.tsx`** y **`members/page.tsx`**: grid `lg:grid-cols-2`/`xl:grid-cols-3` + `lg:px-8`. La sheet de expulsar miembro de `members/page.tsx` (una implementación duplicada e independiente de la que ya migré en `groups/[groupId]/layout.tsx`) también pasa a `ResponsiveSheet`.
+- **Hallazgo sin actuar:** `/groups/[groupId]/members` no está enlazada desde ningún sitio de la navegación (la función equivalente vive en la sheet "Miembros" del menú de Ajustes) — puede ser una ruta huérfana. La dejé funcional y con el mismo pulido que el resto por si se usa por URL directa, pero no la until borré porque a diferencia de `RescheduleSheet.tsx` (0 imports, inequívocamente muerta) esto es una *ruta*, y borrar una ruta accesible por URL es una decisión con más peso — mejor que la tomes tú.
+- **Qué probé:** Verificación completa en Docker a 1600px — login, register, grid de grupos, ruleta (rueda + resultado), duelo (idle + votación), dashboard de stats, perfil a dos columnas. Todo consistente, sin errores de consola nuevos. `npm run build` y `eslint` limpios en todos los archivos tocados.
+
+### 7.6 (fix) — Register seguía viéndose "modo móvil" ✅
+- **Feedback del usuario:** la card con glow que añadí en 7.6 era solo un marco decorativo — el formulario de dentro seguía siendo la misma columna vertical larga de móvil (avatar picker, color picker, 4 inputs, todo apilado), así que en la práctica seguía "pareciendo móvil".
+- **Fix:**
+  - `(auth)/layout.tsx` — pasa a detectar la ruta (`usePathname`) y da a `/register` una card más ancha (`lg:max-w-2xl` vs `max-w-sm` de login) ya que tiene mucho más contenido.
+  - `(auth)/register/page.tsx` — en `lg:` el avatar picker y el color picker van lado a lado, Nombre+Email en una fila, Contraseña+Confirmar en otra — de 7 bloques apilados pasa a 3 filas. Ahora cabe todo en una pantalla sin scroll y de verdad se ve como un formulario pensado para escritorio, no uno de móvil metido en una caja. Login (solo 2 campos) no necesitaba este tratamiento y se queda igual.
+- **Qué probé:** Docker a 1600px (verificado que ya no hay scroll y los campos emparejan bien) y a 390px (confirmado que el móvil no cambió ni un píxel).
+
+### 7.7 (fix) — Panel demasiado estrecho en pantalla completa + salto brusco a móvil ✅
+- **Feedback del usuario:** en pantalla completa (MacBook 14") el contenido se veía "estrecho" con saltos de línea raros en las cards; al reducir la ventana de Safari por debajo de cierto punto, la app saltaba de golpe a la vista móvil completa (bottom nav incluido) en vez de mantener el sidebar, aunque fuera colapsado.
+- **Causas reales:**
+  1. El contenido tenía un `max-w-5xl` (1024px) fijo — en una pantalla grande eso deja muchísimo margen vacío a los lados en vez de usarlo, y los grids con columnas fijas (`lg:grid-cols-2 xl:grid-cols-3`) hacían que 3 columnas metidas en esos 1024px quedaran más estrechas que 2, provocando los saltos de línea feos.
+  2. El breakpoint que decide "modo escritorio vs modo móvil" estaba en 1024px (`lg` de Tailwind) — media pantalla en un portátil cae por debajo de eso, así que todo el shell (sidebar, grids, sheets como diálogo, hover-actions) se apagaba de golpe.
+- **Fix:**
+  - `globals.css` — redefine `--breakpoint-lg: 48rem` (768px). Como *todo* el `lg:` de la Fase 7 lo añadí yo mismo (no había ningún `lg:` real antes), esto desplaza el interruptor completo "modo escritorio" a 768px con un cambio de una línea, sin tocar clases una a una. Por debajo de eso sigue siendo la vista móvil de siempre (cubre cualquier móvil real de sobra).
+  - `useIsDesktop.ts` — su media query pasa a `768px` para no desincronizarse del CSS.
+  - `(app)/layout.tsx` — el contenido ya no tiene un `max-w` fijo de 1024px; ahora se estira libremente hasta `2xl` (1536px) y solo a partir de ahí se limita a 1800px (para no tener líneas de texto absurdamente largas en un monitor externo gigante).
+  - Grids de películas/grupos/recuerdos/miembros — de columnas fijas por breakpoint a `grid-cols-[repeat(auto-fit,minmax(300px,1fr))]`: el número de columnas se adapta de forma continua al ancho real disponible (nunca una columna más estrecha de 300px), en vez de saltar bruscamente entre 2 y 3.
+  - **`Sidebar.tsx` — ahora es colapsable**: botón para plegarlo a una barra de solo iconos (76px) o expandirlo (272px). Por debajo de 1024px (media pantalla en portátil) se colapsa automáticamente para dejar sitio al contenido, pero sigue en "modo escritorio" — sheets como diálogo, grids, hover-actions, todo intacto. El usuario puede expandir/colapsar en cualquier momento con el botón; esa elección manual se guarda en `localStorage` y a partir de ahí gana siempre al comportamiento automático.
+- **Qué probé:** Docker con capturas a 1728px (pantalla completa simulada — el grid ya usa 4 columnas y respira bien), 860px (media pantalla — sidebar se auto-colapsa a iconos, grid pasa a 2 columnas), expandir/colapsar manual en ese mismo ancho (funciona en ambos sentidos), y 390px (confirmado que el móvil real no cambió nada). `npm run build` limpio.
+
+### 7.7 (fix 2) — Cards de tamaño inconsistente ("auto-fit" seguía estirando) ✅
+- **Feedback del usuario:** con `minmax(Npx, 1fr)`, las columnas se estiran para rellenar el ancho hasta que justo cabe una columna más — en ese instante todas se encogen de golpe cerca del mínimo. En un monitor de 34" esto se traducía en 5 columnas pequeñas en vez de pocas columnas grandes: el usuario quiere que las cards tengan **siempre el mismo tamaño fijo**, y que sea el número de columnas el que varíe (dejando espacio vacío si no cabe una columna más, en vez de encoger las que ya hay).
+- **Fix:** en los 4 grids de cards (`groups/[groupId]/page.tsx` películas, `groups/page.tsx` lista y skeleton, `memories/page.tsx`, `members/page.tsx`) cambié `repeat(auto-fit, minmax(Npx, 1fr))` por `repeat(auto-fill, Npx)` — ancho de columna fijo (380px películas, 340px grupos/recuerdos, 320px miembros), el navegador decide solo cuántas caben. Ya no hay "salto" de tamaño al redimensionar.
+- **Qué probé:** Docker a 3440px (simulando un monitor ultra-wide de 34") — 4 columnas, todas exactamente del mismo tamaño, con margen vacío a la derecha en vez de cards estiradas; y a 1180px (el caso límite que antes rompía) — 2 columnas limpias y consistentes, sin fragmentación. `npm run build` limpio.
+
+---
+
+## Fase 7 — Vista Desktop: COMPLETA (7.1 → 7.7)
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -260,6 +399,13 @@
 | 2026-07-18 | Fase 2 | 2.1-2.4 completos. Hook useSheetAnimation + useLongPress |
 | 2026-07-18 | Fase 3 | 3.1-3.3 completos. Skeletons shimmer + OfflineBanner + empty states |
 | 2026-07-18 | Fase 4 | 4.1-4.4 completos. 4 tabs + NowPlayingBanner + SearchBar + Historial+Memories |
+| 2026-09-08 | Fase 7.1 | Shell desktop: Sidebar + shell de layout + header/tabs de grupo. Resto de Fase 7 pendiente |
+| 2026-09-08 | Fase 7.2 | ResponsiveSheet + migración de sheets del grupo y del perfil. Verificado en Docker |
+| 2026-09-08 | Fase 7.3 | Grid de películas + hover-actions + sheets de películas migradas. Bug de título largo arreglado |
+| 2026-09-08 | Fase 7.4 | Sheets de sesiones migradas + layout de lista/detalle. RescheduleSheet (dead code) eliminado |
+| 2026-09-08 | Fase 7.5 | Ruleta y Duelo: alturas dinámicas para desktop, mode-switcher no estirado |
+| 2026-09-08 | Fase 7.6 | Auth: card con glow en desktop para login/register |
+| 2026-09-08 | Fase 7.7 | Pulido final: grids, dashboard de stats, perfil 2 columnas. Fase 7 completa |
 
 ---
 

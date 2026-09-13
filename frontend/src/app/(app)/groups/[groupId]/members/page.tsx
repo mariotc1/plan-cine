@@ -1,11 +1,12 @@
 'use client';
 
 import { use, useState } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import { UserMinus, Shield } from 'lucide-react';
 import { useGroupMembers, useGroup, useKickMember } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { GroupMember } from '@/types';
 import { Button } from '@/components/ui/button';
 import { staggerContainer, staggerItem } from '@/lib/animations';
@@ -34,7 +35,7 @@ export default function MembersPage({ params }: Props) {
   if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="px-5 pb-8">
+    <div className="px-5 pb-8 lg:px-8">
       <p className="text-zinc-600 text-xs uppercase tracking-wider font-semibold mb-4">
         {members?.length ?? 0} {(members?.length ?? 0) === 1 ? 'miembro' : 'miembros'}
       </p>
@@ -43,7 +44,7 @@ export default function MembersPage({ params }: Props) {
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="space-y-2.5"
+        className="space-y-2.5 lg:grid lg:grid-cols-[repeat(auto-fill,320px)] lg:gap-3 lg:space-y-0"
       >
         {members?.map((member: GroupMember) => {
           const isSelf = member.id === user?.id;
@@ -102,54 +103,40 @@ export default function MembersPage({ params }: Props) {
       </motion.div>
 
       {/* Kick confirm sheet */}
-      <AnimatePresence>
+      <ResponsiveSheet open={!!kickTarget} onClose={() => setKickTarget(null)} size="sm">
         {kickTarget && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/70 z-[60] backdrop-blur-sm"
-              onClick={() => setKickTarget(null)}
-            />
-            <motion.div
-              initial={{ y: '100%' }} animate={{ y: 0 }} exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl px-6 pb-[max(env(safe-area-inset-bottom),24px)]"
-            >
-              <div className="flex justify-center pt-3 pb-4">
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
+          <div className="px-6 pb-[max(env(safe-area-inset-bottom),24px)] lg:pb-8">
+            <div className="flex flex-col items-center text-center mb-6 pt-2">
+              <div
+                className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
+                style={{ backgroundColor: `${kickTarget.user?.color ?? '#6366f1'}22` }}
+              >
+                {kickTarget.user?.avatar}
               </div>
-              <div className="flex flex-col items-center text-center mb-6">
-                <div
-                  className="w-16 h-16 rounded-2xl flex items-center justify-center text-3xl mb-4"
-                  style={{ backgroundColor: `${kickTarget.user?.color ?? '#6366f1'}22` }}
-                >
-                  {kickTarget.user?.avatar}
-                </div>
-                <h2 className="text-white font-bold text-xl">Expulsar a {kickTarget.user?.name}</h2>
-                <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
-                  Se eliminará del grupo y perderá acceso a todas sus películas y sesiones.
-                </p>
-              </div>
-              <div className="space-y-3">
-                <Button
-                  onClick={handleKick}
-                  disabled={kickMember.isPending}
-                  className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
-                >
-                  {kickMember.isPending ? 'Expulsando...' : `Expulsar a ${kickTarget.user?.name}`}
-                </Button>
-                <Button
-                  onClick={() => setKickTarget(null)}
-                  variant="ghost"
-                  className="w-full h-12 rounded-xl text-zinc-400"
-                >
-                  Cancelar
-                </Button>
-              </div>
-            </motion.div>
-          </>
+              <h2 className="text-white font-bold text-xl">Expulsar a {kickTarget.user?.name}</h2>
+              <p className="text-zinc-400 text-sm mt-2 leading-relaxed">
+                Se eliminará del grupo y perderá acceso a todas sus películas y sesiones.
+              </p>
+            </div>
+            <div className="space-y-3">
+              <Button
+                onClick={handleKick}
+                disabled={kickMember.isPending}
+                className="w-full h-12 rounded-xl bg-red-500 hover:bg-red-600 text-white font-semibold"
+              >
+                {kickMember.isPending ? 'Expulsando...' : `Expulsar a ${kickTarget.user?.name}`}
+              </Button>
+              <Button
+                onClick={() => setKickTarget(null)}
+                variant="ghost"
+                className="w-full h-12 rounded-xl text-zinc-400"
+              >
+                Cancelar
+              </Button>
+            </div>
+          </div>
         )}
-      </AnimatePresence>
+      </ResponsiveSheet>
     </div>
   );
 }

@@ -58,102 +58,109 @@ export default function RegisterPage() {
 
       <form onSubmit={handleSubmit} className="space-y-5">
 
-        {/* Avatar picker */}
-        <div className="space-y-2.5">
-          <div className="flex items-center justify-between">
-            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu avatar</Label>
-            <div
-              className="w-9 h-9 rounded-xl flex items-center justify-center text-xl transition-all duration-150 flex-shrink-0"
-              style={{ backgroundColor: `${color}28` }}
-            >
-              {avatar}
+        {/* Avatar + color pickers — side by side on desktop, the card is wide enough */}
+        <div className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-6 lg:items-start">
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between">
+              <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu avatar</Label>
+              <div
+                className="w-9 h-9 rounded-xl flex items-center justify-center text-xl transition-all duration-150 flex-shrink-0"
+                style={{ backgroundColor: `${color}28` }}
+              >
+                {avatar}
+              </div>
+            </div>
+            <AvatarPicker value={avatar} onChange={setAvatar} color={color} />
+          </div>
+
+          <div className="space-y-2.5">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu color</Label>
+            <div className="grid grid-cols-6 gap-2 p-1">
+              {COLORS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => setColor(c)}
+                  className={cn(
+                    'w-full aspect-square rounded-full transition-transform',
+                    color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-950' : 'hover:scale-105'
+                  )}
+                  style={{ backgroundColor: c }}
+                />
+              ))}
             </div>
           </div>
-          <AvatarPicker value={avatar} onChange={setAvatar} color={color} />
         </div>
 
-        {/* Color picker */}
-        <div className="space-y-2.5">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Tu color</Label>
-          <div className="grid grid-cols-6 gap-2 p-1">
-            {COLORS.map((c) => (
-              <button
-                key={c}
-                type="button"
-                onClick={() => setColor(c)}
-                className={cn(
-                  'w-full aspect-square rounded-full transition-transform',
-                  color === c ? 'ring-2 ring-white ring-offset-2 ring-offset-zinc-950' : 'hover:scale-105'
-                )}
-                style={{ backgroundColor: c }}
+        {/* Name + Email — paired on desktop instead of one long column */}
+        <div className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Nombre</Label>
+            <Input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Tu nombre"
+              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12"
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Email</Label>
+            <Input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="tu@email.com"
+              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12"
+              required
+            />
+          </div>
+        </div>
+
+        {/* Password + Confirm — paired on desktop */}
+        <div className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-2 lg:gap-4">
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Contraseña</Label>
+            <div className="relative">
+              <Input
+                type={showPassword ? 'text' : 'password'}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 8 caracteres"
+                className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12 pr-11"
+                required
+                minLength={8}
               />
-            ))}
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-2">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Nombre</Label>
-          <Input
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="Tu nombre"
-            className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Email</Label>
-          <Input
-            type="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="tu@email.com"
-            className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12"
-            required
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Contraseña</Label>
-          <div className="relative">
-            <Input
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Mínimo 8 caracteres"
-              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12 pr-11"
-              required
-              minLength={8}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="text-zinc-400 text-xs uppercase tracking-wider">Confirmar contraseña</Label>
-          <div className="relative">
-            <Input
-              type={showConfirm ? 'text' : 'password'}
-              value={passwordConfirm}
-              onChange={(e) => setPasswordConfirm(e.target.value)}
-              placeholder="Repite la contraseña"
-              className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12 pr-11"
-              required
-            />
-            <button
-              type="button"
-              onClick={() => setShowConfirm((v) => !v)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
-            >
-              {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
-            </button>
+          <div className="space-y-2">
+            <Label className="text-zinc-400 text-xs uppercase tracking-wider">Confirmar contraseña</Label>
+            <div className="relative">
+              <Input
+                type={showConfirm ? 'text' : 'password'}
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder="Repite la contraseña"
+                className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-zinc-600 rounded-xl h-12 pr-11"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirm((v) => !v)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
+              >
+                {showConfirm ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
           </div>
         </div>
 

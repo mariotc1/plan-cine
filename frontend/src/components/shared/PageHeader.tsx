@@ -3,6 +3,7 @@
 import { ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 
 interface PageHeaderProps {
   title: string;
@@ -13,9 +14,13 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, subtitle, back, action }: PageHeaderProps) {
   const router = useRouter();
+  const isDesktop = useIsDesktop();
 
   return (
-    <div className="flex items-center justify-between px-5 pb-4" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
+    <div
+      className="flex items-center justify-between px-5 pb-4 lg:px-8 lg:pb-6"
+      style={{ paddingTop: isDesktop ? '2.5rem' : 'max(env(safe-area-inset-top), 16px)' }}
+    >
       <div className="flex items-center gap-3">
         {back && (
           <motion.button
@@ -27,8 +32,8 @@ export function PageHeader({ title, subtitle, back, action }: PageHeaderProps) {
           </motion.button>
         )}
         <div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">{title}</h1>
-          {subtitle && <p className="text-sm text-zinc-500 mt-0.5">{subtitle}</p>}
+          <h1 className="text-2xl font-bold text-white tracking-tight lg:text-[32px]">{title}</h1>
+          {subtitle && <p className="text-sm text-zinc-500 mt-0.5 lg:text-[15px]">{subtitle}</p>}
         </div>
       </div>
       {action && <div>{action}</div>}

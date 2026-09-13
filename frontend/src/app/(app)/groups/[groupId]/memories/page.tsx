@@ -30,8 +30,13 @@ export default function MemoriesPage({ params }: Props) {
   }
 
   return (
-    <div className="px-5 pb-8">
-      <motion.div variants={staggerContainer} initial="initial" animate="animate" className="space-y-4">
+    <div className="px-5 pb-8 lg:px-8">
+      <motion.div
+        variants={staggerContainer}
+        initial="initial"
+        animate="animate"
+        className="space-y-4 lg:space-y-0 lg:grid lg:grid-cols-[repeat(auto-fill,340px)] lg:gap-4 lg:items-start"
+      >
         {memories.map((memory, i) => {
           const platform = getPlatform(memory.movie.platform);
           return (

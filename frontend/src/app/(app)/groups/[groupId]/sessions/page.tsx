@@ -84,10 +84,10 @@ export default function SessionsPage({ params }: Props) {
   }
 
   return (
-    <div className="pb-8">
+    <div className="pb-8 lg:max-w-2xl lg:mx-auto">
       {/* Programadas */}
       {scheduled.length > 0 && (
-        <div className="px-5 pt-2 pb-5">
+        <div className="px-5 pt-2 pb-5 lg:px-8">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-400 mb-3">
             Próximas
           </h2>
@@ -101,7 +101,7 @@ export default function SessionsPage({ params }: Props) {
 
       {/* Viendo ahora */}
       {inProgress.length > 0 && (
-        <div className="px-5 pt-2 pb-5">
+        <div className="px-5 pt-2 pb-5 lg:px-8">
           <h2 className="text-xs font-semibold uppercase tracking-wider text-emerald-400 mb-3">
             Viendo ahora
           </h2>
@@ -116,7 +116,7 @@ export default function SessionsPage({ params }: Props) {
       {/* Historial agrupado por mes */}
       {groups.map(({ key, label, items }) => (
         <div key={key}>
-          <div className="sticky top-0 z-10 bg-transparent px-5 py-2.5 border-b border-white/[0.04]">
+          <div className="sticky top-0 z-10 bg-transparent px-5 py-2.5 border-b border-white/[0.04] lg:px-8">
             <div className="flex items-baseline gap-2">
               <span className="text-xs font-semibold uppercase tracking-wider text-zinc-400 capitalize">
                 {label}
@@ -130,7 +130,7 @@ export default function SessionsPage({ params }: Props) {
             variants={staggerContainer}
             initial="initial"
             animate="animate"
-            className="px-5 pt-3 pb-5 space-y-3"
+            className="px-5 pt-3 pb-5 space-y-3 lg:px-8"
           >
             {items.map((s) => (
               <SessionCard key={s.id} session={s} groupId={groupId} hideStatus />
@@ -141,7 +141,7 @@ export default function SessionsPage({ params }: Props) {
 
       {/* Recuerdos */}
       {memories && memories.length > 0 && (
-        <div className="px-5 pb-8">
+        <div className="px-5 pb-8 lg:px-8">
           <div className="flex items-baseline gap-2 py-2.5 mb-3 border-t border-white/[0.04]">
             <span className="text-xs font-semibold uppercase tracking-wider text-indigo-400">Recuerdos</span>
             <span className="text-xs text-zinc-600">· Tal día como hoy</span>

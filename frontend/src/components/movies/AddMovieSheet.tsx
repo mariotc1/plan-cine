@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useSheetAnimation } from '@/hooks/useSheetAnimation';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { X, ChevronRight, Check, Search, Film, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { Input } from '@/components/ui/input';
@@ -58,68 +58,48 @@ interface PickerSheetProps {
 }
 
 function PickerSheet({ open, title, options, value, onSelect, onClose }: PickerSheetProps) {
-  const { motionProps, handleProps } = useSheetAnimation(onClose);
   return (
-    <AnimatePresence>
-      {open && (
-        <>
-          <motion.div
-            initial={{ opacity: 0 }} animate={{ opacity: 0.5 }} exit={{ opacity: 0 }}
-            className="fixed inset-0 bg-black z-[79]" onClick={onClose}
-          />
-          <motion.div
-            {...motionProps}
-            className="fixed bottom-0 left-0 right-0 z-[80] bg-zinc-900 border-t border-white/10 rounded-t-3xl flex flex-col sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px]"
-            style={{ maxHeight: '70vh' }}
+    <ResponsiveSheet open={open} onClose={onClose} size="sm" zIndex={80} className="flex flex-col" style={{ maxHeight: '70vh' }}>
+      <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 lg:pr-10">
+        <h3 className="text-white font-semibold text-base">{title}</h3>
+        <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 lg:hidden">
+          <X size={14} />
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto px-3 pb-[max(env(safe-area-inset-bottom),20px)] lg:pb-4">
+        {options.map((opt, i) => (
+          <button
+            key={opt.value} type="button"
+            onClick={() => { onSelect(opt.value); onClose(); }}
+            className={cn(
+              'w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-colors',
+              i < options.length - 1 && 'mb-0.5',
+              value === opt.value ? 'bg-indigo-500/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]',
+            )}
           >
-            <div className="flex justify-center pt-3 pb-1 flex-shrink-0 select-none" {...handleProps}>
-              <div className="w-10 h-1 bg-white/20 rounded-full" />
-            </div>
-            <div className="flex items-center justify-between px-6 py-3 flex-shrink-0">
-              <h3 className="text-white font-semibold text-base">{title}</h3>
-              <button onClick={onClose} className="w-7 h-7 rounded-full bg-white/10 flex items-center justify-center text-zinc-400">
-                <X size={14} />
-              </button>
-            </div>
-            <div className="flex-1 overflow-y-auto px-3 pb-[max(env(safe-area-inset-bottom),20px)]">
-              {options.map((opt, i) => (
-                <button
-                  key={opt.value} type="button"
-                  onClick={() => { onSelect(opt.value); onClose(); }}
-                  className={cn(
-                    'w-full flex items-center gap-3 px-4 py-3.5 rounded-xl text-left transition-colors',
-                    i < options.length - 1 && 'mb-0.5',
-                    value === opt.value ? 'bg-indigo-500/15 text-white' : 'text-zinc-300 hover:bg-white/[0.04]',
-                  )}
-                >
-                  {opt.isPlatform ? (
-                    <span
-                      className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
-                      style={{
-                        backgroundColor: `${opt.color}${value === opt.value ? '28' : '14'}`,
-                        opacity: value === opt.value ? 1 : 0.75,
-                      }}
-                    >
-                      <PlatformLogo platform={opt.value} size={18} color={opt.color} />
-                    </span>
-                  ) : (
-                    <span className="text-xl w-7 text-center">{opt.emoji}</span>
-                  )}
-                  <span className="flex-1 font-medium text-sm">{opt.label}</span>
-                  {value === opt.value && <Check size={16} className="text-indigo-400 flex-shrink-0" />}
-                </button>
-              ))}
-            </div>
-          </motion.div>
-        </>
-      )}
-    </AnimatePresence>
+            {opt.isPlatform ? (
+              <span
+                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
+                style={{
+                  backgroundColor: `${opt.color}${value === opt.value ? '28' : '14'}`,
+                  opacity: value === opt.value ? 1 : 0.75,
+                }}
+              >
+                <PlatformLogo platform={opt.value} size={18} color={opt.color} />
+              </span>
+            ) : (
+              <span className="text-xl w-7 text-center">{opt.emoji}</span>
+            )}
+            <span className="flex-1 font-medium text-sm">{opt.label}</span>
+            {value === opt.value && <Check size={16} className="text-indigo-400 flex-shrink-0" />}
+          </button>
+        ))}
+      </div>
+    </ResponsiveSheet>
   );
 }
 
 export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: AddMovieSheetProps) {
-  const { motionProps, handleProps } = useSheetAnimation(onClose);
-
   // Core form state
   const [title, setTitle] = useState('');
   const [durationRaw, setDurationRaw] = useState('');
@@ -228,30 +208,13 @@ export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: A
 
   return (
     <>
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
-              onClick={onClose}
-            />
-            <motion.div
-              {...motionProps}
-              className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl flex flex-col sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px]"
-              style={{ maxHeight: '92vh' }}
-            >
-              {/* Handle — drag here to dismiss */}
-              <div className="flex justify-center pt-3 pb-1 flex-shrink-0 select-none" {...handleProps}>
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
-              </div>
-
+      <ResponsiveSheet open={open} onClose={onClose} size="md" className="flex flex-col" style={{ maxHeight: '92vh' }}>
               {/* Header */}
-              <div className="flex items-center justify-between px-6 py-3 flex-shrink-0">
+              <div className="flex items-center justify-between px-6 py-3 flex-shrink-0 lg:pr-10">
                 <h2 className="text-white font-bold text-xl">
                   {editMovie ? 'Editar película' : 'Añadir película'}
                 </h2>
-                <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400">
+                <button onClick={onClose} className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 lg:hidden">
                   <X size={16} />
                 </button>
               </div>
@@ -442,7 +405,7 @@ export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: A
               </div>
 
               {/* Footer */}
-              <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] border-t border-white/[0.06]">
+              <div className="flex-shrink-0 px-6 pt-3 pb-[max(env(safe-area-inset-bottom),20px)] lg:pb-5 border-t border-white/[0.06] lg:rounded-b-3xl">
                 <Button
                   form="add-movie-form" type="submit" disabled={!canSubmit}
                   className="w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white font-semibold"
@@ -450,10 +413,7 @@ export function AddMovieSheet({ open, onClose, onSubmit, loading, editMovie }: A
                   {loading ? 'Guardando...' : editMovie ? 'Guardar cambios' : 'Añadir película'}
                 </Button>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      </ResponsiveSheet>
 
       <PickerSheet
         open={activePicker === 'platform'}

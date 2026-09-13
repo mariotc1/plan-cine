@@ -103,7 +103,7 @@ export default function SpinPage({ params }: Props) {
   return (
     <div>
       {/* Mode switcher */}
-      <div className="flex gap-2 px-5 pt-1 pb-4">
+      <div className="flex gap-2 px-5 pt-1 pb-4 lg:px-8 lg:justify-start">
         <ModeButton
           active={mode === 'ruleta'}
           onClick={() => setMode('ruleta')}
@@ -194,7 +194,7 @@ function ModeButton({ active, onClick, icon, label, activeClass }: ModeButtonPro
       whileTap={{ scale: 0.96 }}
       onClick={onClick}
       className={cn(
-        'flex items-center gap-1.5 h-9 px-4 rounded-xl text-[13px] font-semibold transition-all border flex-1 justify-center',
+        'flex items-center gap-1.5 h-9 px-4 rounded-xl text-[13px] font-semibold transition-all border flex-1 justify-center lg:flex-none lg:px-6',
         active
           ? activeClass
           : 'bg-zinc-800/60 border-white/[0.06] text-zinc-500',

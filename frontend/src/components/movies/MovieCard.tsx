@@ -9,6 +9,7 @@ import { getPlatform, getGenre } from '@/lib/constants';
 import { staggerItem } from '@/lib/animations';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { useLongPress } from '@/hooks/useLongPress';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 
 // Distance (px) the user must drag to trigger the action on release
 const TRIGGER = 72;
@@ -26,6 +27,7 @@ interface MovieCardProps {
 export function MovieCard({ movie, onTap, onEdit, onDelete, onWatchNow }: MovieCardProps) {
   const platform = getPlatform(movie.platform);
   const genre = getGenre(movie.genre);
+  const isDesktop = useIsDesktop();
 
   // ─── Swipe state ─────────────────────────────────────────────────────────
   const x = useMotionValue(0);
@@ -60,7 +62,7 @@ export function MovieCard({ movie, onTap, onEdit, onDelete, onWatchNow }: MovieC
     [movie, onDelete, onWatchNow, snapBack]
   );
 
-  const canSwipe = !!(onDelete || onWatchNow);
+  const canSwipe = !isDesktop && !!(onDelete || onWatchNow);
 
   // ─── Long-press context menu ──────────────────────────────────────────────
   const [menuOpen, setMenuOpen] = useState(false);
@@ -79,7 +81,7 @@ export function MovieCard({ movie, onTap, onEdit, onDelete, onWatchNow }: MovieC
   }, [didFire, onTap, movie]);
 
   return (
-    <motion.div variants={staggerItem} layout className="relative select-none">
+    <motion.div variants={staggerItem} layout className="relative select-none group">
 
       {/*
         Swipe container — overflow-hidden is the key:
@@ -169,7 +171,7 @@ export function MovieCard({ movie, onTap, onEdit, onDelete, onWatchNow }: MovieC
 
               {/* Content */}
               <div className="flex-1 min-w-0 pt-0.5">
-                <h3 className="text-[15px] font-bold text-white leading-tight line-clamp-2 mb-2">
+                <h3 className="text-[15px] font-bold text-white leading-tight line-clamp-2 break-words mb-2">
                   {movie.title}
                 </h3>
 
@@ -208,7 +210,39 @@ export function MovieCard({ movie, onTap, onEdit, onDelete, onWatchNow }: MovieC
                 )}
               </div>
 
-              <ChevronRight size={15} className="text-zinc-700 flex-shrink-0 mt-1.5" />
+              <div className="flex items-center gap-1 flex-shrink-0 mt-1.5">
+                {/* Desktop hover actions — space is always reserved, only opacity fades so nothing shifts on hover */}
+                <div className="hidden lg:flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150">
+                  {onWatchNow && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onWatchNow(movie); }}
+                      aria-label="Ver ahora"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-indigo-500/15 hover:bg-indigo-500/25 text-indigo-400 transition-colors"
+                    >
+                      <Play size={12} fill="currentColor" />
+                    </button>
+                  )}
+                  {onEdit && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onEdit(movie); }}
+                      aria-label="Editar"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-white/[0.05] hover:bg-white/[0.1] text-zinc-500 hover:text-zinc-300 border border-white/[0.08] transition-colors"
+                    >
+                      <Pencil size={12} />
+                    </button>
+                  )}
+                  {onDelete && (
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onDelete(movie); }}
+                      aria-label="Eliminar"
+                      className="w-7 h-7 rounded-lg flex items-center justify-center bg-red-500/[0.08] hover:bg-red-500/[0.16] text-red-500/70 hover:text-red-400 border border-red-500/[0.12] transition-colors"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  )}
+                </div>
+                <ChevronRight size={15} className="text-zinc-700 flex-shrink-0" />
+              </div>
             </div>
           </div>
         </motion.div>

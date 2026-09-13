@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Shuffle, X, CalendarDays } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { Movie } from '@/types';
 import { getPlatform, getGenre } from '@/lib/constants';
 
@@ -48,6 +49,7 @@ export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProp
   const [result, setResult] = useState<Movie | null>(null);
   const [showResult, setShowResult] = useState(false);
   const rotRef = useRef(0);
+  const isDesktop = useIsDesktop();
 
   const n = movies.length;
   const segAngle = n > 0 ? 360 / n : 360;
@@ -90,7 +92,10 @@ export function SpinWheel({ movies, onSpin, onWatch, onSchedule }: SpinWheelProp
   const genre = result ? getGenre(result.genre) : null;
 
   return (
-    <div className="flex flex-col items-center justify-center px-5" style={{ minHeight: 'calc(100svh - 230px)' }}>
+    <div
+      className="flex flex-col items-center justify-center px-5"
+      style={{ minHeight: isDesktop ? '600px' : 'calc(100svh - 230px)' }}
+    >
 
       {/* Wheel */}
       <div className="relative flex items-center justify-center mb-8">

@@ -32,7 +32,7 @@ export function NotificationBanner() {
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 16 }}
         transition={{ delay: 0.4, type: 'spring', stiffness: 340, damping: 30 }}
-        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40"
+        className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] left-4 right-4 z-40 md:left-auto md:right-6 md:w-96 lg:bottom-6"
       >
         <div className="bg-zinc-900 border border-white/10 rounded-2xl px-4 py-3 flex items-center gap-3 shadow-xl shadow-black/50">
           <div className="w-8 h-8 rounded-xl bg-indigo-500/20 flex items-center justify-center flex-shrink-0">

@@ -15,7 +15,7 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 lg:hidden">
       <div className="max-w-[480px] mx-auto">
         {/* Top edge glow */}
         <div className="h-px bg-gradient-to-r from-transparent via-white/[0.08] to-transparent" />

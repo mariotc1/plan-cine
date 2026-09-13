@@ -10,6 +10,7 @@ import { RatingStars } from '@/components/sessions/RatingStars';
 import { ScheduleSessionSheet } from '@/components/sessions/ScheduleSessionSheet';
 import { ConfirmSheet } from '@/components/sessions/ConfirmSheet';
 import { ShareCardSheet } from '@/components/sessions/ShareCardSheet';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { LoadingSpinner } from '@/components/shared/LoadingSpinner';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -103,7 +104,7 @@ export default function SessionDetailPage({ params }: Props) {
   return (
     <div>
       {/* Breadcrumb */}
-      <div className="px-5 pt-3 pb-4">
+      <div className="px-5 pt-3 pb-4 lg:px-8 lg:max-w-2xl lg:mx-auto">
         <motion.button
           whileTap={{ scale: 0.85 }}
           onClick={() => router.back()}
@@ -114,7 +115,7 @@ export default function SessionDetailPage({ params }: Props) {
         </motion.button>
       </div>
 
-      <div className="px-5 pb-10 space-y-4">
+      <div className="px-5 pb-10 space-y-4 lg:px-8 lg:max-w-2xl lg:mx-auto">
         {/* Title + status */}
         <div>
           <div className="flex items-start gap-2">
@@ -359,26 +360,12 @@ export default function SessionDetailPage({ params }: Props) {
       </div>
 
       {/* ─── Rating prompt sheet ─────────────────────────────── */}
-      <AnimatePresence>
-        {showRatingPrompt && (
-          <>
-            <motion.div
-              key="rating-backdrop"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/75 z-[60] backdrop-blur-sm"
-              onClick={ratingStep === 'rate' ? handleCloseRatingSheet : undefined}
-            />
-
-            <motion.div
-              key="rating-sheet"
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 340, damping: 34 }}
-              className="fixed bottom-0 left-0 right-0 sm:left-1/2 sm:right-auto sm:-translate-x-1/2 sm:w-[480px] z-[61] bg-zinc-950 rounded-t-3xl overflow-hidden border-t border-white/[0.08]"
-            >
+      <ResponsiveSheet
+        open={showRatingPrompt}
+        onClose={ratingStep === 'rate' ? handleCloseRatingSheet : () => {}}
+        size="md"
+        className="overflow-hidden"
+      >
               {/* Poster hero */}
               {session.movie?.poster_path ? (
                 <div className="relative w-full h-52">
@@ -394,7 +381,7 @@ export default function SessionDetailPage({ params }: Props) {
                 <div className="pt-5" />
               )}
 
-              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)]">
+              <div className="px-6 pt-4 pb-[max(env(safe-area-inset-bottom),28px)] lg:pb-8">
                 <AnimatePresence mode="wait">
 
                   {/* Step 1 — Rate */}
@@ -467,10 +454,7 @@ export default function SessionDetailPage({ params }: Props) {
 
                 </AnimatePresence>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      </ResponsiveSheet>
 
       {/* Edit session sheet (participants + date/time) */}
       <ScheduleSessionSheet

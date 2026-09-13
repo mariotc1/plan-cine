@@ -1,12 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
-import { SlidersHorizontal, Search, X } from 'lucide-react';
+import { SlidersHorizontal, Search, X, Plus } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { PLATFORMS, GENRES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
 import { formatDuration } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { MovieFiltersState } from '@/stores/filterStore';
 
 interface MovieFiltersProps {
@@ -14,9 +15,10 @@ interface MovieFiltersProps {
   onChange: (filters: MovieFiltersState) => void;
   searchQuery?: string;
   onSearchChange?: (v: string) => void;
+  onAddMovie?: () => void;
 }
 
-export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChange }: MovieFiltersProps) {
+export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChange, onAddMovie }: MovieFiltersProps) {
   const [open, setOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -79,6 +81,17 @@ export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChan
               </span>
             )}
           </button>
+
+          {/* Desktop-only primary action — no FAB on desktop, action lives in the toolbar */}
+          {onAddMovie && (
+            <button
+              onClick={onAddMovie}
+              className="hidden lg:flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-semibold flex-shrink-0 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-[0_4px_14px_-2px_rgba(99,102,241,0.45)]"
+            >
+              <Plus size={14} strokeWidth={2.5} />
+              Añadir película
+            </button>
+          )}
         </div>
 
         {/* Active filter chips */}
@@ -140,48 +153,29 @@ export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChan
         </AnimatePresence>
       </div>
 
-      {/* Filter bottom sheet */}
-      <AnimatePresence>
-        {open && (
-          <>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+      {/* Filter sheet */}
+      <ResponsiveSheet open={open} onClose={() => setOpen(false)} size="md">
+        <div className="flex items-center justify-between px-6 py-3 lg:pr-10">
+          <h2 className="text-white font-bold text-lg">Filtrar películas</h2>
+          <div className="flex items-center gap-3">
+            {hasFilters && (
+              <button
+                onClick={() => { onChange({}); }}
+                className="text-xs text-indigo-400 font-semibold"
+              >
+                Limpiar todo
+              </button>
+            )}
+            <button
               onClick={() => setOpen(false)}
-            />
-            <motion.div
-              initial={{ y: '100%' }}
-              animate={{ y: 0 }}
-              exit={{ y: '100%' }}
-              transition={{ type: 'spring', stiffness: 320, damping: 32 }}
-              className="fixed bottom-0 left-0 right-0 z-[61] bg-zinc-950 border-t border-white/10 rounded-t-3xl"
+              className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400 lg:hidden"
             >
-              <div className="flex justify-center pt-3 pb-1">
-                <div className="w-10 h-1 bg-white/20 rounded-full" />
-              </div>
-              <div className="flex items-center justify-between px-6 py-3">
-                <h2 className="text-white font-bold text-lg">Filtrar películas</h2>
-                <div className="flex items-center gap-3">
-                  {hasFilters && (
-                    <button
-                      onClick={() => { onChange({}); }}
-                      className="text-xs text-indigo-400 font-semibold"
-                    >
-                      Limpiar todo
-                    </button>
-                  )}
-                  <button
-                    onClick={() => setOpen(false)}
-                    className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-zinc-400"
-                  >
-                    <X size={15} />
-                  </button>
-                </div>
-              </div>
+              <X size={15} />
+            </button>
+          </div>
+        </div>
 
-              <div className="px-6 pb-[max(env(safe-area-inset-bottom),28px)] space-y-6 overflow-y-auto max-h-[70vh]">
+        <div className="px-6 pb-[max(env(safe-area-inset-bottom),28px)] lg:pb-8 space-y-6 overflow-y-auto max-h-[70vh]">
                 {/* Platform */}
                 <div>
                   <p className="text-[11px] font-semibold text-zinc-500 uppercase tracking-widest mb-3">
@@ -283,10 +277,7 @@ export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChan
                   </div>
                 </div>
               </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      </ResponsiveSheet>
     </>
   );
 }

@@ -7,6 +7,7 @@ import {
   CalendarDays, Check, X, Users, ChevronRight, Film,
 } from 'lucide-react';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
+import { useIsDesktop } from '@/hooks/useIsDesktop';
 import { getPlatform } from '@/lib/constants';
 import { Movie, User, Duel } from '@/types';
 import {
@@ -24,9 +25,11 @@ interface DuelViewProps {
   onSchedule: (movie: Movie) => void;
 }
 
-// Accounts for: safe-area-top (~44px) + group header (~56px) + tabs (~58px)
-// + mt-3 (~12px) + mode-switcher (~52px) + main pb-20 (80px) = ~302px total
-const CONTENT_HEIGHT = 'calc(100svh - 295px)';
+// Mobile accounts for: safe-area-top (~44px) + group header (~56px) + tabs (~58px)
+// + mt-3 (~12px) + mode-switcher (~52px) + main pb-20 (80px) = ~302px total.
+// Desktop has no bottom nav and a taller header/tabs stack — different offset.
+const CONTENT_HEIGHT_MOBILE = 'calc(100svh - 295px)';
+const CONTENT_HEIGHT_DESKTOP = 'calc(100svh - 260px)';
 
 // ─── Voting / Tie movie card ──────────────────────────────────────────────────
 
@@ -339,6 +342,8 @@ export function DuelView({ groupId, currentUserId, isAdmin, members, onWatch, on
 
   const [showIntro, setShowIntro] = useState(false);
   const [randomSpinning, setRandomSpinning] = useState(false);
+  const isDesktop = useIsDesktop();
+  const CONTENT_HEIGHT = isDesktop ? CONTENT_HEIGHT_DESKTOP : CONTENT_HEIGHT_MOBILE;
 
   function apiError(e: unknown, fallback: string): string {
     const err = e as { response?: { data?: { message?: string } } };
