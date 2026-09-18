@@ -656,6 +656,79 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Perfil en desktop: layout más profesional ✅
+
+> Última pantalla pendiente de revisar de toda la vista desktop. No estaba
+> mal, pero pedido reestructurar: perfil arriba con las estadísticas debajo
+> (no al lado), cards de estadísticas sin estirarse a todo el ancho, y el
+> botón de cerrar sesión al final de todo.
+
+- **De 2 columnas a 1 columna contenida:** el layout pasa de `grid-cols-[280px_1fr]` (barra lateral estrecha de identidad + columna de estadísticas estirándose todo el ancho disponible) a una única columna con `lg:max-w-2xl` — ya no se estira a los ~1800px del área de contenido, queda contenida como una página de ajustes seria (mismo patrón que usan páginas de configuración de apps tipo Linear/Stripe).
+- **Identidad en fila horizontal:** en vez de columna estrecha apilada (avatar arriba, nombre debajo), en desktop el avatar queda a la izquierda y nombre+email a la derecha en la misma fila — usa mejor el ancho contenido, más natural, estilo cabecera de "Ajustes > Apple ID".
+- **Orden**: identidad → estadísticas → "Cerrar sesión" siempre al final, una sola instancia (antes había una copia oculta para móvil y otra para desktop en columnas separadas).
+- **Móvil sin cambios**: todas las clases nuevas van con prefijo `lg:`, confirmado por captura que la vista móvil es pixel-idéntica a la anterior.
+- **Qué probé:** Docker a 1440px (fila horizontal, cards contenidas, cerrar sesión al final) y 390px (sin cambios respecto a antes). `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Cabecera de grupo fija con efecto "Liquid Glass" al hacer scroll ✅
+
+> Petición del usuario: la cabecera (volver, nombre del grupo, miembros,
+> ajustes) y el selector de pestañas se perdían al hacer scroll, obligando a
+> subir del todo para cambiar de vista. Pedido explícitamente: fijarla, pero
+> no como un bloque sólido cortando el contenido — quería el efecto que ha
+> visto "en el nuevo del Mac" (el cristal esmerilado de macOS/iOS: el
+> contenido se difumina progresivamente al pasar por debajo en vez de
+> cortarse en seco), y que respete el notch/isla dinámica en cualquier móvil.
+
+- **Fijo de verdad:** `groups/[groupId]/layout.tsx` — la cabecera + pestañas pasan a un contenedor `sticky top-0 z-30`, con fondo `bg-zinc-950/75 backdrop-blur-xl` (cristal esmerilado real, no un color plano) — sigue respetando `max(env(safe-area-inset-top), 16px)` que ya tenía, así que en cualquier iPhone con notch o isla dinámica el contenido del cristal no queda tapado por la cámara: el fondo se pinta también por detrás de esa zona.
+- **Difuminado progresivo ("Liquid Glass"):** justo debajo del panel de cristal, una franja de 32px con **tres capas apiladas** de `backdrop-blur` crecientes (1px / 3px / 6px), cada una con una máscara de degradado (`mask-image: linear-gradient(...)`) que se desvanece antes que la anterior. El resultado: el contenido que sube por debajo se va desenfocando gradualmente según se acerca a la cabecera, en vez de cortarse en una línea dura — es la técnica real detrás del efecto de macOS Tahoe / iOS con barras translúcidas, sin usar ninguna librería, solo CSS.
+- **No bloquea toques:** la franja de difuminado lleva `pointer-events-none`, así que sigue pudiéndose tocar el contenido que hay justo debajo aunque visualmente esté empezando a desenfocarse.
+- **Aplica a ambas vistas:** el `sticky` y el cristal funcionan igual en móvil y desktop (en desktop la página normalmente no necesita scroll porque cabe todo, pero si el grupo tiene muchas pelis, la cabecera se queda fija igual).
+- **Qué probé:** Docker a 390px — capturas en reposo, a media altura del scroll (la peli "Interstellar" quedando literalmente difuminada bajo la cabecera, exactamente el efecto pedido) y con scroll más profundo; repetido en la pestaña Ranking. A 1440px sin cambios visibles en reposo (nada raro en el header ni las pestañas). `npm run build` y `eslint` limpios.
+
+---
+
+## FIX — El cristal esmerilado no llegaba a la zona del notch/isla dinámica ✅
+
+> Feedback inmediato tras el efecto "Liquid Glass": en la zona de la isla
+> dinámica/notch se veía "como negro fijo" (un corte duro), mientras que el
+> resto de la cabecera sí mostraba el desenfoque. Exactamente el síntoma de
+> un problema de configuración PWA muy concreto, no del CSS del blur en sí.
+
+- **Causa raíz:** faltaba `viewport-fit=cover` en la etiqueta `<meta name="viewport">` (`src/app/layout.tsx`). El status bar ya estaba configurado como `black-translucent` (correcto), pero **sin `viewport-fit=cover` esa configuración no tiene efecto** — iOS sigue tratando el notch/isla dinámica como una barra de sistema sólida y opaca, totalmente al margen del contenido web, en vez de dejar que la página se extienda por debajo (que es lo que de verdad hace falta para que nuestro cristal esmerilado se vea también ahí). Efecto secundario: como `env(safe-area-inset-top)` solo devuelve un valor real cuando hay `viewport-fit=cover`, todos los `max(env(safe-area-inset-top), 16px)` que ya usa la app por toda la interfaz llevaban devolviendo simplemente `16px` fijos — el soporte de safe-area estaba a medias desde antes de esta conversación.
+- **Fix:** una línea — `viewportFit: 'cover'` en el `Viewport` export de Next.js (`src/app/layout.tsx`). Confirmado en el HTML servido: `<meta name="viewport" content="...viewport-fit=cover">`.
+- **De paso:** limpiados dos `<meta>` duplicados que había manualmente en el `<head>` (`apple-mobile-web-app-capable` y `apple-mobile-web-app-status-bar-style`) — Next.js ya los genera automáticamente a partir de `metadata.appleWebApp`, estaban repetidos dos veces en el HTML final sin necesidad.
+- **Qué probé:** confirmado el meta tag correcto vía `curl`; intenté una verificación visual automatizada con Playwright+WebKit+iPhone 14 Pro pero el propio entorno de pruebas (Turbopack + WebKit) falló al hacer login (error de red específico de esa combinación, no de la app — confirmado que Chromium/producción no tienen ese problema). El comportamiento real del notch solo se puede confirmar con certeza en Safari/simulador de verdad — **pendiente de que el usuario lo confirme en su simulador**, que es exactamente el entorno donde vio el problema originalmente. `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Botón flotante "subir arriba" en móvil ✅
+
+- **`groups/[groupId]/layout.tsx`** — nuevo botón circular flotante, cristal esmerilado a juego con la cabecera (`bg-zinc-900/80 backdrop-blur-md`), en la esquina inferior izquierda (simétrico al FAB morado de "Añadir película" que ya vive en la derecha, sin pisarlo). Aparece con una animación de entrada/salida (fade + spring) al superar 400px de scroll, y al pulsarlo hace `scrollTo({top: 0, behavior: 'smooth'})`. Visible en las 4 pestañas del grupo (Pelis/Ruleta/Sesiones/Ranking) al vivir en el layout compartido, no solo en una vista. Solo móvil (`lg:hidden`), igual que el resto de detalles de esta sesión.
+- **Qué probé:** Docker, forzando scroll más allá del umbral — el botón aparece, y al pulsarlo `window.scrollY` pasa a `0` con la animación suave nativa.
+
+---
+
+## MEJORA — Móvil: toolbar consolidada (Filtrar + Ajustes + Añadir) y FAB flotante eliminado ✅
+
+> Petición: quitar el botón circular "..." de la cabecera móvil e integrarlo
+> junto a "Filtrar" (sin texto, solo icono); "Añadir película" también solo
+> icono (morado, se entiende solo); y un poco más de margen arriba.
+> Confirmado con el usuario: al consolidar todo en esa fila, el botón
+> flotante morado grande de abajo a la derecha desaparece (ya no hace falta,
+> quedaría duplicado).
+
+- **Nuevo store compartido `stores/groupUIStore.ts`** — un Zustand mínimo (`settingsOpen` + `openSettings`/`closeSettings`) para poder abrir el sheet de ajustes del grupo desde cualquier componente, no solo desde `layout.tsx` donde vive el sheet. Necesario porque el botón de ajustes pasa a vivir dentro de `MovieFilters.tsx` (solo se renderiza en la pestaña Pelis), mientras que el sheet en sí sigue en el layout compartido.
+- **Cabecera (`layout.tsx`):** el botón "..." se oculta en móvil (`hidden lg:flex`) — en desktop sigue exactamente igual, con su texto "Ajustes".
+- **Toolbar de Pelis (`MovieFilters.tsx`):** en móvil, fila de 4 elementos — buscador, icono de Filtrar (sin texto), icono nuevo de Ajustes (`MoreHorizontal`, llama a `openSettings()` del store), e icono "+" morado de Añadir película (sin texto). En desktop cada uno conserva su texto tal cual estaba.
+- **FAB flotante eliminado** (`groups/[groupId]/page.tsx`) — ya no hace falta, "Añadir película" vive en la toolbar de arriba, visible siempre (antes solo estaba arriba en desktop). El botón de "subir arriba" (de la mejora anterior) vuelve a su posición original (`bottom-24`) al no tener ya nada debajo con lo que apilarse.
+- **Margen superior:** `paddingTop` de la cabecera de `max(env(safe-area-inset-top), 16px)` a `max(..., 22px)` — un poco más de aire sin pasarse, tal y como se pidió.
+- **Trade-off explícito:** en móvil, "Ajustes" del grupo ahora solo es accesible desde la pestaña Pelis (antes estaba en la cabecera, visible en las 4 pestañas). Es una simplificación razonable — son acciones poco frecuentes (salir/borrar grupo, QR, invitar) — pero queda anotado por si en el futuro hiciera falta recuperar el acceso desde otras pestañas.
+- **Qué probé:** Docker a 390px — los tres botones (Filtrar/Ajustes/Añadir) abren su sheet correspondiente; sin FAB flotante; cabecera de Ruleta/Sesiones/Ranking sin hueco raro donde antes estaba el "...". A 1440px sin cambios (confirmado por captura: Ajustes con texto en la cabecera, Filtrar y Añadir película con texto en la toolbar, igual que siempre). `npm run build` y `eslint` limpios.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -684,6 +757,12 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-18 | Mejora | Racha: chapa degradada + glow, versión compacta icono+número en móvil para no envolver nunca |
 | 2026-09-18 | Revertido | Racha eliminada por completo (backend+frontend+debug). Se mantiene Top clicable y renombrados |
 | 2026-09-19 | Mejora | Selector de vistas móvil (Pelis/Ruleta/Sesiones/Ranking) más fino + brillo sutil en la píldora activa |
+| 2026-09-19 | Mejora | Perfil desktop: identidad en fila horizontal, estadísticas debajo contenidas, cerrar sesión al final |
+| 2026-09-19 | Mejora | Cabecera de grupo fija (sticky) con cristal esmerilado y difuminado progresivo estilo "Liquid Glass" |
+| 2026-09-19 | Fix | `viewport-fit=cover` que faltaba — el cristal esmerilado no llegaba a la zona del notch/isla dinámica |
+| 2026-09-19 | Mejora | Botón flotante "subir arriba" en móvil, aparece tras 400px de scroll |
+| 2026-09-19 | Ajuste | Botón "subir arriba": umbral a 150px y reubicado a la derecha, apilado sobre "Añadir película" |
+| 2026-09-19 | Mejora | Móvil: toolbar consolidada (Filtrar/Ajustes/Añadir, solo iconos) + FAB flotante eliminado + más margen arriba |
 
 ---
 

@@ -60,18 +60,19 @@ export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChan
             </AnimatePresence>
           </div>
 
-          {/* Filter button box — mismo alto y estilo */}
+          {/* Filter button box — icon-only on mobile, icon+label on desktop */}
           <button
             onClick={() => setOpen(true)}
+            aria-label="Filtrar"
             className={cn(
-              'flex items-center gap-1.5 h-10 px-3.5 rounded-xl text-[13px] font-semibold transition-all flex-shrink-0 border',
+              'flex items-center justify-center gap-1.5 h-10 w-10 lg:w-auto lg:px-3.5 rounded-xl text-[13px] font-semibold transition-all flex-shrink-0 border',
               hasFilters
                 ? 'bg-indigo-500/15 border-indigo-500/35 text-indigo-400'
                 : 'bg-zinc-800/60 border-white/[0.06] text-zinc-400',
             )}
           >
             <SlidersHorizontal size={13} />
-            Filtrar
+            <span className="hidden lg:inline">Filtrar</span>
             {activeCount > 0 && (
               <span className={cn(
                 'rounded-full w-4 h-4 flex items-center justify-center text-[10px] font-bold',
@@ -82,14 +83,15 @@ export function MovieFilters({ filters, onChange, searchQuery = '', onSearchChan
             )}
           </button>
 
-          {/* Desktop-only primary action — no FAB on desktop, action lives in the toolbar */}
+          {/* Add movie — icon-only on mobile (self-explanatory, purple = primary action), icon+label on desktop */}
           {onAddMovie && (
             <button
               onClick={onAddMovie}
-              className="hidden lg:flex items-center gap-1.5 h-10 px-4 rounded-xl text-[13px] font-semibold flex-shrink-0 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-[0_4px_14px_-2px_rgba(99,102,241,0.45)]"
+              aria-label="Añadir película"
+              className="flex items-center justify-center gap-1.5 h-10 w-10 lg:w-auto lg:px-4 rounded-xl text-[13px] font-semibold flex-shrink-0 bg-indigo-500 hover:bg-indigo-600 text-white transition-colors shadow-[0_4px_14px_-2px_rgba(99,102,241,0.45)]"
             >
               <Plus size={14} strokeWidth={2.5} />
-              Añadir película
+              <span className="hidden lg:inline">Añadir película</span>
             </button>
           )}
         </div>

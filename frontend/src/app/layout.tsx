@@ -32,6 +32,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -42,9 +43,6 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       style={{ minHeight: '100dvh', backgroundColor: '#09090b' }}
     >
       <head>
-        <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <link rel="apple-touch-icon" href="/icon-192.png" />
       </head>
       <body className="min-h-full bg-transparent text-white antialiased font-sans">
