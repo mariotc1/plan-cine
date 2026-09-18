@@ -208,22 +208,28 @@ class GroupController extends Controller
         $totalWatched = $finishedSessions->count();
         $totalMinutes = $finishedSessions->sum(fn($s) => $s->movie?->duration_minutes ?? 0);
 
-        // Top 10
+        // Top 10 — each entry links to the most recently watched session of that
+        // movie, so a rewatched movie (ratings pooled from all its finished
+        // sessions) still resolves to a single, well-defined session to open.
         $movieRatings = [];
         foreach ($finishedSessions as $session) {
             if ($session->movie && $session->ratings->isNotEmpty()) {
                 $movieId = $session->movie->id;
                 if (!isset($movieRatings[$movieId])) {
-                    $movieRatings[$movieId] = ['movie' => $session->movie, 'scores' => []];
+                    $movieRatings[$movieId] = ['movie' => $session->movie, 'scores' => [], 'session_id' => $session->id, 'last_watched' => $session->actual_end_at];
                 }
                 foreach ($session->ratings as $r) {
                     $movieRatings[$movieId]['scores'][] = $r->score;
+                }
+                if (!$movieRatings[$movieId]['last_watched'] || ($session->actual_end_at && $session->actual_end_at->gt($movieRatings[$movieId]['last_watched']))) {
+                    $movieRatings[$movieId]['session_id'] = $session->id;
+                    $movieRatings[$movieId]['last_watched'] = $session->actual_end_at;
                 }
             }
         }
 
         $top10 = collect($movieRatings)
-            ->map(fn($m) => ['movie' => new MovieResource($m['movie']), 'avg_rating' => round(array_sum($m['scores']) / count($m['scores']), 1)])
+            ->map(fn($m) => ['movie' => new MovieResource($m['movie']), 'avg_rating' => round(array_sum($m['scores']) / count($m['scores']), 1), 'session_id' => $m['session_id']])
             ->sortByDesc('avg_rating')
             ->take(10)
             ->values();

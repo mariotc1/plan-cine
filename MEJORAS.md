@@ -553,6 +553,95 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Ranking: Top clicable, títulos con más personalidad y racha ✅
+
+> Última pasada de pulido sobre la vista de Ranking, pedida por el usuario tras
+> dar por buena toda la responsividad de la app: (1) poder pinchar una película
+> del Top y llegar a su sesión para ver cuándo se vio y cómo se valoró; (2)
+> títulos de tarjeta con más personalidad, en la línea de "noches de cine
+> juntos" / "de palomitas y sofá"; (3) le pregunté si añadiría una categoría
+> nueva con los datos disponibles — solo si era algo con lo que "dar orgullo y
+> vicio de usar la app", si no prefería no forzarlo. Propuse una **racha**
+> (semanas seguidas con sesión de cine, estilo Duolingo) y la aprobó.
+
+- **Backend (`GroupController::stats`):**
+  - `top_10` ahora incluye `session_id` por entrada. Como una película puede tener varias sesiones terminadas (rewatches) y sus valoraciones se agrupan todas juntas para la media, se guarda el id de la **sesión más reciente** (por `actual_end_at`) de esa película — así "pinchar en el Top" siempre resuelve a una sesión concreta y bien definida, incluso en el caso raro de una peli repetida.
+  - Nuevo campo `current_streak_weeks`: semanas ISO consecutivas con al menos una sesión terminada, contando hacia atrás desde la semana actual. Con periodo de gracia de una semana — si la semana en curso todavía no tiene sesión, no se rompe la racha, se cuenta desde la semana anterior (igual que Duolingo no rompe la racha hasta que el día termina sin actividad).
+- **Frontend (`stats/page.tsx`):**
+  - Nueva tarjeta "🔥 N semanas seguidas · de noches de cine sin fallar" a todo el ancho, encima del grid de 4, con acento ámbar — solo se muestra si `current_streak_weeks > 0` (no hay nada que mostrar con orgullo si la racha está en cero).
+  - "Protagonistas" → **"El reparto"**, "Top N películas" → **"El podio"** (ya no hace falta el número en el título, cada fila ya muestra su puesto 1/2/3...).
+  - Cada fila del podio es ahora un `<Link>` a `/groups/{groupId}/sessions/{session_id}` con hover y chevron, en vez de un `<div>` estático.
+  - `types/index.ts` — `GroupStats.top_10` gana `session_id: string`; nuevo `GroupStats.current_streak_weeks: number`.
+- **Qué probé:** creé un grupo temporal vía API, añadí una sesión y la terminé (para caer en la semana ISO actual) y confirmé `current_streak_weeks: 1` en la respuesta y la tarjeta 🔥 renderizada correctamente; luego lo borré para no dejar datos de prueba. Con los datos reales de "Familia Tibus", pinché "Dune: Parte Dos" en El podio y confirmé que navega a `/groups/.../sessions/{id}` mostrando fecha, participantes y valoraciones (incluido el comentario "Genial en el sofá" de la feature anterior). `npm run build` y `eslint` limpios; `php -l` sin errores de sintaxis.
+
+---
+
+## MEJORA — Racha: menos peso visual, celebración animada al lograrla ✅
+
+> Feedback directo tras ver la primera versión de la racha: el card con el
+> emoji 🔥 grande rompía con la estética Apple simplicity de toda la app — "vale
+> que mole darle protagonismo pero no tanto peso visual". Pedido en su lugar:
+> (1) un indicador mucho más discreto; (2) que salte una animación/notificación
+> cuando se logra o continúa la racha, estilo apps de gimnasio; (3) lo mismo si
+> se rompe, para animar a retomarla.
+
+- **Backend:**
+  - Lógica de racha extraída de `GroupController` a `CinemaSession::streakStatsForGroup(string $groupId): array` (modelo `CinemaSession`), reutilizable desde cualquier controlador — devuelve `['current' => int, 'longest' => int]`. Usa un índice de semana absoluto (semanas desde una fecha época fija) en vez de comparar strings de fecha, evitando bugs de fin de año con semanas ISO.
+  - Nuevo campo `longest_streak_weeks` en `GroupController::stats()` — la mejor racha histórica del grupo, necesaria para distinguir "nunca hubo racha" de "hubo una racha y se rompió" (solo en el segundo caso merece la pena mostrar un aviso).
+  - `SessionController::finish()` ahora, antes de marcar la sesión como terminada, comprueba si el grupo **ya tenía otra sesión terminada esta misma semana** (para no repetir la celebración si es la segunda peli de la semana) y devuelve en la respuesta `streak: { weeks, is_new_week }`.
+- **Frontend:**
+  - El card grande con el 🔥 desaparece. En su lugar, una pequeña pastilla discreta en la esquina superior de la tarjeta "noches de cine juntos": ámbar con icono `Flame` (lucide, no emoji) + número si hay racha activa; gris neutro "Racha en pausa" si la racha se rompió pero hubo una de 2+ semanas antes (nunca se muestra si el grupo nunca tuvo una racha real, para no generar ruido).
+  - `useFinishSession` — al terminar una sesión que estrena o continúa la racha de la semana (`is_new_week`), lanza un segundo toast ~900 ms después del de "¡Película finalizada!": "Racha iniciada 🎬 A por la próxima semana" (racha=1) o "🔥 Racha de N semanas seguidas. ¡Seguid así!" (racha≥2) — la celebración vive en el momento de la acción, no como un elemento fijo en pantalla.
+- **Qué probé:** creé un grupo temporal, empecé y terminé una sesión desde la UI real (banner "en curso" → botón "Terminamos la película") y confirmé ambos toasts en cadena. Con `php artisan tinker` retrasé las fechas de dos sesiones a semanas consecutivas ya pasadas para simular una racha de 2 rota, confirmando la pastilla "Racha en pausa" en desktop y móvil. Confirmé también que "Familia Tibus" (sin racha real) no muestra ninguna pastilla — sin regresión. Grupos de prueba borrados al terminar. `npm run build` y `eslint` limpios; `php -l` sin errores.
+
+---
+
+## MEJORA — Racha: texto en línea con el número + panel de debug ✅
+
+> Segunda ronda de feedback: la pastilla de racha en la esquina "no decía
+> nada" — pidió ponerla junto al número grande, a su misma altura, con el
+> texto literal ("2 semanas de racha"). Además, probó a generar una racha real
+> esta semana y no vio nada — sospechó un bug y pidió una forma de probar el
+> mecanismo (subir/romper la racha) sin depender de esperar semanas reales.
+
+- **Diagnóstico:** revisando los datos reales de "Familia Tibus", `total_watched` seguía en 1 (la única sesión de la seed, de junio) — es decir, **no se había completado ninguna sesión nueva de verdad** desde que existe la racha. La racha solo cuenta sesiones que pasan por "Terminamos la película" (o el auto-finish programado); si no hay una sesión nueva finalizada, no hay nada que contar — no era un bug de cálculo, sino que la acción que dispara la racha no había llegado a ejecutarse (o se probó contra producción, donde este código aún no está desplegado).
+- **Rediseño del indicador:** de una pastilla absoluta en la esquina a texto en línea, `items-baseline` junto al número grande de "noches de cine juntos" — mismo tamaño de línea que el número, texto completo ("🔥 2 semanas de racha" / "Racha en pausa (mejor: N)"), ya no un badge separado que hay que descifrar.
+- **Panel de debug (`groups/[groupId]/stats/page.tsx`, componente `DebugStreakPanel`):** visible únicamente si `window.location.hostname` es `localhost`/`127.0.0.1` (comprobado con `useSyncExternalStore` para no romper la hidratación de Next), con tres botones:
+  - **+1 semana** — crea una película+sesión de mentira ("🐛 Debug racha …", ya marcada como "vista" para no ensuciar la lista de pendientes) fechada exactamente una semana antes de la última semana ya contada, extendiendo la racha en vivo. También lanza el mismo toast de celebración que vería un usuario real, para confirmar que la animación en sí funciona.
+  - **Romper racha** — adelanta 3 semanas las sesiones de debug ya creadas, tirando la racha actual a 0 sin perder el "mejor" histórico.
+  - **Reset** — borra por completo las películas/sesiones de debug creadas por el panel, dejando el grupo exactamente como estaba.
+  - **Doble candado de seguridad para producción:** la ruta `POST groups/{id}/debug/streak` ni siquiera se registra en `routes/api.php` fuera de `local`/`staging` (`if (!app()->environment('production'))`), y el método del controlador repite la comprobación (`abort_if(app()->environment('production'), 404)`) — aunque el botón del frontend se colara en un build de producción por error, la llamada devolvería 404 sin hacer nada.
+- **Qué probé:** en Docker, contra "Familia Tibus" real — **+1 semana** (pasó de "sin racha" a "🔥 1 semana de racha" junto al número, más el toast "Racha iniciada 🎬"), **Romper racha** (bajó a 0, sin pastilla porque el histórico no llega a 2), **Reset** (grupo devuelto exactamente a su estado original: 1 noche, 2.8h, 3 pelis — sin residuos). `npm run build` y `eslint` limpios; `php artisan route:list` confirma que la ruta de debug solo existe en `local`.
+
+---
+
+## MEJORA — Racha: tarjeta con más carácter, sin salto de línea ✅
+
+> Tercera ronda: el texto plano quedó demasiado soso ("esperaba algo más
+> épico tipo card motivacional currado estilo Apple") y además saltaba de
+> línea en pantallas estrechas cuando el texto no cabía junto al número.
+
+- **Tratamiento visual más cuidado, sin subir el volumen:** la tarjeta "noches de cine juntos" gana, solo cuando hay racha activa, un borde y un degradado cálido muy sutil (`border-amber-500/25` + wash `from-amber-500/[0.08]`) y el icono pasa de un `Flame` suelto a una chapa circular con degradado ámbar→naranja y un glow suave (`shadow` con `rgba(245,158,11,...)`) — el mismo lenguaje de "icono en insignia" que usan apps como Apple Fitness, sin caer en el bloque gigante de la primera versión.
+- **Nunca salta de línea:** en vez de dejar que el texto se envuelva o se corte con "…", se usan dos niveles de detalle según el ancho — **desktop** (`lg:` ≥768px, con mucho más aire): "🔥 2 semanas de racha" completo; **móvil** (todo el rango real de uso de la app): solo "🔥 2" — icono + número, sin palabras, al estilo del contador de racha de Duolingo. Mismo patrón para "Racha en pausa" → "En pausa" en móvil, "Racha en pausa (mejor: N)" en desktop. `whitespace-nowrap` en ambos casos como cinturón de seguridad.
+- **Qué probé:** con el panel de debug, construí una racha de 2 semanas y la rompí, verificando las 4 combinaciones (activa/en pausa × 375px/1440px) — ninguna envuelve ni se corta en el ancho más estrecho que soporta la app (iPhone SE, 375px). Reset al terminar, grupo real intacto. `npm run build` y `eslint` limpios.
+
+---
+
+## REVERTIDO — Racha eliminada por completo ✅
+
+> Cuarta ronda: "se ve fatal" — el usuario pidió eliminar por completo todo lo
+> relacionado con la racha (incluidas las notificaciones/toasts de
+> celebración), manteniendo únicamente el Top clicable y los cambios de
+> nombre ("El reparto", "El podio", "Vuestra plataforma", "Vuestro género").
+
+- **Backend:** `CinemaSession::streakStatsForGroup()` eliminado del modelo; `GroupController::stats()` ya no devuelve `current_streak_weeks`/`longest_streak_weeks`; `GroupController::debugStreak()` y la ruta `groups/{id}/debug/streak` eliminados por completo; `SessionController::finish()` vuelve a su forma original (sin cálculo de "primera sesión de la semana" ni la clave `streak` en la respuesta). Imports que solo servían para esto (`CinemaSession`, `Movie`, `Carbon` en el modelo) retirados.
+- **Frontend:** `DebugStreakPanel` y el hook `useDebugStreak` eliminados; `stats/page.tsx` vuelve a la tarjeta simple "noches de cine juntos" sin icono, degradado ni condicional de racha; `useFinishSession` vuelve a su versión original sin el segundo toast de celebración; `GroupStats.current_streak_weeks`/`longest_streak_weeks` fuera de `types/index.ts`; `groupsApi.debugStreak` fuera de `lib/api.ts`.
+- **Se mantiene:** `top_10` con `session_id` y cada fila de "El podio" como `<Link>` a su sesión (con `ChevronRight`), y los cuatro renombrados de cabecera ("El reparto", "El podio", "Vuestra plataforma", "Vuestro género").
+- **Limpieza de datos:** durante las pruebas de la racha se habían creado 4 películas/sesiones de debug (`🐛 Debug racha ...`) en el grupo real del usuario (visto primero como "Familia Tibus", luego renombrado a "Tibus Cinema" por el propio usuario en paralelo — mismo grupo, mismo id). Borradas por completo vía `tinker` una vez retirada la ruta de la API que las gestionaba; `total_watched`/`total_hours` confirmados de vuelta a su valor original (1 / 2.8h).
+- **Qué probé:** `grep` de `streak|racha|Debug` en todo `frontend/src` y `backend/app`+`routes` sin ningún resultado; `php artisan route:list --path=debug` sin rutas; `npm run build` y `eslint` limpios; capturas en 1440px y 375px confirmando la tarjeta original sin racha, y clic en "El podio" navegando correctamente a la sesión.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -575,6 +664,11 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-13 | Feature | Comentarios en valoraciones: opcional, editable/borrable, independiente de la puntuación |
 | 2026-09-18 | Mejora | Logos reales de Disney+ y Prime Video (placeholders genéricos sustituidos por assets oficiales adaptados) |
 | 2026-09-18 | Mejora | Color de Disney+ a cian legible + etiquetas "Vuestra plataforma"/"Vuestro género" en Ranking |
+| 2026-09-18 | Mejora | Ranking: Top 10 clicable a su sesión, "El reparto"/"El podio", nueva racha de semanas seguidas |
+| 2026-09-18 | Mejora | Racha: card grande → pastilla discreta + toast de celebración al lograrla/romperla |
+| 2026-09-18 | Mejora | Racha: texto en línea junto al número + panel de debug (solo local) para probar el mecanismo |
+| 2026-09-18 | Mejora | Racha: chapa degradada + glow, versión compacta icono+número en móvil para no envolver nunca |
+| 2026-09-18 | Revertido | Racha eliminada por completo (backend+frontend+debug). Se mantiene Top clicable y renombrados |
 
 ---
 
