@@ -642,6 +642,20 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Selector de vistas (Pelis/Ruleta/Sesiones/Ranking) más fino en móvil ✅
+
+> Pulido sutil pedido directamente: el segmented control móvil (Pelis / Ruleta
+> / Sesiones / Ranking, `groups/[groupId]/layout.tsx`) se veía algo grueso;
+> pedido "más fino" o alguna idea más estética estilo Apple.
+
+- **Más fino:** padding del contenedor `p-1` → `p-[3px]`, padding vertical de cada pestaña `py-[9px]` → `py-[7px]` — la barra pasa de los ~40px de alto a algo más cercano a los ~32-34pt de un segmented control nativo de iOS.
+- **Jerarquía tipográfica:** las pestañas inactivas pasan de `font-semibold` a `font-medium` (más ligeras), la activa mantiene `font-semibold` — más contraste entre "seleccionado" y "no seleccionado" sin subir el tamaño de letra.
+- **Toque extra "Apple":** la píldora activa gana un sutil highlight interior superior (`inset 0 1px 0 rgba(255,255,255,0.12)`) además de su sombra de color existente — el típico brillo superior de un botón físico/vidrio de iOS, muy discreto, sin caer en un efecto "glossy" anticuado.
+- **Solo móvil:** todos los cambios van sin prefijo `lg:`, así que la versión desktop (pestañas subrayadas) queda exactamente igual — confirmado por captura.
+- **Qué probé:** Docker a 390px (el segmented control se ve más fino y con el brillo sutil) y 1440px (sin cambios). `npm run build` y `eslint` limpios.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -669,6 +683,7 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-18 | Mejora | Racha: texto en línea junto al número + panel de debug (solo local) para probar el mecanismo |
 | 2026-09-18 | Mejora | Racha: chapa degradada + glow, versión compacta icono+número en móvil para no envolver nunca |
 | 2026-09-18 | Revertido | Racha eliminada por completo (backend+frontend+debug). Se mantiene Top clicable y renombrados |
+| 2026-09-19 | Mejora | Selector de vistas móvil (Pelis/Ruleta/Sesiones/Ranking) más fino + brillo sutil en la píldora activa |
 
 ---
 
