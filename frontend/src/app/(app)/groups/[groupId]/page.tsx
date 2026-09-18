@@ -3,7 +3,7 @@
 import { use, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Trash2, Film } from 'lucide-react';
+import { Trash2, Film } from 'lucide-react';
 import { useMovies, useCreateMovie, useUpdateMovie, useDeleteMovie } from '@/hooks/useMovies';
 import { useGroupMembers } from '@/hooks/useGroups';
 import { useCreateSession, useStartSession } from '@/hooks/useSessions';
@@ -183,15 +183,6 @@ export default function MoviesPage({ params }: Props) {
           </motion.div>
         )}
       </div>
-
-      {/* FAB — mobile/tablet only, desktop uses the "Añadir película" button in the toolbar */}
-      <motion.button
-        whileTap={{ scale: 0.91 }}
-        onClick={() => setShowAdd(true)}
-        className="fixed bottom-24 right-5 w-14 h-14 rounded-full flex items-center justify-center z-40 bg-gradient-to-br from-indigo-400 to-indigo-600 shadow-[0_8px_28px_-2px_rgba(99,102,241,0.65)] sm:right-[max(1.25rem,calc(50%-240px+1.25rem))] lg:hidden"
-      >
-        <Plus size={22} className="text-white" strokeWidth={2.5} />
-      </motion.button>
 
       <AddMovieSheet
         open={showAdd}

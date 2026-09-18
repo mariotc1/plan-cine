@@ -3,7 +3,7 @@
 import { use, useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { ArrowLeft, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft, Users, Shield, UserMinus } from 'lucide-react';
+import { ArrowLeft, ArrowUp, Copy, MoreHorizontal, X, Pencil, LogOut, Trash2, Share2, QrCode, ChevronLeft, Users, Shield, UserMinus } from 'lucide-react';
 import QRCode from 'react-qr-code';
 import { useGroup, useUpdateGroup, useDeleteGroup, useLeaveGroup, useGroupMembers, useKickMember } from '@/hooks/useGroups';
 import { useAuthStore } from '@/stores/authStore';
@@ -12,7 +12,7 @@ import { ResponsiveSheet } from '@/components/shared/ResponsiveSheet';
 import { useActiveDuel } from '@/hooks/useDuel';
 import { GroupMember } from '@/types';
 import { cn } from '@/lib/utils';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -58,6 +58,14 @@ export default function GroupLayout({ children, params }: Props) {
   const [showMembers, setShowMembers] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [kickTarget, setKickTarget] = useState<GroupMember | null>(null);
+
+  // Scroll-to-top FAB — mobile only, appears once you've scrolled a bit
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  useEffect(() => {
+    const onScroll = () => setShowScrollTop(window.scrollY > 150);
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   // ─── Global duel detection (runs on every group page) ────────────────────
   const { data: activeDuel } = useActiveDuel(groupId);
@@ -178,7 +186,7 @@ export default function GroupLayout({ children, params }: Props) {
           {/* Header */}
           <div
             className="relative flex items-center justify-between px-5 pb-0 lg:px-8 lg:pt-2"
-            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 22px)' }}
           >
             <motion.button
               whileTap={{ scale: 0.88 }}
@@ -270,6 +278,24 @@ export default function GroupLayout({ children, params }: Props) {
       <NowPlayingBanner groupId={groupId} />
 
       <div className="mt-3">{children}</div>
+
+      {/* Scroll-to-top — mobile only, appears once you've scrolled a bit */}
+      <AnimatePresence>
+        {showScrollTop && (
+          <motion.button
+            initial={{ opacity: 0, scale: 0.8, y: 8 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 8 }}
+            whileTap={{ scale: 0.88 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 32 }}
+            onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+            aria-label="Subir arriba del todo"
+            className="fixed bottom-24 right-5 z-40 w-11 h-11 rounded-full bg-zinc-900/80 backdrop-blur-md border border-white/10 shadow-[0_8px_24px_-4px_rgba(0,0,0,0.5)] flex items-center justify-center text-zinc-300 sm:right-[max(1.25rem,calc(50%-240px+1.25rem))] lg:hidden"
+          >
+            <ArrowUp size={18} />
+          </motion.button>
+        )}
+      </AnimatePresence>
 
       {/* Settings sheet */}
       <ResponsiveSheet open={showSettings} onClose={() => setShowSettings(false)} size="sm">
