@@ -8,20 +8,18 @@ interface PlatformLogoProps {
   color?: string;
 }
 
+// Real brand marks, extracted from the official logos as tintable silhouettes
+// (image alpha/luminance mask) so they render exactly like the vector paths
+// below: single-color, colorable via the `color` prop, same "logo suite" feel.
+const IMAGE_MASKS: Record<string, { src: string; aspect: number; color: string }> = {
+  disney: { src: '/logos/disney-plus-mark.png', aspect: 292 / 160, color: '#06AED4' },
+  prime: { src: '/logos/prime-video-mark.png', aspect: 519 / 160, color: '#1A98FF' },
+};
+
 const PATHS: Record<string, { d: string; color: string }> = {
   netflix: {
     d: 'm5.398 0 8.348 23.602c2.346.059 4.856.398 4.856.398L10.113 0H5.398zm8.489 0v9.172l4.715 13.33V0h-4.715zM5.398 1.5V24c1.873-.225 2.81-.312 4.715-.398V14.83L5.398 1.5z',
     color: '#E50914',
-  },
-  prime: {
-    // Play triangle — universal "video" symbol for Prime Video
-    d: 'M8 5v14l11-7z',
-    color: '#1A98FF',
-  },
-  disney: {
-    // 5-pointed star — Disney magic
-    d: 'M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z',
-    color: '#113CCF',
   },
   hbo: {
     d: 'M7.042 16.896H4.414v-3.754H2.708v3.754H.01L0 7.22h2.708v3.6h1.706v-3.6h2.628zm12.043.046C21.795 16.94 24 14.689 24 11.978a4.89 4.89 0 0 0-4.915-4.92c-2.707-.002-4.09 1.991-4.432 2.795.003-1.207-1.187-2.632-2.58-2.634H7.59v9.674l4.181.001c1.686 0 2.886-1.46 2.888-2.713.385.788 1.72 2.762 4.427 2.76zm-7.665-3.936c.387 0 .692.382.692.817 0 .435-.305.817-.692.817h-1.33v-1.634zm.005-3.633c.387 0 .692.382.692.817 0 .436-.305.818-.692.818h-1.33V9.373zm1.77 2.607c.305-.039.813-.387.992-.61-.063.276-.068 1.074.006 1.35-.204-.314-.688-.701-.998-.74zm3.43 0a2.462 2.462 0 1 1 4.924 0 2.462 2.462 0 0 1-4.925 0zm2.462 1.936a1.936 1.936 0 1 0 0-3.872 1.936 1.936 0 0 0 0 3.872Z',
@@ -38,6 +36,32 @@ const PATHS: Record<string, { d: string; color: string }> = {
 };
 
 export function PlatformLogo({ platform, size = 16, color }: PlatformLogoProps) {
+  const mask = IMAGE_MASKS[platform];
+  if (mask) {
+    const fill = color ?? mask.color;
+    return (
+      <span
+        role="img"
+        aria-hidden
+        style={{
+          display: 'inline-block',
+          flexShrink: 0,
+          width: size * mask.aspect,
+          height: size,
+          backgroundColor: fill,
+          WebkitMaskImage: `url(${mask.src})`,
+          maskImage: `url(${mask.src})`,
+          WebkitMaskSize: 'contain',
+          maskSize: 'contain',
+          WebkitMaskRepeat: 'no-repeat',
+          maskRepeat: 'no-repeat',
+          WebkitMaskPosition: 'center',
+          maskPosition: 'center',
+        }}
+      />
+    );
+  }
+
   const entry = PATHS[platform];
 
   if (!entry) {
@@ -59,5 +83,5 @@ export function PlatformLogo({ platform, size = 16, color }: PlatformLogoProps) 
 }
 
 export function getPlatformBrandColor(platform: string): string {
-  return PATHS[platform]?.color ?? '#6366f1';
+  return IMAGE_MASKS[platform]?.color ?? PATHS[platform]?.color ?? '#6366f1';
 }

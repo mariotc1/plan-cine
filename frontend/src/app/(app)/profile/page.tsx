@@ -257,7 +257,7 @@ export default function ProfilePage() {
 function StatRow({ emoji, label, value, logo }: { emoji: string; label: string; value: string; logo?: React.ReactNode }) {
   return (
     <div className="flex items-center gap-3 px-5 py-3.5">
-      <span className="w-6 flex items-center justify-center flex-shrink-0">
+      <span className="min-w-6 flex items-center justify-center flex-shrink-0">
         {logo ?? <span className="text-base">{emoji}</span>}
       </span>
       <span className="flex-1 text-sm text-zinc-400">{label}</span>
