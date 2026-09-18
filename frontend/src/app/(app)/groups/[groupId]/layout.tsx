@@ -171,75 +171,99 @@ export default function GroupLayout({ children, params }: Props) {
 
   return (
     <div className="min-h-screen">
-      {/* Header */}
-      <div
-        className="relative flex items-center justify-between px-5 pb-0 lg:px-8 lg:pt-2"
-        style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
-      >
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          onClick={() => router.push('/groups')}
-          className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-zinc-300 flex-shrink-0 lg:hidden"
-        >
-          <ArrowLeft size={16} />
-        </motion.button>
+      {/* Sticky header + tabs — frosted glass while scrolled, with a soft
+          progressive blur hand-off into the content below (no hard edge) */}
+      <div className="sticky top-0 z-30">
+        <div className="relative bg-zinc-950/75 backdrop-blur-xl">
+          {/* Header */}
+          <div
+            className="relative flex items-center justify-between px-5 pb-0 lg:px-8 lg:pt-2"
+            style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}
+          >
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => router.push('/groups')}
+              className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center text-zinc-300 flex-shrink-0 lg:hidden"
+            >
+              <ArrowLeft size={16} />
+            </motion.button>
 
-        {/* Center on mobile (absolutely positioned so buttons don't shift it) — left-aligned flow on desktop */}
-        <div className="absolute inset-x-0 flex flex-col items-center justify-center pointer-events-none px-14 lg:static lg:flex-1 lg:items-start lg:justify-start lg:pointer-events-auto lg:px-0">
-          <h1 className="text-[17px] font-bold text-white tracking-tight truncate text-center w-full lg:text-left lg:text-[28px]">
-            {group?.name || '...'}
-          </h1>
-          {group?.member_count !== undefined && (
-            <p className="text-[11px] text-zinc-500 mt-0.5 lg:text-[13px] lg:mt-1">
-              {group.member_count} {group.member_count === 1 ? 'miembro' : 'miembros'}
-            </p>
-          )}
+            {/* Center on mobile (absolutely positioned so buttons don't shift it) — left-aligned flow on desktop */}
+            <div className="absolute inset-x-0 flex flex-col items-center justify-center pointer-events-none px-14 lg:static lg:flex-1 lg:items-start lg:justify-start lg:pointer-events-auto lg:px-0">
+              <h1 className="text-[17px] font-bold text-white tracking-tight truncate text-center w-full lg:text-left lg:text-[28px]">
+                {group?.name || '...'}
+              </h1>
+              {group?.member_count !== undefined && (
+                <p className="text-[11px] text-zinc-500 mt-0.5 lg:text-[13px] lg:mt-1">
+                  {group.member_count} {group.member_count === 1 ? 'miembro' : 'miembros'}
+                </p>
+              )}
+            </div>
+
+            <motion.button
+              whileTap={{ scale: 0.88 }}
+              onClick={() => setShowSettings(true)}
+              aria-label="Ajustes"
+              className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center gap-2 text-zinc-300 flex-shrink-0 lg:w-auto lg:h-10 lg:px-4 lg:rounded-xl lg:hover:bg-white/[0.1] lg:transition-colors"
+            >
+              <MoreHorizontal size={18} />
+              <span className="hidden lg:inline text-sm font-medium">Ajustes</span>
+            </motion.button>
+          </div>
+
+          {/* Tabs — segmented pill on mobile, underlined tabs on desktop */}
+          <div className="px-4 pt-4 pb-3 lg:px-8 lg:pt-6 lg:pb-0">
+            <div className="relative flex bg-zinc-900/50 border border-white/[0.06] rounded-2xl p-[3px] lg:bg-transparent lg:border-0 lg:border-b lg:border-white/[0.08] lg:rounded-none lg:p-0 lg:gap-7 lg:justify-start">
+              {TABS.map((tab) => {
+                const href = `/groups/${groupId}${tab.href}`;
+                const isActive = tab.href === ''
+                  ? pathname === `/groups/${groupId}`
+                  : pathname.startsWith(href);
+
+                return (
+                  <Link
+                    key={tab.href}
+                    href={href}
+                    className="relative flex-1 flex items-center justify-center py-[7px] z-10 lg:flex-none lg:justify-start lg:py-0 lg:pb-3"
+                  >
+                    {isActive && (
+                      <motion.div
+                        layoutId="group-tab-pill"
+                        className="absolute left-0 right-0 top-0 bottom-0 bg-indigo-500 rounded-[10px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_2px_10px_-3px_rgba(99,102,241,0.55)] lg:top-auto lg:h-[2px] lg:rounded-none lg:shadow-none"
+                        transition={{ type: 'spring', stiffness: 420, damping: 36 }}
+                      />
+                    )}
+                    <span
+                      className={cn(
+                        'relative z-10 text-[12px] font-medium tracking-[0.01em] transition-colors duration-150 whitespace-nowrap lg:text-[13px] lg:font-semibold',
+                        isActive ? 'text-white font-semibold' : 'text-zinc-500 lg:hover:text-zinc-300'
+                      )}
+                    >
+                      {tab.label}
+                    </span>
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
         </div>
 
-        <motion.button
-          whileTap={{ scale: 0.88 }}
-          onClick={() => setShowSettings(true)}
-          aria-label="Ajustes"
-          className="relative z-10 w-9 h-9 rounded-full bg-white/[0.07] border border-white/[0.08] flex items-center justify-center gap-2 text-zinc-300 flex-shrink-0 lg:w-auto lg:h-10 lg:px-4 lg:rounded-xl lg:hover:bg-white/[0.1] lg:transition-colors"
-        >
-          <MoreHorizontal size={18} />
-          <span className="hidden lg:inline text-sm font-medium">Ajustes</span>
-        </motion.button>
-      </div>
-
-      {/* Tabs — segmented pill on mobile, underlined tabs on desktop */}
-      <div className="px-4 pt-4 pb-0 lg:px-8 lg:pt-6">
-        <div className="relative flex bg-zinc-900/50 border border-white/[0.06] rounded-2xl p-[3px] lg:bg-transparent lg:border-0 lg:border-b lg:border-white/[0.08] lg:rounded-none lg:p-0 lg:gap-7 lg:justify-start">
-          {TABS.map((tab) => {
-            const href = `/groups/${groupId}${tab.href}`;
-            const isActive = tab.href === ''
-              ? pathname === `/groups/${groupId}`
-              : pathname.startsWith(href);
-
-            return (
-              <Link
-                key={tab.href}
-                href={href}
-                className="relative flex-1 flex items-center justify-center py-[7px] z-10 lg:flex-none lg:justify-start lg:py-0 lg:pb-3"
-              >
-                {isActive && (
-                  <motion.div
-                    layoutId="group-tab-pill"
-                    className="absolute left-0 right-0 top-0 bottom-0 bg-indigo-500 rounded-[10px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_2px_10px_-3px_rgba(99,102,241,0.55)] lg:top-auto lg:h-[2px] lg:rounded-none lg:shadow-none"
-                    transition={{ type: 'spring', stiffness: 420, damping: 36 }}
-                  />
-                )}
-                <span
-                  className={cn(
-                    'relative z-10 text-[12px] font-medium tracking-[0.01em] transition-colors duration-150 whitespace-nowrap lg:text-[13px] lg:font-semibold',
-                    isActive ? 'text-white font-semibold' : 'text-zinc-500 lg:hover:text-zinc-300'
-                  )}
-                >
-                  {tab.label}
-                </span>
-              </Link>
-            );
-          })}
+        {/* Progressive blur — three stacked, increasingly-blurred bands each
+            masked to fade out sooner, so content sliding up dissolves smoothly
+            instead of clipping at a hard line (the "Liquid Glass" hand-off). */}
+        <div aria-hidden className="pointer-events-none absolute left-0 right-0 top-full h-8">
+          <div
+            className="absolute inset-0 backdrop-blur-[1px]"
+            style={{ maskImage: 'linear-gradient(to bottom, black, transparent)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent)' }}
+          />
+          <div
+            className="absolute inset-0 backdrop-blur-[3px]"
+            style={{ maskImage: 'linear-gradient(to bottom, black, transparent 66%)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 66%)' }}
+          />
+          <div
+            className="absolute inset-0 backdrop-blur-[6px]"
+            style={{ maskImage: 'linear-gradient(to bottom, black, transparent 33%)', WebkitMaskImage: 'linear-gradient(to bottom, black, transparent 33%)' }}
+          />
         </div>
       </div>
 

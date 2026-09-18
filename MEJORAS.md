@@ -656,6 +656,39 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Perfil en desktop: layout más profesional ✅
+
+> Última pantalla pendiente de revisar de toda la vista desktop. No estaba
+> mal, pero pedido reestructurar: perfil arriba con las estadísticas debajo
+> (no al lado), cards de estadísticas sin estirarse a todo el ancho, y el
+> botón de cerrar sesión al final de todo.
+
+- **De 2 columnas a 1 columna contenida:** el layout pasa de `grid-cols-[280px_1fr]` (barra lateral estrecha de identidad + columna de estadísticas estirándose todo el ancho disponible) a una única columna con `lg:max-w-2xl` — ya no se estira a los ~1800px del área de contenido, queda contenida como una página de ajustes seria (mismo patrón que usan páginas de configuración de apps tipo Linear/Stripe).
+- **Identidad en fila horizontal:** en vez de columna estrecha apilada (avatar arriba, nombre debajo), en desktop el avatar queda a la izquierda y nombre+email a la derecha en la misma fila — usa mejor el ancho contenido, más natural, estilo cabecera de "Ajustes > Apple ID".
+- **Orden**: identidad → estadísticas → "Cerrar sesión" siempre al final, una sola instancia (antes había una copia oculta para móvil y otra para desktop en columnas separadas).
+- **Móvil sin cambios**: todas las clases nuevas van con prefijo `lg:`, confirmado por captura que la vista móvil es pixel-idéntica a la anterior.
+- **Qué probé:** Docker a 1440px (fila horizontal, cards contenidas, cerrar sesión al final) y 390px (sin cambios respecto a antes). `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Cabecera de grupo fija con efecto "Liquid Glass" al hacer scroll ✅
+
+> Petición del usuario: la cabecera (volver, nombre del grupo, miembros,
+> ajustes) y el selector de pestañas se perdían al hacer scroll, obligando a
+> subir del todo para cambiar de vista. Pedido explícitamente: fijarla, pero
+> no como un bloque sólido cortando el contenido — quería el efecto que ha
+> visto "en el nuevo del Mac" (el cristal esmerilado de macOS/iOS: el
+> contenido se difumina progresivamente al pasar por debajo en vez de
+> cortarse en seco), y que respete el notch/isla dinámica en cualquier móvil.
+
+- **Fijo de verdad:** `groups/[groupId]/layout.tsx` — la cabecera + pestañas pasan a un contenedor `sticky top-0 z-30`, con fondo `bg-zinc-950/75 backdrop-blur-xl` (cristal esmerilado real, no un color plano) — sigue respetando `max(env(safe-area-inset-top), 16px)` que ya tenía, así que en cualquier iPhone con notch o isla dinámica el contenido del cristal no queda tapado por la cámara: el fondo se pinta también por detrás de esa zona.
+- **Difuminado progresivo ("Liquid Glass"):** justo debajo del panel de cristal, una franja de 32px con **tres capas apiladas** de `backdrop-blur` crecientes (1px / 3px / 6px), cada una con una máscara de degradado (`mask-image: linear-gradient(...)`) que se desvanece antes que la anterior. El resultado: el contenido que sube por debajo se va desenfocando gradualmente según se acerca a la cabecera, en vez de cortarse en una línea dura — es la técnica real detrás del efecto de macOS Tahoe / iOS con barras translúcidas, sin usar ninguna librería, solo CSS.
+- **No bloquea toques:** la franja de difuminado lleva `pointer-events-none`, así que sigue pudiéndose tocar el contenido que hay justo debajo aunque visualmente esté empezando a desenfocarse.
+- **Aplica a ambas vistas:** el `sticky` y el cristal funcionan igual en móvil y desktop (en desktop la página normalmente no necesita scroll porque cabe todo, pero si el grupo tiene muchas pelis, la cabecera se queda fija igual).
+- **Qué probé:** Docker a 390px — capturas en reposo, a media altura del scroll (la peli "Interstellar" quedando literalmente difuminada bajo la cabecera, exactamente el efecto pedido) y con scroll más profundo; repetido en la pestaña Ranking. A 1440px sin cambios visibles en reposo (nada raro en el header ni las pestañas). `npm run build` y `eslint` limpios.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -684,6 +717,8 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-18 | Mejora | Racha: chapa degradada + glow, versión compacta icono+número en móvil para no envolver nunca |
 | 2026-09-18 | Revertido | Racha eliminada por completo (backend+frontend+debug). Se mantiene Top clicable y renombrados |
 | 2026-09-19 | Mejora | Selector de vistas móvil (Pelis/Ruleta/Sesiones/Ranking) más fino + brillo sutil en la píldora activa |
+| 2026-09-19 | Mejora | Perfil desktop: identidad en fila horizontal, estadísticas debajo contenidas, cerrar sesión al final |
+| 2026-09-19 | Mejora | Cabecera de grupo fija (sticky) con cristal esmerilado y difuminado progresivo estilo "Liquid Glass" |
 
 ---
 
