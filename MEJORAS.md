@@ -546,6 +546,13 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Color de Disney+ y etiquetas de Ranking ✅
+
+- **Color de Disney+:** el `#113CCF` (azul-índigo) usado como color de marca leía "morado" en pantalla, según feedback directo del usuario. Cambiado a `#06AED4` (cian-azulado), tomado del propio degradado turquesa del icono oficial — más fiel a la marca y perfectamente legible sobre fondo oscuro. Único color, se propaga automáticamente a `PlatformLogo` y a todos los badges de la app (`frontend/src/lib/constants.ts` + `PlatformLogo.tsx`).
+- **Etiquetas "Plataforma"/"Género" en Ranking de grupo:** el usuario las encontraba ambiguas — no quedaba claro que son la plataforma/género *favoritos* del grupo. Cambiadas a "Vuestra plataforma" / "Vuestro género" (`stats/page.tsx`), manteniendo el mismo estilo tipográfico (mayúsculas, tracking ancho, gris) que el resto de cabeceras de tarjeta de la página (Protagonistas, Top N películas) — solo cambia el texto, no el sistema visual. Probado en 375px (envuelve a dos líneas en el caso de "Vuestra plataforma" sin romper el layout) y 1440px (una línea).
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -567,6 +574,7 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-13 | Bug crítico #2 | `tokens()->delete()` en login mataba sesiones de otros dispositivos. Arreglado (multi-sesión) |
 | 2026-09-13 | Feature | Comentarios en valoraciones: opcional, editable/borrable, independiente de la puntuación |
 | 2026-09-18 | Mejora | Logos reales de Disney+ y Prime Video (placeholders genéricos sustituidos por assets oficiales adaptados) |
+| 2026-09-18 | Mejora | Color de Disney+ a cian legible + etiquetas "Vuestra plataforma"/"Vuestro género" en Ranking |
 
 ---
 
