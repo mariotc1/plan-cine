@@ -72,89 +72,80 @@ export default function ProfilePage() {
         variants={staggerContainer}
         initial="initial"
         animate="animate"
-        className="space-y-5 lg:space-y-0 lg:grid lg:grid-cols-[280px_1fr] lg:gap-8 lg:items-start"
+        className="space-y-5 lg:space-y-8 lg:max-w-2xl"
       >
 
-        <div className="lg:sticky lg:top-8 lg:space-y-5">
-          {/* Avatar + identity */}
-          <motion.div variants={staggerItem} className="flex flex-col items-center pt-2 lg:items-start lg:pt-0">
-            <div className="relative">
-              <div
-                className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
-                style={{ backgroundColor: `${user.color}25`, boxShadow: `0 0 0 2px ${user.color}35` }}
-              >
-                {user.avatar}
-              </div>
-              <button
-                onClick={() => { setEditing(true); setName(user.name); setAvatar(user.avatar); setColor(user.color); }}
-                aria-label="Editar perfil"
-                className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-zinc-950"
-              >
-                <Pencil size={11} className="text-white" />
-              </button>
+        {/* Avatar + identity — stacked on mobile, horizontal row on desktop */}
+        <motion.div variants={staggerItem} className="flex flex-col items-center pt-2 lg:flex-row lg:items-center lg:gap-5 lg:pt-0">
+          <div className="relative">
+            <div
+              className="w-24 h-24 rounded-3xl flex items-center justify-center text-5xl"
+              style={{ backgroundColor: `${user.color}25`, boxShadow: `0 0 0 2px ${user.color}35` }}
+            >
+              {user.avatar}
             </div>
-            <div className="text-center mt-4 lg:text-left">
-              <h2 className="text-xl font-bold text-white">{user.name}</h2>
-              <p className="text-sm text-zinc-600 mt-0.5">{user.email}</p>
+            <button
+              onClick={() => { setEditing(true); setName(user.name); setAvatar(user.avatar); setColor(user.color); }}
+              aria-label="Editar perfil"
+              className="absolute -bottom-1.5 -right-1.5 w-7 h-7 bg-indigo-500 rounded-full flex items-center justify-center shadow-lg border-2 border-zinc-950"
+            >
+              <Pencil size={11} className="text-white" />
+            </button>
+          </div>
+          <div className="text-center mt-4 lg:text-left lg:mt-0">
+            <h2 className="text-xl font-bold text-white lg:text-2xl">{user.name}</h2>
+            <p className="text-sm text-zinc-600 mt-0.5">{user.email}</p>
+          </div>
+        </motion.div>
+
+        {/* Stats — below the identity, contained width so cards stay a sensible size */}
+        {stats && (
+          <motion.div variants={staggerItem} className="space-y-3">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Mis estadísticas</p>
+
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_watched}</p>
+                <p className="text-xs text-zinc-500 mt-2">películas vistas</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">
+                  {stats.hours_accumulated}<span className="text-lg text-zinc-500 ml-0.5">h</span>
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">de cine acumuladas</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">
+                  {stats.average_score ?? '—'}
+                </p>
+                <p className="text-xs text-zinc-500 mt-2">nota media</p>
+              </div>
+              <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
+                <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_added}</p>
+                <p className="text-xs text-zinc-500 mt-2">pelis propuestas</p>
+              </div>
+            </div>
+
+            <div className="bg-zinc-900 rounded-2xl border border-white/5 divide-y divide-white/[0.04]">
+              <StatRow
+                emoji={genre?.emoji ?? '🎭'}
+                label="Género favorito"
+                value={genre?.label ?? '—'}
+              />
+              <StatRow
+                emoji="📺"
+                logo={platform ? <PlatformLogo platform={stats.favorite_platform!} size={16} color={platform.color} /> : undefined}
+                label="Plataforma favorita"
+                value={platform?.label ?? '—'}
+              />
             </div>
           </motion.div>
+        )}
 
-          {/* Logout — desktop: sits under identity in the sticky left column */}
-          <motion.div variants={staggerItem} className="hidden lg:block">
-            {logoutButton}
-          </motion.div>
-        </div>
-
-        <div className="space-y-5 lg:space-y-3">
-          {/* Stats */}
-          {stats && (
-            <motion.div variants={staggerItem} className="space-y-3">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Mis estadísticas</p>
-
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
-                  <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_watched}</p>
-                  <p className="text-xs text-zinc-500 mt-2">películas vistas</p>
-                </div>
-                <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
-                  <p className="text-3xl font-bold text-white tracking-tight leading-none">
-                    {stats.hours_accumulated}<span className="text-lg text-zinc-500 ml-0.5">h</span>
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-2">de cine acumuladas</p>
-                </div>
-                <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
-                  <p className="text-3xl font-bold text-white tracking-tight leading-none">
-                    {stats.average_score ?? '—'}
-                  </p>
-                  <p className="text-xs text-zinc-500 mt-2">nota media</p>
-                </div>
-                <div className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-5 flex flex-col">
-                  <p className="text-3xl font-bold text-white tracking-tight leading-none">{stats.movies_added}</p>
-                  <p className="text-xs text-zinc-500 mt-2">pelis propuestas</p>
-                </div>
-              </div>
-
-              <div className="bg-zinc-900 rounded-2xl border border-white/5 divide-y divide-white/[0.04]">
-                <StatRow
-                  emoji={genre?.emoji ?? '🎭'}
-                  label="Género favorito"
-                  value={genre?.label ?? '—'}
-                />
-                <StatRow
-                  emoji="📺"
-                  logo={platform ? <PlatformLogo platform={stats.favorite_platform!} size={16} color={platform.color} /> : undefined}
-                  label="Plataforma favorita"
-                  value={platform?.label ?? '—'}
-                />
-              </div>
-            </motion.div>
-          )}
-
-          {/* Logout — mobile only, desktop version lives in the left column */}
-          <motion.div variants={staggerItem} className="lg:hidden">
-            {logoutButton}
-          </motion.div>
-        </div>
+        {/* Logout — always last, bottom of the page */}
+        <motion.div variants={staggerItem}>
+          {logoutButton}
+        </motion.div>
 
       </motion.div>
 

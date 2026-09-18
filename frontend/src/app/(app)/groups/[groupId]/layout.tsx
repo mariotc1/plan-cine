@@ -209,7 +209,7 @@ export default function GroupLayout({ children, params }: Props) {
 
       {/* Tabs — segmented pill on mobile, underlined tabs on desktop */}
       <div className="px-4 pt-4 pb-0 lg:px-8 lg:pt-6">
-        <div className="relative flex bg-zinc-900/50 border border-white/[0.06] rounded-2xl p-1 lg:bg-transparent lg:border-0 lg:border-b lg:border-white/[0.08] lg:rounded-none lg:p-0 lg:gap-7 lg:justify-start">
+        <div className="relative flex bg-zinc-900/50 border border-white/[0.06] rounded-2xl p-[3px] lg:bg-transparent lg:border-0 lg:border-b lg:border-white/[0.08] lg:rounded-none lg:p-0 lg:gap-7 lg:justify-start">
           {TABS.map((tab) => {
             const href = `/groups/${groupId}${tab.href}`;
             const isActive = tab.href === ''
@@ -220,19 +220,19 @@ export default function GroupLayout({ children, params }: Props) {
               <Link
                 key={tab.href}
                 href={href}
-                className="relative flex-1 flex items-center justify-center py-[9px] z-10 lg:flex-none lg:justify-start lg:py-0 lg:pb-3"
+                className="relative flex-1 flex items-center justify-center py-[7px] z-10 lg:flex-none lg:justify-start lg:py-0 lg:pb-3"
               >
                 {isActive && (
                   <motion.div
                     layoutId="group-tab-pill"
-                    className="absolute left-0 right-0 top-0 bottom-0 bg-indigo-500 rounded-xl shadow-[0_2px_16px_-3px_rgba(99,102,241,0.55)] lg:top-auto lg:h-[2px] lg:rounded-none lg:shadow-none"
+                    className="absolute left-0 right-0 top-0 bottom-0 bg-indigo-500 rounded-[10px] shadow-[inset_0_1px_0_0_rgba(255,255,255,0.12),0_2px_10px_-3px_rgba(99,102,241,0.55)] lg:top-auto lg:h-[2px] lg:rounded-none lg:shadow-none"
                     transition={{ type: 'spring', stiffness: 420, damping: 36 }}
                   />
                 )}
                 <span
                   className={cn(
-                    'relative z-10 text-[12px] font-semibold transition-colors duration-150 whitespace-nowrap lg:text-[13px]',
-                    isActive ? 'text-white' : 'text-zinc-500 lg:hover:text-zinc-300'
+                    'relative z-10 text-[12px] font-medium tracking-[0.01em] transition-colors duration-150 whitespace-nowrap lg:text-[13px] lg:font-semibold',
+                    isActive ? 'text-white font-semibold' : 'text-zinc-500 lg:hover:text-zinc-300'
                   )}
                 >
                   {tab.label}

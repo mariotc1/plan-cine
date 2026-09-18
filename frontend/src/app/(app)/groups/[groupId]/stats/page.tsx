@@ -1,6 +1,7 @@
 'use client';
 
 import React, { use } from 'react';
+import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useGroupStats } from '@/hooks/useGroups';
 import { StatCardSkeleton } from '@/components/stats/StatCardSkeleton';
@@ -9,7 +10,7 @@ import { RatingStars } from '@/components/sessions/RatingStars';
 import { getPlatform, getGenre } from '@/lib/constants';
 import { PlatformLogo } from '@/components/ui/PlatformLogo';
 import { staggerContainer, staggerItem } from '@/lib/animations';
-import { BarChart2 } from 'lucide-react';
+import { BarChart2, ChevronRight } from 'lucide-react';
 
 interface Props {
   params: Promise<{ groupId: string }>;
@@ -83,7 +84,7 @@ export default function StatsPage({ params }: Props) {
           {(stats.most_proposer || stats.most_demanding || stats.most_generous) && (
             <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
               <div className="px-5 pt-4 pb-2">
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Protagonistas</h3>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">El reparto</h3>
               </div>
               <div className="divide-y divide-white/[0.04]">
                 {stats.most_proposer && (
@@ -102,13 +103,15 @@ export default function StatsPage({ params }: Props) {
           {top.length > 0 && (
             <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 overflow-hidden">
               <div className="px-5 pt-4 pb-2">
-                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">
-                  Top {top.length} películas
-                </h3>
+                <h3 className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">El podio</h3>
               </div>
               <div className="divide-y divide-white/[0.04]">
                 {top.map((item, i) => (
-                  <div key={item.movie.id} className="flex items-center gap-3 px-5 py-3.5">
+                  <Link
+                    key={item.movie.id}
+                    href={`/groups/${groupId}/sessions/${item.session_id}`}
+                    className="flex items-center gap-3 px-5 py-3.5 hover:bg-white/[0.03] transition-colors"
+                  >
                     <span className={`text-sm font-bold w-5 flex-shrink-0 tabular-nums ${
                       i === 0 ? 'text-amber-400' : i === 1 ? 'text-zinc-400' : i === 2 ? 'text-orange-600' : 'text-zinc-700'
                     }`}>
@@ -119,7 +122,8 @@ export default function StatsPage({ params }: Props) {
                       <RatingStars value={Math.round(item.avg_rating)} readonly size={11} />
                       <span className="text-xs text-zinc-500 tabular-nums">{item.avg_rating}</span>
                     </div>
-                  </div>
+                    <ChevronRight size={14} className="text-zinc-700 flex-shrink-0" />
+                  </Link>
                 ))}
               </div>
             </motion.div>

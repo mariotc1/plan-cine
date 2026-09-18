@@ -105,7 +105,7 @@ export interface GroupStats {
   best_rated_movie: Movie | null;
   total_watched: number;
   total_hours: number;
-  top_10: Array<{ movie: Movie; avg_rating: number }>;
+  top_10: Array<{ movie: Movie; avg_rating: number; session_id: string }>;
 }
 
 export interface Badge {
