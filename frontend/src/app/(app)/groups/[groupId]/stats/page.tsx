@@ -53,19 +53,19 @@ export default function StatsPage({ params }: Props) {
             <p className="text-xs text-zinc-500 mt-2 leading-snug">de palomitas y sofá</p>
           </motion.div>
           <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-6 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Plataforma</p>
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Vuestra plataforma</p>
             {platform ? (
-              <div className="flex items-center gap-2 mt-auto">
+              <div className="flex items-center gap-2">
                 <PlatformLogo platform={stats.favorite_platform!} size={20} color={platform.color} />
                 <span className="text-sm font-semibold text-white">{platform.label}</span>
               </div>
             ) : (
-              <span className="text-sm text-zinc-500 mt-auto">—</span>
+              <span className="text-sm text-zinc-500">—</span>
             )}
           </motion.div>
           <motion.div variants={staggerItem} className="bg-zinc-900 rounded-2xl border border-white/5 p-4 lg:p-6 flex flex-col gap-2">
-            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Género</p>
-            <div className="flex items-center gap-2 mt-auto">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-zinc-600">Vuestro género</p>
+            <div className="flex items-center gap-2">
               {genre ? (
                 <>
                   <span className="text-xl">{genre.emoji}</span>

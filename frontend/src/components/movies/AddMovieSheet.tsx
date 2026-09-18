@@ -79,13 +79,13 @@ function PickerSheet({ open, title, options, value, onSelect, onClose }: PickerS
           >
             {opt.isPlatform ? (
               <span
-                className="w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
+                className="min-w-8 h-8 px-1.5 rounded-lg flex items-center justify-center flex-shrink-0 transition-all"
                 style={{
                   backgroundColor: `${opt.color}${value === opt.value ? '28' : '14'}`,
                   opacity: value === opt.value ? 1 : 0.75,
                 }}
               >
-                <PlatformLogo platform={opt.value} size={18} color={opt.color} />
+                <PlatformLogo platform={opt.value} size={16} color={opt.color} />
               </span>
             ) : (
               <span className="text-xl w-7 text-center">{opt.emoji}</span>

@@ -529,6 +529,30 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Logos reales de Disney+ y Prime Video ✅
+
+> El agente de IA que generó `PlatformLogo.tsx` no encontró vectores fiables para
+> estas dos plataformas y usó placeholders genéricos (una estrella para Disney+,
+> un triángulo de "play" para Prime Video). El usuario descargó los logos
+> oficiales y pidió adaptarlos para que se vean parte de la misma familia visual
+> que Netflix/HBO/Movistar/Apple TV+ (glifo plano, un solo color, tintable vía
+> prop `color`) tanto al añadir película como en estadísticas de grupo y perfil.
+
+- **Origen de los assets:** `Disney_Plus_Logo.png` (icono de app, 512×512, fondo degradado) y `Amazon_Prime_Video_logo.png` (wordmark horizontal, fondo transparente), descargados por el usuario en `~/Downloads`.
+- **Procesado (Python/Pillow, sin herramientas externas):** para Prime Video, el canal alfa del PNG original ya delimitaba exactamente el wordmark+flecha, así que se recortó y reescaló directamente. Para Disney+ (icono opaco sin transparencia) se generó una máscara por umbral de luminancia (215–248) que separa el texto blanco del fondo turquesa degradado, recortada al contenido real. Resultado: dos PNG monocromos con alfa, `frontend/public/logos/{disney-plus,prime-video}-mark.png` (14-18 KB cada uno).
+- **`PlatformLogo.tsx`:** los paths de placeholder de `disney`/`prime` se sustituyen por un nuevo mapa `IMAGE_MASKS`, renderizado como un `<span>` con `mask-image`/`background-color` — mismo comportamiento "glifo plano tintable" que los `<svg><path>` del resto de plataformas, pero a partir de la imagen real en vez de un path dibujado a mano. Cada logo mantiene su proporción real (Prime Video es muy ancho, Disney+ más cuadrado) con altura fija igual al `size` pedido, en vez de forzarlos a un cuadrado (eso los dejaba ilegibles).
+- **Ajuste de dos contenedores de ancho fijo** que asumían un icono cuadrado y recortaban los logos anchos: el swatch del selector de plataforma en `AddMovieSheet.tsx` (`w-8` → `min-w-8` con padding) y el icono de `StatRow` en `profile/page.tsx` (`w-6` → `min-w-6`). El resto de usos (badges tipo píldora en `MovieCard`, `MovieFilters`, stats de grupo, sheets de sesión) ya eran de ancho automático y no necesitaron cambios.
+- **Qué probé:** Docker a 1440px — selector de plataforma al añadir película (los 7 logos, incluidos Disney+ y Prime Video, legibles y con la misma altura visual), tarjetas de película existentes con Prime Video/Disney+/Movistar+/Netflix/HBO Max en el mismo grid, estadísticas de perfil (icono de plataforma favorita). `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Color de Disney+ y etiquetas de Ranking ✅
+
+- **Color de Disney+:** el `#113CCF` (azul-índigo) usado como color de marca leía "morado" en pantalla, según feedback directo del usuario. Cambiado a `#06AED4` (cian-azulado), tomado del propio degradado turquesa del icono oficial — más fiel a la marca y perfectamente legible sobre fondo oscuro. Único color, se propaga automáticamente a `PlatformLogo` y a todos los badges de la app (`frontend/src/lib/constants.ts` + `PlatformLogo.tsx`).
+- **Etiquetas "Plataforma"/"Género" en Ranking de grupo:** el usuario las encontraba ambiguas — no quedaba claro que son la plataforma/género *favoritos* del grupo. Cambiadas a "Vuestra plataforma" / "Vuestro género" (`stats/page.tsx`), manteniendo el mismo estilo tipográfico (mayúsculas, tracking ancho, gris) que el resto de cabeceras de tarjeta de la página (Protagonistas, Top N películas) — solo cambia el texto, no el sistema visual. Probado en 375px (envuelve a dos líneas en el caso de "Vuestra plataforma" sin romper el layout) y 1440px (una línea).
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -549,6 +573,8 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-13 | Bug crítico | Service Worker atascado servía HTML cacheado para siempre → sesión "se perdía". Arreglado |
 | 2026-09-13 | Bug crítico #2 | `tokens()->delete()` en login mataba sesiones de otros dispositivos. Arreglado (multi-sesión) |
 | 2026-09-13 | Feature | Comentarios en valoraciones: opcional, editable/borrable, independiente de la puntuación |
+| 2026-09-18 | Mejora | Logos reales de Disney+ y Prime Video (placeholders genéricos sustituidos por assets oficiales adaptados) |
+| 2026-09-18 | Mejora | Color de Disney+ a cian legible + etiquetas "Vuestra plataforma"/"Vuestro género" en Ranking |
 
 ---
 
