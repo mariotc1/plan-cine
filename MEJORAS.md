@@ -724,8 +724,36 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 - **Toolbar de Pelis (`MovieFilters.tsx`):** en móvil, fila de 4 elementos — buscador, icono de Filtrar (sin texto), icono nuevo de Ajustes (`MoreHorizontal`, llama a `openSettings()` del store), e icono "+" morado de Añadir película (sin texto). En desktop cada uno conserva su texto tal cual estaba.
 - **FAB flotante eliminado** (`groups/[groupId]/page.tsx`) — ya no hace falta, "Añadir película" vive en la toolbar de arriba, visible siempre (antes solo estaba arriba en desktop). El botón de "subir arriba" (de la mejora anterior) vuelve a su posición original (`bottom-24`) al no tener ya nada debajo con lo que apilarse.
 - **Margen superior:** `paddingTop` de la cabecera de `max(env(safe-area-inset-top), 16px)` a `max(..., 22px)` — un poco más de aire sin pasarse, tal y como se pidió.
-- **Trade-off explícito:** en móvil, "Ajustes" del grupo ahora solo es accesible desde la pestaña Pelis (antes estaba en la cabecera, visible en las 4 pestañas). Es una simplificación razonable — son acciones poco frecuentes (salir/borrar grupo, QR, invitar) — pero queda anotado por si en el futuro hiciera falta recuperar el acceso desde otras pestañas.
-- **Qué probé:** Docker a 390px — los tres botones (Filtrar/Ajustes/Añadir) abren su sheet correspondiente; sin FAB flotante; cabecera de Ruleta/Sesiones/Ranking sin hueco raro donde antes estaba el "...". A 1440px sin cambios (confirmado por captura: Ajustes con texto en la cabecera, Filtrar y Añadir película con texto en la toolbar, igual que siempre). `npm run build` y `eslint` limpios.
+- **Corregido tras probarlo:** el usuario confirmó que quería "Ajustes" de vuelta en la cabecera (accesible desde las 4 pestañas, no solo Pelis) — revertido: el botón "..." vuelve a la cabecera tal cual estaba, se quita el duplicado de la toolbar y se elimina `groupUIStore.ts` (ya no hace falta compartir el estado entre componentes). Se mantiene todo lo demás: Filtrar sin texto en móvil, "+" morado sin texto, sin FAB flotante, y el margen superior de 22px.
+- **Qué probé:** Docker a 390px — Filtrar y Añadir película abren su sheet desde la toolbar; Ajustes abre el suyo desde la cabecera, confirmado también en la pestaña Ruleta; sin FAB flotante. A 1440px sin cambios. `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Pantalla de bienvenida (landing) simplificada y con desktop de verdad ✅
+
+> Feedback: la pantalla previa al login tenía demasiado texto, no encajaba
+> con el tono ni la estética del resto de la app, y en desktop no acababa de
+> verse bien. Además, pregunta abierta: ¿cómo plantear el "muro" de login
+> obligatorio de forma más elegante, "como un ingeniero de Apple"?
+
+- **Mi recomendación (aplicada):** esta pantalla no es una landing pública que tiene que convencer a un desconocido de descargar la app — a Plan Cine se llega casi siempre por invitación de alguien de tu grupo, que ya te ha explicado de qué va. No hace falta venderla con una lista de features tipo SaaS; el muro de login es inevitable (es una app multiusuario, no hay nada que "probar" sin un grupo), así que lo que sí se puede controlar es que esa pantalla obligatoria se sienta como una bienvenida cálida y rápida, no como un formulario de venta.
+- **Recortado:** fuera la tarjeta de 3 features ("Lista compartida...", "Ruleta para...", "Valoraciones...") y la línea final "Gratis · Sin anuncios · Para cualquier grupo" — ya no cuentan lo que hace la app con palabras, solo la esencia en una línea.
+- **Copy más cercano al pitch real:** "Las mejores noches de cine, organizadas y perfectas" → **"Decidid qué ver esta noche. Sin discutir."** — la frase que resume el problema real que resuelve la app (de la que parte todo el proyecto), no una descripción genérica.
+- **Un único CTA fuerte:** "Iniciar sesión" se queda como botón sólido; "Crear cuenta" deja de ser un segundo botón del mismo peso y pasa a un enlace de texto discreto debajo ("¿No tienes cuenta? Crear una") — menos "dos opciones iguales", más "una acción clara y una puerta secundaria".
+- **Desktop por fin resuelto:** reutiliza exactamente el mismo lenguaje visual que ya tienen login/register (`(auth)/layout.tsx`) — glow ambiental radial de fondo + tarjeta `bg-zinc-900/50` con borde, esquinas grandes y sombra — en vez de quedar flotando sola en medio de una pantalla negra vacía.
+- **Qué probé:** Docker a 1440px (tarjeta bien anclada con el glow, ya no vacío alrededor) y 390px (mucho menos denso, más aire). `npm run build` y `eslint` limpios.
+
+---
+
+## MEJORA — Splash screen para los momentos de "pantalla en blanco" ✅
+
+> Petición: una pantalla de carga para que el usuario no sienta que está
+> esperando sin más. Dejó el desktop a mi criterio ("no sé si pega, decide tú").
+
+- **Diagnóstico:** no había ningún hueco de red/carga real que cubrir (Zustand rehidrata la sesión de forma síncrona) — el "hueco" son dos `return null` ya existentes en el código, momentos en los que la app decide a dónde redirigirte y de momento no pinta nada: `app/page.tsx` (si ya has iniciado sesión, antes de mandarte a `/groups`) y `app/(app)/layout.tsx` (si no has iniciado sesión, antes de mandarte a `/`). Con fondo oscuro de por medio no se ve un flash blanco feo, pero tampoco hay nada — sensación de "vacío", no de "cargando".
+- **`components/shared/SplashScreen.tsx`** (nuevo) — pantalla completa con el logo y el mismo glow índigo que ya usa la portada, con un pulso de respiración suave en bucle (framer-motion, sin spinner adicional — se mantiene minimal). Sustituye a los dos `return null`.
+- **Decisión de diseño (desktop incluido):** no es un gesto "de instalar app móvil", es literalmente tapar un hueco de redirección que ocurre en cualquier dispositivo — así que el mismo componente se usa igual en desktop, sin `lg:` distintos. Un logo centrado con un pulso suave queda igual de bien en una pantalla grande.
+- **Qué probé:** capturé el instante exacto con CPU throttling en Playwright (sin eso la transición es demasiado rápida para verla) — el logo con su glow y el pulso a mitad de animación, confirmando que sustituye correctamente al blanco/negro vacío de antes. `npm run build` y `eslint` limpios.
 
 ---
 
@@ -763,6 +791,12 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-19 | Mejora | Botón flotante "subir arriba" en móvil, aparece tras 400px de scroll |
 | 2026-09-19 | Ajuste | Botón "subir arriba": umbral a 150px y reubicado a la derecha, apilado sobre "Añadir película" |
 | 2026-09-19 | Mejora | Móvil: toolbar consolidada (Filtrar/Ajustes/Añadir, solo iconos) + FAB flotante eliminado + más margen arriba |
+| 2026-09-19 | Corrección | "Ajustes" de vuelta en la cabecera (accesible desde las 4 pestañas) tras feedback |
+| 2026-09-19 | Mejora | Landing (pre-login) simplificada: sin lista de features, copy más directo, desktop con el mismo lenguaje visual que login/register |
+| 2026-09-19 | Ajuste | Landing: salto de línea antes de "Sin discutir." + botón "Iniciar sesión" más fino (h-12, sombra más discreta) |
+| 2026-09-19 | Ajuste | Landing: más margen lateral en móvil (px-6 → px-10), desktop sin cambios. Fase de landing dada por cerrada |
+| 2026-09-19 | Mejora | Splash screen (logo + pulso) sustituyendo los `return null` en blanco de las redirecciones de sesión |
+| 2026-09-19 | Ajuste | Cabecera móvil: margen superior 22px → 30px para que respire mejor. Ronda de mejoras de esta sesión dada por cerrada |
 
 ---
 

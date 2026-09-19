@@ -19,7 +19,7 @@ export function PageHeader({ title, subtitle, back, action }: PageHeaderProps) {
   return (
     <div
       className="flex items-center justify-between px-5 pb-4 lg:px-8 lg:pb-6"
-      style={{ paddingTop: isDesktop ? '2.5rem' : 'max(env(safe-area-inset-top), 16px)' }}
+      style={{ paddingTop: isDesktop ? '2.5rem' : 'max(calc(env(safe-area-inset-top) + 10px), 16px)' }}
     >
       <div className="flex items-center gap-3">
         {back && (

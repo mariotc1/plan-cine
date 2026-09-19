@@ -67,7 +67,7 @@ export default function ProfilePage() {
   );
 
   return (
-    <div className="px-5 pb-8 lg:px-8 lg:pb-12" style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)' }}>
+    <div className="px-5 pb-8 lg:px-8 lg:pb-12" style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 10px), 16px)' }}>
       <motion.div
         variants={staggerContainer}
         initial="initial"
