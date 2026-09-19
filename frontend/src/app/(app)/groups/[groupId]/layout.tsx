@@ -186,7 +186,7 @@ export default function GroupLayout({ children, params }: Props) {
           {/* Header */}
           <div
             className="relative flex items-center justify-between px-5 pb-0 lg:px-8 lg:pt-2"
-            style={{ paddingTop: 'max(env(safe-area-inset-top), 24px)' }}
+            style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 10px), 30px)' }}
           >
             <motion.button
               whileTap={{ scale: 0.88 }}

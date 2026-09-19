@@ -12,7 +12,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div
       className="relative min-h-[100dvh] flex flex-col items-center px-5 overflow-y-auto lg:justify-center lg:px-6"
-      style={{ paddingTop: 'max(env(safe-area-inset-top), 16px)', paddingBottom: '40px' }}
+      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 10px), 16px)', paddingBottom: '40px' }}
     >
       {/* Desktop-only ambient glow behind the card */}
       <div

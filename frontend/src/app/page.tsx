@@ -22,7 +22,7 @@ export default function LandingPage() {
   return (
     <div
       className="relative min-h-[100dvh] flex flex-col items-center justify-center px-10 py-14 overflow-hidden lg:px-6"
-      style={{ paddingTop: 'max(env(safe-area-inset-top), 40px)' }}
+      style={{ paddingTop: 'max(calc(env(safe-area-inset-top) + 10px), 40px)' }}
     >
       {/* Desktop-only ambient glow — same language as the login/register card */}
       <div
