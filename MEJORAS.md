@@ -745,6 +745,18 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 
 ---
 
+## MEJORA — Splash screen para los momentos de "pantalla en blanco" ✅
+
+> Petición: una pantalla de carga para que el usuario no sienta que está
+> esperando sin más. Dejó el desktop a mi criterio ("no sé si pega, decide tú").
+
+- **Diagnóstico:** no había ningún hueco de red/carga real que cubrir (Zustand rehidrata la sesión de forma síncrona) — el "hueco" son dos `return null` ya existentes en el código, momentos en los que la app decide a dónde redirigirte y de momento no pinta nada: `app/page.tsx` (si ya has iniciado sesión, antes de mandarte a `/groups`) y `app/(app)/layout.tsx` (si no has iniciado sesión, antes de mandarte a `/`). Con fondo oscuro de por medio no se ve un flash blanco feo, pero tampoco hay nada — sensación de "vacío", no de "cargando".
+- **`components/shared/SplashScreen.tsx`** (nuevo) — pantalla completa con el logo y el mismo glow índigo que ya usa la portada, con un pulso de respiración suave en bucle (framer-motion, sin spinner adicional — se mantiene minimal). Sustituye a los dos `return null`.
+- **Decisión de diseño (desktop incluido):** no es un gesto "de instalar app móvil", es literalmente tapar un hueco de redirección que ocurre en cualquier dispositivo — así que el mismo componente se usa igual en desktop, sin `lg:` distintos. Un logo centrado con un pulso suave queda igual de bien en una pantalla grande.
+- **Qué probé:** capturé el instante exacto con CPU throttling en Playwright (sin eso la transición es demasiado rápida para verla) — el logo con su glow y el pulso a mitad de animación, confirmando que sustituye correctamente al blanco/negro vacío de antes. `npm run build` y `eslint` limpios.
+
+---
+
 ## Control de versiones de este documento
 
 | Fecha | Fase completada | Notas |
@@ -783,6 +795,8 @@ cualquier componente lo lea — no hay hueco de carrera ahí.
 | 2026-09-19 | Mejora | Landing (pre-login) simplificada: sin lista de features, copy más directo, desktop con el mismo lenguaje visual que login/register |
 | 2026-09-19 | Ajuste | Landing: salto de línea antes de "Sin discutir." + botón "Iniciar sesión" más fino (h-12, sombra más discreta) |
 | 2026-09-19 | Ajuste | Landing: más margen lateral en móvil (px-6 → px-10), desktop sin cambios. Fase de landing dada por cerrada |
+| 2026-09-19 | Mejora | Splash screen (logo + pulso) sustituyendo los `return null` en blanco de las redirecciones de sesión |
+| 2026-09-19 | Ajuste | Cabecera móvil: margen superior 22px → 30px para que respire mejor. Ronda de mejoras de esta sesión dada por cerrada |
 
 ---
 

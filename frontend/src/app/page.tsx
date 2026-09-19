@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useAuthStore } from '@/stores/authStore';
 import { InstallBanner } from '@/components/shared/InstallBanner';
+import { SplashScreen } from '@/components/shared/SplashScreen';
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
@@ -16,7 +17,7 @@ export default function LandingPage() {
     if (isAuthenticated) router.replace('/groups');
   }, [isAuthenticated, router]);
 
-  if (isAuthenticated) return null;
+  if (isAuthenticated) return <SplashScreen />;
 
   return (
     <div

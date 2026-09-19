@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/stores/authStore';
+import { SplashScreen } from '@/components/shared/SplashScreen';
 import { BottomNav } from '@/components/shared/BottomNav';
 import { Sidebar } from '@/components/shared/Sidebar';
 import { InstallBanner } from '@/components/shared/InstallBanner';
@@ -36,7 +37,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!isAuthenticated) return null;
+  if (!isAuthenticated) return <SplashScreen />;
 
   return (
     <div className="min-h-screen lg:flex">
