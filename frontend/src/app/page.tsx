@@ -5,15 +5,8 @@ import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { Film, Shuffle, Star } from 'lucide-react';
 import { useAuthStore } from '@/stores/authStore';
 import { InstallBanner } from '@/components/shared/InstallBanner';
-
-const features = [
-  { icon: Film, label: 'Lista compartida de películas' },
-  { icon: Shuffle, label: 'Ruleta para elegir qué ver' },
-  { icon: Star, label: 'Valoraciones y estadísticas del grupo' },
-];
 
 export default function LandingPage() {
   const { isAuthenticated } = useAuthStore();
@@ -26,9 +19,17 @@ export default function LandingPage() {
   if (isAuthenticated) return null;
 
   return (
-    <div className="relative min-h-[100dvh] flex flex-col items-center justify-center px-6 py-14 overflow-hidden">
+    <div
+      className="relative min-h-[100dvh] flex flex-col items-center justify-center px-10 py-14 overflow-hidden lg:px-6"
+      style={{ paddingTop: 'max(env(safe-area-inset-top), 40px)' }}
+    >
+      {/* Desktop-only ambient glow — same language as the login/register card */}
+      <div
+        className="hidden lg:block fixed inset-0 pointer-events-none"
+        style={{ background: 'radial-gradient(620px circle at 50% 42%, rgba(99,102,241,0.16), transparent 70%)' }}
+      />
 
-      <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm space-y-8">
+      <div className="relative z-10 flex flex-col items-center text-center w-full max-w-sm space-y-9 lg:bg-zinc-900/50 lg:border lg:border-white/[0.07] lg:rounded-3xl lg:px-12 lg:py-16 lg:shadow-2xl lg:shadow-black/50">
 
         {/* Logo */}
         <motion.div
@@ -50,57 +51,32 @@ export default function LandingPage() {
         >
           <h1 className="text-[44px] font-bold text-white tracking-tight leading-none">Plan Cine</h1>
           <p className="text-zinc-400 mt-3 text-[15px] leading-relaxed max-w-[260px] mx-auto">
-            Las mejores noches de cine, organizadas y perfectas.
+            Decidid qué ver esta noche.
+            <br />
+            Sin discutir.
           </p>
         </motion.div>
 
-        {/* Feature list — iOS settings style */}
+        {/* CTAs — one clear primary action, the other lives as a quiet link */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.42 }}
-          className="w-full bg-white/[0.03] border border-white/[0.06] rounded-2xl overflow-hidden divide-y divide-white/[0.05]"
-        >
-          {features.map(({ icon: Icon, label }) => (
-            <div key={label} className="flex items-center gap-3.5 px-4 py-3.5">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/15 flex items-center justify-center flex-shrink-0">
-                <Icon size={15} className="text-indigo-400" />
-              </div>
-              <span className="text-sm text-zinc-300 text-left">{label}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* CTAs */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.56 }}
-          className="w-full space-y-3"
+          transition={{ duration: 0.5, delay: 0.4 }}
+          className="w-full space-y-4"
         >
           <Link
             href="/login"
-            className="flex items-center justify-center w-full h-14 rounded-2xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-semibold text-base transition-colors shadow-[0_4px_32px_-4px_rgba(99,102,241,0.6)]"
+            className="flex items-center justify-center w-full h-12 rounded-xl bg-indigo-500 hover:bg-indigo-600 active:bg-indigo-700 text-white font-medium text-[15px] transition-colors shadow-[0_2px_16px_-4px_rgba(99,102,241,0.45)]"
           >
             Iniciar sesión
           </Link>
           <Link
             href="/register"
-            className="flex items-center justify-center w-full h-14 rounded-2xl bg-white/[0.06] hover:bg-white/10 active:bg-white/[0.04] text-white font-semibold text-base transition-colors border border-white/[0.09]"
+            className="block text-sm text-zinc-500 hover:text-zinc-300 transition-colors"
           >
-            Crear cuenta
+            ¿No tienes cuenta? <span className="text-indigo-400 font-medium">Crear una</span>
           </Link>
         </motion.div>
-
-        {/* Tagline */}
-        <motion.p
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.72 }}
-          className="text-zinc-600 text-xs"
-        >
-          Gratis · Sin anuncios · Para cualquier grupo
-        </motion.p>
 
       </div>
 
